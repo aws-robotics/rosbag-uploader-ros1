@@ -26,3 +26,13 @@ This library is licensed under the Apache 2.0 License.
 
         cd ~/ros-workspace && colcon build
 
+### Running Tests
+- After build run
+
+    colcon test
+
+Notes:
+To see linter errors run
+
+    cd ~/ros-workspace/build/<package_name>
+    make roslint
