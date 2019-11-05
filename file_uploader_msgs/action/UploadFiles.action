@@ -1,0 +1,15 @@
+# Goal
+# A list of files uploaded. Empty lists will be rejected. 
+# Other than that no validity checks will be done before accepting the goal
+# The number of files to upload is only limited by the size of the message
+string[] files
+# The s3 key prefix for the objects.No validity checks are done on the action
+# An empty string is valid
+string location
+----
+# Feedback
+# The number of files that have been uploaded so far
+uint8 num_files_uploaded
+----
+# Result
+UploaderResult result
