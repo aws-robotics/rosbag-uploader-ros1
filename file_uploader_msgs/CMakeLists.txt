@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
     FILES
     UploaderResult.msg
-    UploaderStatus.msg
 )
 
 ## Generate actions in the action folder
