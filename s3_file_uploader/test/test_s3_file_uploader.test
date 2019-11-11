@@ -1,0 +1,3 @@
+<launch>
+    <test test-name="test_s3_file_uploader" pkg="s3_file_uploader" type="test_s3_file_uploader" time-limit="120.0"/>
+</launch>

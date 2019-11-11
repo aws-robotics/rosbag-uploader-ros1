@@ -11,11 +11,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <!-- <build_depend>roslint</build_depend> -->
-
   <depend>actionlib</depend>
   <depend>actionlib_msgs</depend>
   <depend>file_uploader_msgs</depend>
   <depend>roscpp</depend>
 
+  <test_depend>rostest</test_depend>
 </package>

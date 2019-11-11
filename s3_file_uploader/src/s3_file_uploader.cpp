@@ -40,6 +40,7 @@ S3FileUploader::S3FileUploader() : node_handle_("~")
 
 void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal)
 {
+    goal.setRejected();
 }
 
 void S3FileUploader::CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal)

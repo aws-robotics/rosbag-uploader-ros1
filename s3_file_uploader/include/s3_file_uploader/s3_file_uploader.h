@@ -34,7 +34,7 @@ typedef actionlib::ActionServer<file_uploader_msgs::UploadFilesAction> UploadFil
 class S3FileUploader
 {
 private:
-    std::unique_ptr<actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>> action_server_;
+    std::unique_ptr<UploadFilesActionServer> action_server_;
     ros::NodeHandle node_handle_;
 
     void GoalCallBack(UploadFilesActionServer::GoalHandle goal);
