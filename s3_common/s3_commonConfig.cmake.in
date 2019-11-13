@@ -1,0 +1,12 @@
+  
+# Compute paths
+set(s3_common_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/../../../include")
+
+if(NOT TARGET s3_common)
+    include("${CMAKE_CURRENT_LIST_DIR}/s3_common-targets.cmake")
+endif()
+
+set(s3_common_LIBRARIES s3_common)
+
+# where the .pc pkgconfig files are installed
+set(s3_common_PKGCONFIG_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../lib/pkgconfig")

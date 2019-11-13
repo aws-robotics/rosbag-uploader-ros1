@@ -49,4 +49,3 @@ void S3FileUploader::CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal
 
 }  // namespace S3
 }  // namespace Aws
-

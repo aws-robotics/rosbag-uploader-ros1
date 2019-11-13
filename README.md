@@ -1,4 +1,3 @@
-
 ## Rosbag Uploader Ros1
 
 ROS packages for uploading rosbags to AWS cloud services.
