@@ -26,6 +26,10 @@ This library is licensed under the Apache 2.0 License.
         cd ~/ros-workspace && colcon build
 
 ### Running Tests
-- After build run
+- Build with
+
+        colcon build --cmake-targets test
+
+- Then run tests
 
     colcon test

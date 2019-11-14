@@ -40,7 +40,7 @@ add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME} ${AWS_LINK_LIBS})
 target_include_directories(${PROJECT_NAME}
   PRIVATE ${AWSSDK_INCLUDE_DIRS}
-  include include ${aws_common_INCLUDE_DIRS})
+  include ${aws_common_INCLUDE_DIRS})
 
 #############
 ## Install ##
@@ -77,3 +77,20 @@ INSTALL(EXPORT ${PROJECT_NAME}-targets DESTINATION share/${PROJECT_NAME}/cmake)
 ##########
 ## Test ##
 ##########
+
+enable_testing()
+find_common_test_packages()
+
+add_common_gtest(test_s3_common
+  test/s3_common_test.cpp
+)
+
+target_include_directories(test_s3_common
+  PRIVATE include
+  PRIVATE ${aws_common_INCLUDE_DIRS}
+)
+
+target_link_libraries(test_s3_common
+  ${GTEST_LIBRARIES}
+  ${PROJECT_NAME}
+)
