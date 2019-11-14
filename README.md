@@ -28,7 +28,7 @@ This library is licensed under the Apache 2.0 License.
 ### Running Tests
 - Build with
 
-        colcon build --cmake-targets test
+        colcon build --cmake-targets tests
 
 - Then run tests
 

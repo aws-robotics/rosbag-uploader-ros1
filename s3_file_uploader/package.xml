@@ -15,6 +15,7 @@
   <depend>actionlib_msgs</depend>
   <depend>file_uploader_msgs</depend>
   <depend>roscpp</depend>
+  <depend>s3_common</depend>
 
   <test_depend>rostest</test_depend>
 </package>

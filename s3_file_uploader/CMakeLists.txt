@@ -6,9 +6,17 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(catkin REQUIRED COMPONENTS
     actionlib
     actionlib_msgs
+    aws_common
     file_uploader_msgs
     roscpp
+    s3_common
 )
+
+if(AWSSDK_FOUND)
+  set(SERVICE s3)
+  AWSSDK_DETERMINE_LIBS_TO_LINK(SERVICE AWS_LINK_LIBS)
+  link_directories("${AWSSDK_LIB_DIR}")
+endif()
 
 set(S3_UPLOADER_LIB_TARGET ${PROJECT_NAME}_lib)
 
@@ -24,9 +32,12 @@ catkin_package(
 
 include_directories(
     include
+    ${AWSSDK_INCLUDE_DIR}
     ${actionlib_INCLUDE_DIRS}
     ${actionlib_msgs_INCLUDE_DIRS}
+    ${aws_common_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
+    ${s3_common_INCLUDE_DIRS}
 )
 
 add_library(${S3_UPLOADER_LIB_TARGET}
@@ -34,7 +45,10 @@ add_library(${S3_UPLOADER_LIB_TARGET}
 )
 
 target_link_libraries(${S3_UPLOADER_LIB_TARGET}
+    ${AWS_LINK_LIBS}
+    ${aws_common_LIBRARIES}
     ${catkin_LIBRARIES}
+    ${s3_common_LIBRARIES}
 )
 
 add_dependencies(${S3_UPLOADER_LIB_TARGET}

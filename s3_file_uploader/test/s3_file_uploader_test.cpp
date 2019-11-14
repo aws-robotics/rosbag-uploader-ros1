@@ -17,6 +17,7 @@
 
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/terminal_state.h>
+#include <aws/core/Aws.h>
 #include <ros/ros.h>
 #include <ros/console.h>
 
@@ -37,7 +38,7 @@ TEST(S3UploaderTest, TestActionReceived)
     bool client_connected = client->waitForActionServerToStart(ros::Duration(10, 0));
     ASSERT_TRUE(client_connected);
     auto transition_call_back = [&message_received](UploadFilesActionClient::GoalHandle goal){
-        EXPECT_EQ(goal.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
+        EXPECT_EQ(goal.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
         message_received = true;
     };
     file_uploader_msgs::UploadFilesGoal goal;
@@ -49,9 +50,13 @@ TEST(S3UploaderTest, TestActionReceived)
 
 int main(int argc, char** argv)
 {
+    // Should be removed once S3_Facade is mocked out
+    Aws::SDKOptions options;
+    Aws::InitAPI(options);
     ::testing::InitGoogleTest(&argc, argv);
     ros::init(argc, argv, "test_node");
     auto result = RUN_ALL_TESTS();
     ros::shutdown();
+    Aws::ShutdownAPI(options);
     return result;
 }

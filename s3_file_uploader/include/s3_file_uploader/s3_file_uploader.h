@@ -19,7 +19,9 @@
 #include <ros/ros.h>
 #include <ros/spinner.h>
 
+
 #include <file_uploader_msgs/UploadFilesAction.h>
+#include <s3_common/s3_facade.h>
 
 namespace Aws
 {
@@ -36,6 +38,7 @@ class S3FileUploader
 private:
     std::unique_ptr<UploadFilesActionServer> action_server_;
     ros::NodeHandle node_handle_;
+    std::unique_ptr<Aws::S3::S3Facade> s3_facade_;
 
     void GoalCallBack(UploadFilesActionServer::GoalHandle goal);
     void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal);

@@ -17,6 +17,7 @@
 
 #include <aws/s3/S3Client.h>
 
+#include <s3_common/s3_common_error_codes.h>
 namespace Aws
 {
 namespace S3
@@ -25,10 +26,20 @@ namespace S3
 class S3Facade
 {
 public:
-    S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
+    S3Facade(const std::unique_ptr<Aws::S3::S3Client> s3_client);
     ~S3Facade() = default;
 
-    Aws::S3::Model::PutObjectOutcome putObject(std::string file_path);
+    /**
+    * @brief Call s3 putObject api to upload file to s3
+    *
+    * Synchronous call to S3. Uploads file at file_path to s3.
+    *
+    * @param file_path path to the file to upload
+    * @param bucket the s3 bucket for upload
+    * @param key object key for upload
+    * @return error code, SUCCESS if the file is uploaded,
+    */
+    Aws::S3::S3ErrorCode putObject(std::string file_path, std::string bucket, std::string key);
 
 private:
     std::unique_ptr<Aws::S3::S3Client> s3_client_;

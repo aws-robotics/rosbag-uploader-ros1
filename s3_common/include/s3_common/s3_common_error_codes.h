@@ -13,19 +13,31 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/core/Aws.h>
+#pragma once
 
-#include <ros/ros.h>
-#include <s3_file_uploader/s3_file_uploader.h>
-
-
-int main(int argc, char* argv[])
+namespace Aws
 {
-    Aws::SDKOptions options;
-    Aws::InitAPI(options);
-    ros::init(argc, argv, "s3_file_uploader");
-    Aws::S3::S3FileUploader file_uploader;
-    ros::spin();
-    Aws::ShutdownAPI(options);
-    return 0;
-}
+namespace S3
+{
+
+/**
+ * Error codes for S3.
+ */
+enum S3ErrorCode
+{
+  // Operation was successfuly
+  SUCCESS = 0,
+  // Generic failure
+  FAILED,
+  // The local file was not found
+  FILE_NOT_FOUND,
+  // The local file couldn't be opened for reading
+  FILE_CANT_BE_READ,
+  // Access to S3 resources was denied
+  S3_ACCESS_DENIED,
+  // S3 bucket doesn't exist
+  S3_BUCKET_DOESNT_EXIST
+};
+
+}  // namespace S3
+}  // namespace Aws

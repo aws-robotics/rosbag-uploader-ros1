@@ -14,21 +14,26 @@
  */
 
 #include <gtest/gtest.h>
+#include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
 
 #include <s3_common/s3_facade.h>
 
 TEST(S3FacadeTest, TestPutObjectReturns)
 {
-    auto client = std::make_unique<Aws::S3::S3Client::S3Client>();
-    Aws::S3::S3Facade s3_facade(client);
-    auto outcome = s3_facade.putObject("file_name");
-    EXPECT_TRUE(outcome.IsSuccess())
+    // This client should be replaced with a mock and the AWS SDK init in the main should be removed
+    auto client = std::make_unique<Aws::S3::S3Client>();
+    Aws::S3::S3Facade s3_facade(std::move(client));
+    auto outcome = s3_facade.putObject("file_name", "bucket", "key");
+    EXPECT_EQ(Aws::S3::S3ErrorCode::SUCCESS, outcome);
 }
 
 int main(int argc, char** argv)
 {
+    Aws::SDKOptions options;
+    Aws::InitAPI(options);
     ::testing::InitGoogleTest(&argc, argv);
     auto result = RUN_ALL_TESTS();
+    Aws::ShutdownAPI(options);
     return result;
 }

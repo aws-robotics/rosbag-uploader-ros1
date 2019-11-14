@@ -13,7 +13,10 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/core/utils/logging/LogMacros.h>
 #include <aws/s3/S3Client.h>
+
+#include <s3_common/s3_common_error_codes.h>
 #include <s3_common/s3_facade.h>
 
 namespace Aws
@@ -27,10 +30,11 @@ S3Facade::S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client)
 }
 
 
-Aws::S3::Model::PutObjectOutcome S3Facade::putObject(std::string file_path)
+Aws::S3::S3ErrorCode S3Facade::putObject(std::string file_path, std::string bucket, std::string key)
 {
-    std::cout<<file_path;
-    return Aws::S3::Model::PutObjectOutcome();
+    //This line is just here to warn about 
+    AWS_LOG_INFO(__func__, "Upload: %s to s3://%s/%s", file_path, bucket, key);
+    return Aws::S3::S3ErrorCode::SUCCESS;
 }
 
 
