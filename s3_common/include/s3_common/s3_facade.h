@@ -39,7 +39,7 @@ public:
     * @param key object key for upload
     * @return error code, SUCCESS if the file is uploaded,
     */
-    Aws::S3::S3ErrorCode putObject(std::string file_path, std::string bucket, std::string key);
+    Aws::S3::S3ErrorCode putObject(const std::string& file_path, const std::string& bucket, const std::string& key);
 
 private:
     std::unique_ptr<Aws::S3::S3Client> s3_client_;
