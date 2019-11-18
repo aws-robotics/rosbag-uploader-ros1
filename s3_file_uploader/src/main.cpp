@@ -16,6 +16,7 @@
 #include <aws/core/Aws.h>
 
 #include <ros/ros.h>
+#include <s3_common/s3_facade.h>
 #include <s3_file_uploader/s3_file_uploader.h>
 
 
@@ -24,7 +25,9 @@ int main(int argc, char* argv[])
     Aws::SDKOptions options;
     Aws::InitAPI(options);
     ros::init(argc, argv, "s3_file_uploader");
-    Aws::S3::S3FileUploader file_uploader;
+    auto client = std::make_unique<Aws::S3::S3Client>();
+    auto s3_facade = std::make_unique<Aws::S3::S3Facade>(std::move(client));
+    Aws::S3::S3FileUploader file_uploader(std::move(s3_facade));
     ros::spin();
     Aws::ShutdownAPI(options);
     return 0;

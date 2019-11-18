@@ -28,10 +28,10 @@ namespace Aws
 namespace S3
 {
 
-S3FileUploader::S3FileUploader() : node_handle_("~")
+S3FileUploader::S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> s3_facade) :
+    node_handle_("~"),
+    s3_facade_(std::move(s3_facade))
 {
-    auto client = std::make_unique<Aws::S3::S3Client>();
-    s3_facade_ = std::make_unique<S3Facade>(std::move(client));
     action_server_ = std::unique_ptr<UploadFilesActionServer>(
         new UploadFilesActionServer(
         node_handle_,

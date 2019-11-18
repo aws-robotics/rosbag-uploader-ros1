@@ -44,7 +44,7 @@ private:
     void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal);
 
 public:
-    S3FileUploader();
+    S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> facade);
     ~S3FileUploader() = default;
 };
 

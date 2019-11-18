@@ -26,7 +26,7 @@ namespace S3
 class S3Facade
 {
 public:
-    S3Facade(const std::unique_ptr<Aws::S3::S3Client> s3_client);
+    S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
     ~S3Facade() = default;
 
     /**
