@@ -24,6 +24,11 @@ namespace Aws
 namespace S3
 {
 
+S3Facade::S3Facade() 
+: s3_client_(std::make_unique<Aws::S3::S3Client>())
+{
+}
+
 S3Facade::S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client)
 : s3_client_(std::move(s3_client))
 {

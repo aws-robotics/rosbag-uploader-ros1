@@ -32,13 +32,12 @@ S3FileUploader::S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> s3_facade) :
     node_handle_("~"),
     s3_facade_(std::move(s3_facade))
 {
-    action_server_ = std::unique_ptr<UploadFilesActionServer>(
-        new UploadFilesActionServer(
+    action_server_ = std::make_unique<UploadFilesActionServer>(
         node_handle_,
         "UploadFiles",
         boost::bind(&S3FileUploader::GoalCallBack, this, _1),
         boost::bind(&S3FileUploader::CancelGoalCallBack, this, _1),
-        false));
+        false);
     action_server_->start();
 }
 

@@ -25,8 +25,7 @@ int main(int argc, char* argv[])
     Aws::SDKOptions options;
     Aws::InitAPI(options);
     ros::init(argc, argv, "s3_file_uploader");
-    auto client = std::make_unique<Aws::S3::S3Client>();
-    auto s3_facade = std::make_unique<Aws::S3::S3Facade>(std::move(client));
+    auto s3_facade = std::make_unique<Aws::S3::S3Facade>();
     Aws::S3::S3FileUploader file_uploader(std::move(s3_facade));
     ros::spin();
     Aws::ShutdownAPI(options);
