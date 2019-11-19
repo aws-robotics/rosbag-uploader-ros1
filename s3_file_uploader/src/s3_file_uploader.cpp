@@ -30,15 +30,14 @@ namespace S3
 
 S3FileUploader::S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> s3_facade) :
     node_handle_("~"),
+    action_server_(node_handle_, "UploadFiles", false),
     s3_facade_(std::move(s3_facade))
 {
-    action_server_ = std::make_unique<UploadFilesActionServer>(
-        node_handle_,
-        "UploadFiles",
-        boost::bind(&S3FileUploader::GoalCallBack, this, _1),
-        boost::bind(&S3FileUploader::CancelGoalCallBack, this, _1),
-        false);
-    action_server_->start();
+    action_server_.registerGoalCallback(
+        boost::bind(&S3FileUploader::GoalCallBack, this, _1));
+    action_server_.registerCancelCallback(
+        boost::bind(&S3FileUploader::CancelGoalCallBack, this, _1));
+    action_server_.start();
 }
 
 void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handle)
@@ -55,6 +54,7 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
 
 void S3FileUploader::CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal_handle)
 {
+    (void) goal_handle;
 }
 
 }  // namespace S3
