@@ -1,0 +1,21 @@
+#Goal
+# Upload destination. No validity checks are done at the time of acceptance
+string destination
+
+# Duration of time to record for
+# Acceptable values: positive integers
+# If value is invalid goal is rejected
+duration duration
+
+# List of topics to record
+# If list is empty default to all
+# No checks are done on the validity of the topics or if they exist
+string[] topics_to_record
+----
+#Result
+RecorderStatus status
+----
+#Feedback
+# This is system time
+time started
+RecorderStatus status
