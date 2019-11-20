@@ -13,7 +13,9 @@
  * permissions and limitations under the License.
  */
 #include <fstream>
+#include <iostream>
 #include <string>
+#include <sys/stat.h>
 
 #include <aws/core/Aws.h>
 #include <aws/core/utils/logging/LogMacros.h>
