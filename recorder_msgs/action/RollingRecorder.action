@@ -1,0 +1,23 @@
+#Goal
+# Upload destination. No validity checks are done at the time of acceptance
+string destination
+
+# Period of time to upload. Note that these times are ros times,
+# (i.e. sim time or wall time)
+# Acceptable values: <= current time, >= current time - max_record_time
+# if value is invalid goal is rejected
+time start_time
+
+# Acceptable values: > start_time, < start time + max_record_time
+# note that end_time can be greater than the current time, i.e. it can record
+# into the future
+# if value is invalid goal is rejected
+time end_time
+----
+#Result
+RecorderStatus status
+----
+#Feedback
+# This is system time
+time started
+RecorderStatus status

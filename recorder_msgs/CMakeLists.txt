@@ -12,6 +12,7 @@ add_action_files(
     DIRECTORY action
     FILES
     DurationRecorder.action
+    RollingRecorder.action
 )
 
 ## Generate messages in the 'msg' folder
