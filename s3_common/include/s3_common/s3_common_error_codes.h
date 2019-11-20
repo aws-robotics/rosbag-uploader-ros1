@@ -31,12 +31,10 @@ enum S3ErrorCode
   FAILED,
   // The local file was not found
   FILE_NOT_FOUND,
-  // The local file couldn't be opened for reading
-  FILE_CANT_BE_READ,
   // Access to S3 resources was denied
   S3_ACCESS_DENIED,
   // S3 bucket doesn't exist
-  S3_BUCKET_DOESNT_EXIST
+  S3_NO_SUCH_BUCKET
 };
 
 }  // namespace S3
