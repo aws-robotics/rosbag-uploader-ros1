@@ -105,17 +105,40 @@ install(
 
 if(CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
-    add_rostest_gtest(test_s3_file_uploader
-        test/test_s3_file_uploader.test
-        test/s3_file_uploader_test.cpp
-    )
-    target_include_directories(test_s3_file_uploader PRIVATE
-        include
-        ${catkin_INCLUDE_DIRS}
-    )
-    target_link_libraries(test_s3_file_uploader
-        ${S3_UPLOADER_LIB_TARGET}
-        ${catkin_LIBRARIES}
-    )
+    find_package(GMock QUIET)
+    if(GMOCK_FOUND)
+      add_rostest_gmock(test_s3_file_uploader
+          test/test_s3_file_uploader.test
+          test/s3_file_uploader_test.cpp
+      )
+      target_include_directories(test_s3_file_uploader PRIVATE
+          ${catkin_INCLUDE_DIRS}
+          ${s3_file_uploader_INCLUDE_DIRS}
+          ${GMOCK_INCLUDE_DIRS}
+      )
+      target_link_libraries(test_s3_file_uploader
+          ${S3_UPLOADER_LIB_TARGET}
+          ${catkin_LIBRARIES}
+          ${GMOCK_BOTH_LIBRARIES}
+      )
+
+    else()
+        include_directories(/usr/include/gmock /usr/src/gmock)
+        add_library(${PROJECT_NAME}_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
+
+        add_rostest_gtest(test_s3_file_uploader
+            test/test_s3_file_uploader.test
+            test/s3_file_uploader_test.cpp
+        )
+        target_include_directories(test_s3_file_uploader PRIVATE
+            ${catkin_INCLUDE_DIRS}
+            ${s3_file_uploader_INCLUDE_DIRS}
+        )
+        target_link_libraries(test_s3_file_uploader
+            ${S3_UPLOADER_LIB_TARGET}
+            ${catkin_LIBRARIES}
+            ${PROJECT_NAME}_libgmock
+        )
+      endif()
 endif()
 

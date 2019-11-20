@@ -13,7 +13,9 @@
  * permissions and limitations under the License.
  */
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
 
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/terminal_state.h>
@@ -26,13 +28,26 @@
 
 typedef actionlib::ActionClient<file_uploader_msgs::UploadFilesAction> UploadFilesActionClient;
 
+using ::testing::Return;
+using ::testing::_;
+
+class MockS3Facade : public Aws::S3::S3Facade
+{
+public:
+    MockS3Facade() : S3Facade() {}
+    MOCK_METHOD3(putObject, Aws::S3::S3ErrorCode(const std::string &, const std::string &, const std::string &));
+};
+
+
 TEST(S3UploaderTest, TestActionReceived)
 {
     ros::AsyncSpinner executor(0);
     executor.start();
     bool message_received = false;
-    auto s3_client = std::make_unique<Aws::S3::S3Client>();
-    auto s3_facade = std::make_unique<Aws::S3::S3Facade>(std::move(s3_client));
+    auto s3_facade = std::make_unique<MockS3Facade>();
+    ON_CALL(*s3_facade, putObject(_,_,_))
+    .WillByDefault(Return(Aws::S3::S3ErrorCode::SUCCESS));
+
     Aws::S3::S3FileUploader file_uploader(std::move(s3_facade));
     ros::NodeHandle nh("~");
     UploadFilesActionClient action_client (nh, "UploadFiles");
@@ -44,6 +59,7 @@ TEST(S3UploaderTest, TestActionReceived)
         message_received = true;
     };
     file_uploader_msgs::UploadFilesGoal goal;
+
     auto gh = action_client.sendGoal(goal, transition_call_back);
     ros::Duration(1,0).sleep();
     ASSERT_TRUE(message_received);
@@ -52,7 +68,6 @@ TEST(S3UploaderTest, TestActionReceived)
 
 int main(int argc, char** argv)
 {
-    // Should be removed once S3_Facade is mocked out
     Aws::SDKOptions options;
     Aws::InitAPI(options);
     ::testing::InitGoogleTest(&argc, argv);

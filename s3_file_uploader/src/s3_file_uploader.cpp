@@ -12,6 +12,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+#include <aws/core/utils/logging/LogMacros.h>
 #include <aws/s3/S3Client.h>
 
 #include <actionlib/server/action_server.h>
@@ -46,6 +47,7 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
     auto goal = goal_handle.getGoal();
     for (const auto file_name: goal->files) {
         //bucket comes from config
+        AWS_LOG_INFO(__func__,"Uploading file %s to %s", file_name, goal->upload_location);
         s3_facade_->putObject(file_name, "bucket", goal->upload_location);
     }
     file_uploader_msgs::UploadFilesResult result;

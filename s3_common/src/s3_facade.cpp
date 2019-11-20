@@ -40,7 +40,6 @@ Aws::S3::S3ErrorCode S3Facade::putObject(
     const std::string & bucket,
     const std::string & key)
 {
-    //This line is just here to warn about 
     AWS_LOG_INFO(__func__, "Upload: %s to s3://%s/%s", file_path, bucket, key);
     return Aws::S3::S3ErrorCode::SUCCESS;
 }
