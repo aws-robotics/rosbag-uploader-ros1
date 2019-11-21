@@ -19,4 +19,8 @@
 
 int main(int argc, char* argv[])
 {
+  ros::init(argc, argv, "rosbag_duration_recorder");
+  Aws::Rosbag::DurationRecorder duration_recorder();
+  ros::spin();
+  return 0;
 }

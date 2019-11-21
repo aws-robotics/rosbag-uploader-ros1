@@ -44,7 +44,7 @@ private:
     void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
 
 public:
-    DurationRecorder(const std::vector<std::string> & topics, const ros::Duration & max_duration);
+    DurationRecorder();
     ~DurationRecorder() = default;
 
     /**
@@ -55,7 +55,7 @@ public:
     * @param rosbag_file_path path to the rosbag file to be deleted
     * @return error code, SUCCESS if the file is sucessfully deleted
     */
-    Aws::Rosbag::RecorderErrorCode DeleteUploadedRosbag(const std::string & rosbag_file_path);
+    Aws::Rosbag::RecorderErrorCode DeleteRosbag(const std::string & rosbag_file_path);
 };
 
 }  // namespace Rosbag

@@ -4,10 +4,10 @@ project(rosbag_recorders)
 set(CMAKE_CXX_STANDARD 14)
 
 # Enable strict compiler flags if possible.
-# include(CheckCXXCompilerFlag)
+include(CheckCXXCompilerFlag)
 # Removed -Wmissing-declarations until gmock is ignored
-# removed -Werror=pedantic until ros.h is fixed
-# set(FLAGS -Wno-long-long -Wall -Wextra -Wcast-align -Wcast-qual -Wformat -Wwrite-strings)
+# Removed -Werror=pedantic until ros.h is fixed
+set(FLAGS -Wno-long-long -Wall -Wextra -Wcast-align -Wcast-qual -Wformat -Wwrite-strings)
 foreach(FLAG ${FLAGS})
   check_cxx_compiler_flag(${FLAG} R${FLAG})
   if(${R${FLAG}})
@@ -60,11 +60,11 @@ add_dependencies(${ROSBAG_RECORDER_LIB_TARGET}
     ${catkin_EXPORTED_TARGETS}
 )
 
-add_executable(${PROJECT_NAME}
-    src/duration_recorder/main.cpp
+add_executable(
+    duration_recorder src/duration_recorder/main.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(duration_recorder
     ${ROSBAG_RECORDER_LIB_TARGET}
 )
 
@@ -73,7 +73,7 @@ target_link_libraries(${PROJECT_NAME}
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} ${ROSBAG_RECORDER_LIB_TARGET}
+install(TARGETS duration_recorder ${ROSBAG_RECORDER_LIB_TARGET}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -89,4 +89,18 @@ install(
 ##########
 ## Test ##
 ##########
-#TODO
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_duration_recorder
+    test/test_duration_recorder.test
+    test/duration_recorder_test.cpp
+  )
+  target_include_directories(test_duration_recorder PRIVATE
+    include
+    ${catkin_INCLUDE_DIRS}
+  )
+  target_link_libraries(test_duration_recorder
+    ${ROSBAG_RECORDER_LIB_TARGET}
+    ${catkin_LIBRARIES}
+  )
+endif()
