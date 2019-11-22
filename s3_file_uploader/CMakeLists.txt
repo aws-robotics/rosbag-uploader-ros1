@@ -104,41 +104,53 @@ install(
 ##########
 
 if(CATKIN_ENABLE_TESTING)
+    set(TEST_TARGET test_s3_file_uploader)
+    set(TEST_FILES
+      test/test_s3_file_uploader.test
+      test/s3_file_uploader_test.cpp
+    )
+    set(TEST_INCLUDE_DIRS
+      ${catkin_INCLUDE_DIRS}
+      ${s3_file_uploader_INCLUDE_DIRS}
+    )
+    set(TEST_LINK_LIBS
+      ${S3_UPLOADER_LIB_TARGET}
+      ${catkin_LIBRARIES}
+    )
+
     find_package(rostest REQUIRED)
     find_package(GMock QUIET)
-    if(GMOCK_FOUND)
-      add_rostest_gmock(test_s3_file_uploader
-          test/test_s3_file_uploader.test
-          test/s3_file_uploader_test.cpp
-      )
-      target_include_directories(test_s3_file_uploader PRIVATE
-          ${catkin_INCLUDE_DIRS}
-          ${s3_file_uploader_INCLUDE_DIRS}
-          ${GMOCK_INCLUDE_DIRS}
-      )
-      target_link_libraries(test_s3_file_uploader
-          ${S3_UPLOADER_LIB_TARGET}
-          ${catkin_LIBRARIES}
-          ${GMOCK_BOTH_LIBRARIES}
-      )
 
+    if(GMOCK_FOUND)
+      add_rostest_gmock(${TEST_TARGET}
+          ${TEST_FILES}
+      )
+      set(TEST_INCLUDE_DIRS
+        ${TEST_INCLUDE_DIRS}
+        ${GMOCK_INCLUDE_DIRS}
+      )
+      set(TEST_LINK_LIBS
+        ${TEST_LINK_LIBS}
+        ${GMOCK_BOTH_LIBRARIES}
+      )
     else()
         include_directories(/usr/include/gmock /usr/src/gmock)
         add_library(${PROJECT_NAME}_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
 
-        add_rostest_gtest(test_s3_file_uploader
-            test/test_s3_file_uploader.test
-            test/s3_file_uploader_test.cpp
+        add_rostest_gtest(${TEST_TARGET}
+          ${TEST_FILES}
         )
-        target_include_directories(test_s3_file_uploader PRIVATE
-            ${catkin_INCLUDE_DIRS}
-            ${s3_file_uploader_INCLUDE_DIRS}
+        set(TEST_LINK_LIBS
+          ${TEST_LINK_LIBS}
+          ${PROJECT_NAME}_libgmock
         )
-        target_link_libraries(test_s3_file_uploader
-            ${S3_UPLOADER_LIB_TARGET}
-            ${catkin_LIBRARIES}
-            ${PROJECT_NAME}_libgmock
-        )
-      endif()
+    endif()
+
+    target_include_directories(${TEST_TARGET} PRIVATE
+      ${TEST_INCLUDE_DIRS}
+    )
+    target_link_libraries(${TEST_TARGET}
+      ${TEST_LINK_LIBS}
+    )
 endif()
 
