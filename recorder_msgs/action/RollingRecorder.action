@@ -15,7 +15,7 @@ time start_time
 time end_time
 ----
 #Result
-RecorderStatus status
+RecorderResult result
 ----
 #Feedback
 # This is system time
