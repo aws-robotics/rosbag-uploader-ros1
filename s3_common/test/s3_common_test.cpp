@@ -14,18 +14,29 @@
  */
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
 #include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
-
+#include <aws/s3/model/PutObjectRequest.h>
 #include <s3_common/s3_facade.h>
+
+using namespace Aws::S3;
+
+class MockS3Client : public S3Client
+{
+public:
+    MockS3Client() : S3Client() {}
+    MOCK_METHOD1(PutObject, Model::PutObjectOutcome(const Model::PutObjectRequest &));
+
+};
 
 TEST(S3FacadeTest, TestPutObjectReturns)
 {
-    // This client should be replaced with a mock and the AWS SDK init in the main should be removed
-    auto client = std::make_unique<Aws::S3::S3Client>();
-    Aws::S3::S3Facade s3_facade(std::move(client));
-    auto outcome = s3_facade.putObject("file_name", "bucket", "key");
-    EXPECT_EQ(Aws::S3::S3ErrorCode::SUCCESS, outcome);
+    auto client = std::make_unique<MockS3Client>();
+    S3Facade s3_facade(std::move(client));
+    auto result = s3_facade.putObject("file_name", "bucket", "key");
+    EXPECT_EQ(S3ErrorCode::SUCCESS, result);
 }
 
 int main(int argc, char** argv)

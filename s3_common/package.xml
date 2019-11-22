@@ -11,7 +11,11 @@
 
   <buildtool_depend>cmake</buildtool_depend>
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  
   <depend>aws_common</depend>
+
+  <test_depend>google-mock</test_depend>
+
   <export>
     <build_type>cmake</build_type>
   </export>
