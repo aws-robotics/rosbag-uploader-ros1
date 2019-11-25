@@ -43,13 +43,15 @@ catkin_package(
 
 include_directories(
     include
-    ${actionlib_INCLUDE_DIRS}
-    ${actionlib_msgs_INCLUDE_DIRS}
+    # ${actionlib_INCLUDE_DIRS}
+    # ${actionlib_msgs_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
+    ${AWSSDK_INCLUDE_DIR}
 )
 
 add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     src/duration_recorder/duration_recorder.cpp
+    src/rolling_recorder/rolling_recorder.cpp
     src/utils/rosbag_file_manager.cpp
 )
 
@@ -66,6 +68,14 @@ add_executable(
 )
 
 target_link_libraries(duration_recorder
+    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+)
+
+add_executable(
+    rolling_recorder src/rolling_recorder/main.cpp
+)
+
+target_link_libraries(rolling_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
 )
 
@@ -92,6 +102,7 @@ install(
 ##########
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+
   add_rostest_gtest(test_duration_recorder
     test/test_duration_recorder.test
     test/duration_recorder_test.cpp
@@ -102,6 +113,19 @@ if(CATKIN_ENABLE_TESTING)
     ${GTEST_LIBRARIES}
   )
   target_link_libraries(test_duration_recorder
+    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+    ${catkin_LIBRARIES}
+  )
+
+  add_rostest_gtest(test_rolling_recorder
+    test/test_rolling_recorder.test
+    test/rolling_recorder_test.cpp
+  )
+  target_include_directories(test_rolling_recorder PRIVATE
+    include
+    ${catkin_INCLUDE_DIRS}
+  )
+  target_link_libraries(test_rolling_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_LIBRARIES}
   )

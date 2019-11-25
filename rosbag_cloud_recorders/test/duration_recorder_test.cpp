@@ -17,7 +17,6 @@
 #include <fstream>
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/terminal_state.h>
-#include <aws/core/Aws.h>
 #include <ros/ros.h>
 #include <ros/console.h>
 

@@ -1,0 +1,3 @@
+<launch>
+    <test test-name="test_rolling_recorder" pkg="rosbag_cloud_recorders" type="test_rolling_recorder" time-limit="120.0"/>
+</launch> 
