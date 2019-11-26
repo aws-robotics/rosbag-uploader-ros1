@@ -9,7 +9,6 @@ RUN pip install -U coverage
 # Python 3 dependencies
 RUN pip3 install -U setuptools
 
-RUN rosdep init
 RUN rosdep update
 
 COPY scripts/build.sh /scripts/build.sh
