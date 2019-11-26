@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>rosbag_cloud_recorders</name>
+  <version>0.0.0</version>
+  <description>Duration recorder and rolling recorder for recoding rosbag files.</description>
+
+  <author email="ros-contributions@amazon.com">AWS RoboMaker</author>
+  <maintainer email="ros-contributions@amazon.com">AWS RoboMaker</maintainer>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>actionlib</depend>
+  <depend>actionlib_msgs</depend>
+  <depend>recorder_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>rosbag</depend>
+
+  <test_depend>rostest</test_depend>
+  <test_depend>gtest</test_depend>
+</package>
