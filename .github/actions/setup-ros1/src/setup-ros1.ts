@@ -20,11 +20,14 @@ async function installPackages() {
 
     const python3Packages = [
       "setuptools"
-    ]
+    ];
 
-    await exec.exec("bash", ["apt-get", "install"].concat(aptPackages))
-    await exec.exec("bash", ["pip", "install"].concat(python2Packages))
-    await exec.exec("bash", ["pip3", "install"].concat(python3Packages))
+    await exec.exec("sudo", ["apt-get", "update"]);
+    await exec.exec("sudo", ["apt-get", "install"].concat(aptPackages));
+    await exec.exec("sudo", ["pip", "install"].concat(python2Packages));
+    await exec.exec("sudo", ["pip3", "install"].concat(python3Packages));
+
+    await exec.exec("rosdep", ["update"]);
 
   } catch (error) {
     core.setFailed(error.message);
