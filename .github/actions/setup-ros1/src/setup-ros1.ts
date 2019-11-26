@@ -1,15 +1,34 @@
 import * as core from '@actions/core';
+import * as exec from '@actions/exec';
 import * as github from '@actions/github';
 
-try {
-  // `who-to-greet` input defined in action metadata file
-  const nameToGreet = core.getInput('who-to-greet');
-  console.log(`Hello ${nameToGreet}!`);
-  const time = (new Date()).toTimeString();
-  core.setOutput("time", time);
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2)
-  console.log(`The event payload: ${payload}`);
-} catch (error) {
-  core.setFailed(error.message);
+async function installPackages() {
+  try {
+    const aptPackages = [
+      "lcov", 
+      "python-pip", 
+      "python-pip3", 
+      "python-rosinstall", 
+      "libgtest-dev", 
+      "cmake", 
+      "python3-colcon-common-extensions"
+    ];
+
+    const python2Packages = [
+      "coverage"
+    ];
+
+    const python3Packages = [
+      "setuptools"
+    ]
+
+    await exec.exec("bash", ["apt-get", "install"].concat(aptPackages))
+    await exec.exec("bash", ["pip", "install"].concat(python2Packages))
+    await exec.exec("bash", ["pip3", "install"].concat(python3Packages))
+
+  } catch (error) {
+    core.setFailed(error.message);
+  }
 }
+
+installPackages();
