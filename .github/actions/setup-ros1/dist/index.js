@@ -969,9 +969,11 @@ function installPackages() {
             const python3Packages = [
                 "setuptools"
             ];
-            yield exec.exec("bash", ["apt-get", "install"].concat(aptPackages));
-            yield exec.exec("bash", ["pip", "install"].concat(python2Packages));
-            yield exec.exec("bash", ["pip3", "install"].concat(python3Packages));
+            yield exec.exec("sudo", ["apt-get", "update"]);
+            yield exec.exec("sudo", ["apt-get", "install"].concat(aptPackages));
+            yield exec.exec("sudo", ["pip", "install"].concat(python2Packages));
+            yield exec.exec("sudo", ["pip3", "install"].concat(python3Packages));
+            yield exec.exec("rosdep", ["update"]);
         }
         catch (error) {
             core.setFailed(error.message);
