@@ -41,24 +41,28 @@ RollingRecorder::RollingRecorder() :
   action_server_.start();
 }
 
-void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
+RecorderErrorCode RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
   goal_handle.setRejected();
+  return FAILED;
 }
 
-void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle /*goal_handle*/)
+RecorderErrorCode RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle /*goal_handle*/)
 {
+  return SUCCESS;
 }
 
-void RollingRecorder::Activate()
+RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
+  return FAILED;
 }
 
-void RollingRecorder::Deactivate()
+RecorderErrorCode RollingRecorder::StopRollingRecorder()
 {
+  return SUCCESS;
 }
 
-bool RollingRecorder::IsActive()
+bool RollingRecorder::IsRollingRecorderActive()
 {
   return false;
 }

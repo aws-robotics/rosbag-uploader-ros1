@@ -41,22 +41,22 @@ public:
   /**
    * Activate the rolling recorder so that it is recording rosbags in the background
    */
-  void Activate();
+  RecorderErrorCode StartRollingRecorder();
 
   /**
    * Deactivate the rolling recorder so that it stops recording rosbags in the background
    */
-  void Deactivate();
+  RecorderErrorCode StopRollingRecorder();
 
   /**
    * Returns boolean indicating whether or not the rolling recorder is currently recording in the
    * background
    */
-  bool IsActive();
+  bool IsRollingRecorderActive();
 
 private:
-  void GoalCallBack(RollingRecorderActionServer::GoalHandle goal);
-  void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal);
+  RecorderErrorCode GoalCallBack(RollingRecorderActionServer::GoalHandle goal);
+  RecorderErrorCode CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal);
 
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;

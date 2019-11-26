@@ -43,8 +43,6 @@ catkin_package(
 
 include_directories(
     include
-    # ${actionlib_INCLUDE_DIRS}
-    # ${actionlib_msgs_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
     ${AWSSDK_INCLUDE_DIR}
 )
