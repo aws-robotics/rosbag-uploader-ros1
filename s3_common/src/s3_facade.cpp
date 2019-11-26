@@ -13,9 +13,7 @@
  * permissions and limitations under the License.
  */
 #include <fstream>
-#include <iostream>
 #include <string>
-#include <sys/stat.h>
 
 #include <aws/core/Aws.h>
 #include <aws/core/utils/logging/LogMacros.h>
@@ -34,8 +32,8 @@
 
 bool file_exists(const std::string& name)
 {
-    struct stat buffer;
-    return (stat(name.c_str(), &buffer) == 0);
+    std::ifstream ifile(name);
+    return ifile.good();
 }
 
 
@@ -48,12 +46,12 @@ namespace S3
 static const int MAX_RETRIES = 3;
 
 S3Facade::S3Facade() 
-: max_retries_(MAX_RETRIES), s3_client_(std::make_unique<Aws::S3::S3Client>())
+: s3_client_(std::make_unique<Aws::S3::S3Client>())
 {
 }
 
 S3Facade::S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client)
-: max_retries_(MAX_RETRIES), s3_client_(std::move(s3_client))
+: s3_client_(std::move(s3_client))
 {
 }
 
