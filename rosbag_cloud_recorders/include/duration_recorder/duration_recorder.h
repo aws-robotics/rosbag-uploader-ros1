@@ -42,6 +42,10 @@ private:
 
     void GoalCallBack(DurationRecorderActionServer::GoalHandle goal);
     void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
+    void GenerateResult(recorder_msgs::DurationRecorderResult & recording_result, recorder_msgs::RecorderResult & t_recording_result, uint stage, std::string message);
+    void GenerateFeedback(recorder_msgs::DurationRecorderFeedback & record_rosbag_action_feedback, uint stage);
+    void ConfigureRecorderOptions(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal, rosbag::RecorderOptions recorder_options);
+    int StartDurationRecorder(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal);
 
 public:
     DurationRecorder();

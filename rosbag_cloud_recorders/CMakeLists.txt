@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
     recorder_msgs
     roscpp
     rosbag
+    aws_common
 )
 
 set(ROSBAG_CLOUD_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
@@ -46,6 +47,7 @@ include_directories(
     ${actionlib_INCLUDE_DIRS}
     ${actionlib_msgs_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
+    ${aws_common_INCLUDE_DIRS}
 )
 
 add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
@@ -67,6 +69,7 @@ add_executable(
 
 target_link_libraries(duration_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+    ${aws_common_LIBRARIES}
 )
 
 #############
