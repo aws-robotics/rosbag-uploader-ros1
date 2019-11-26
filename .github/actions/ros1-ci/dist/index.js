@@ -958,6 +958,7 @@ function build() {
                 cwd: core.getInput('package-path')
             };
             yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y"], execOptions);
+            yield exec.exec(".", ["/opt/ros/kinetic/setup.sh"]);
             yield exec.exec("colcon", ["build"], execOptions);
         }
         catch (error) {
@@ -965,7 +966,12 @@ function build() {
         }
     });
 }
-build();
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield build();
+    });
+}
+run();
 
 
 /***/ }),

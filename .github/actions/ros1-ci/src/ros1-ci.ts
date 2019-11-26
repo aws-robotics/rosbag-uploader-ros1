@@ -11,12 +11,16 @@ async function build() {
     };
 
     await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y"], execOptions);
+    await exec.exec(".", ["/opt/ros/kinetic/setup.sh"]);
     await exec.exec("colcon", ["build"], execOptions);
 
   } catch (error) {
     core.setFailed(error.message);
   }
-
 }
 
-build();
+async function run() {
+  await build();
+}
+
+run();
