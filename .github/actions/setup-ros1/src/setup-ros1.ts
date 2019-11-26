@@ -23,9 +23,9 @@ async function installPackages() {
     ];
 
     await exec.exec("sudo", ["apt-get", "update"]);
-    await exec.exec("sudo", ["apt-get", "install"].concat(aptPackages));
-    await exec.exec("sudo", ["pip", "install"].concat(python2Packages));
-    await exec.exec("sudo", ["pip3", "install"].concat(python3Packages));
+    await exec.exec("sudo", ["apt-get", "install", "-y"].concat(aptPackages));
+    await exec.exec("sudo", ["pip", "install", "-U"].concat(python2Packages));
+    await exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
 
     await exec.exec("rosdep", ["update"]);
 

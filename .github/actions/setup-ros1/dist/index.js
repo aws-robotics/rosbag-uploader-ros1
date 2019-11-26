@@ -970,9 +970,9 @@ function installPackages() {
                 "setuptools"
             ];
             yield exec.exec("sudo", ["apt-get", "update"]);
-            yield exec.exec("sudo", ["apt-get", "install"].concat(aptPackages));
-            yield exec.exec("sudo", ["pip", "install"].concat(python2Packages));
-            yield exec.exec("sudo", ["pip3", "install"].concat(python3Packages));
+            yield exec.exec("sudo", ["apt-get", "install", "-y"].concat(aptPackages));
+            yield exec.exec("sudo", ["pip", "install", "-U"].concat(python2Packages));
+            yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
         }
         catch (error) {
