@@ -38,23 +38,26 @@ RollingRecorder::RollingRecorder() :
   action_server_.registerCancelCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
     this->CancelGoalCallBack(goal_handle);
   });
-  action_server_.start();
 }
 
-RecorderErrorCode RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
+void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
   goal_handle.setRejected();
-  return FAILED;
 }
 
-RecorderErrorCode RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle /*goal_handle*/)
+void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle /*goal_handle*/)
 {
-  return SUCCESS;
 }
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
-  return FAILED;
+  bool successful_start = true;
+  if (successful_start) {
+    action_server_.start();
+    return SUCCESS;
+  } else {
+    return FAILED;
+  }
 }
 
 RecorderErrorCode RollingRecorder::StopRollingRecorder()

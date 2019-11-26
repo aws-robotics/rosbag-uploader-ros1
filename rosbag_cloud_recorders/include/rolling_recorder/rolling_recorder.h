@@ -55,8 +55,8 @@ public:
   bool IsRollingRecorderActive();
 
 private:
-  RecorderErrorCode GoalCallBack(RollingRecorderActionServer::GoalHandle goal);
-  RecorderErrorCode CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal);
+  void GoalCallBack(RollingRecorderActionServer::GoalHandle goal);
+  void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal);
 
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;

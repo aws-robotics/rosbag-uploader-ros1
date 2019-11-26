@@ -23,10 +23,8 @@
 #include <recorder_msgs/DurationRecorderAction.h>
 #include <recorder_common_error_codes.h>
 
-namespace Aws
-{
-namespace Rosbag
-{
+namespace Aws {
+namespace Rosbag {
 
 typedef actionlib::ActionServer<recorder_msgs::DurationRecorderAction> DurationRecorderActionServer;
 
@@ -35,17 +33,17 @@ typedef actionlib::ActionServer<recorder_msgs::DurationRecorderAction> DurationR
  */
 class DurationRecorder
 {
-private:
-    ros::NodeHandle node_handle_;
-    DurationRecorderActionServer action_server_;
-    std::unique_ptr<rosbag::Recorder> rosbag_recorder_;
-
-    void GoalCallBack(DurationRecorderActionServer::GoalHandle goal);
-    void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
-
 public:
-    DurationRecorder();
-    ~DurationRecorder() = default;
+  DurationRecorder();
+  ~DurationRecorder() = default;
+
+private:
+  void GoalCallBack(DurationRecorderActionServer::GoalHandle goal);
+  void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
+
+  ros::NodeHandle node_handle_;
+  DurationRecorderActionServer action_server_;
+  std::unique_ptr<rosbag::Recorder> rosbag_recorder_;
 };
 
 }  // namespace Rosbag

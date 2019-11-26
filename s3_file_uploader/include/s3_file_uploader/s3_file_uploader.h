@@ -19,14 +19,11 @@
 #include <ros/ros.h>
 #include <ros/spinner.h>
 
-
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <s3_common/s3_facade.h>
 
-namespace Aws
-{
-namespace S3
-{
+namespace Aws {
+namespace S3 {
 
 typedef actionlib::ActionServer<file_uploader_msgs::UploadFilesAction> UploadFilesActionServer;
 
@@ -35,17 +32,17 @@ typedef actionlib::ActionServer<file_uploader_msgs::UploadFilesAction> UploadFil
  */
 class S3FileUploader
 {
-private:
-    ros::NodeHandle node_handle_;
-    UploadFilesActionServer action_server_;
-    std::unique_ptr<Aws::S3::S3Facade> s3_facade_;
-
-    void GoalCallBack(UploadFilesActionServer::GoalHandle goal);
-    void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal);
-
 public:
-    S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> facade);
-    ~S3FileUploader() = default;
+  S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> facade);
+  ~S3FileUploader() = default;
+
+private:
+  void GoalCallBack(UploadFilesActionServer::GoalHandle goal);
+  void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal);
+
+  ros::NodeHandle node_handle_;
+  UploadFilesActionServer action_server_;
+  std::unique_ptr<Aws::S3::S3Facade> s3_facade_;
 };
 
 }  // namespace S3

@@ -34,11 +34,6 @@ typedef actionlib::ActionClient<recorder_msgs::DurationRecorderAction> DurationR
 class DurationRecorderNodeFixture : public ::testing::Test
 {
 protected:
-
-  std::shared_ptr<DurationRecorderActionClient> action_client;
-  std::shared_ptr<Aws::Rosbag::DurationRecorder> duration_recorder;
-  std::shared_ptr<Aws::Rosbag::Utils::RosbagFileManager> rosbag_file_manager;
-
   void SetUp() override
   {
     ros::NodeHandle nh("~");
@@ -46,6 +41,10 @@ protected:
     duration_recorder = std::make_shared<Aws::Rosbag::DurationRecorder>();
     rosbag_file_manager = std::make_shared<Aws::Rosbag::Utils::RosbagFileManager>();
   }
+
+  std::shared_ptr<DurationRecorderActionClient> action_client;
+  std::shared_ptr<Aws::Rosbag::DurationRecorder> duration_recorder;
+  std::shared_ptr<Aws::Rosbag::Utils::RosbagFileManager> rosbag_file_manager;
 };
 
 TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)

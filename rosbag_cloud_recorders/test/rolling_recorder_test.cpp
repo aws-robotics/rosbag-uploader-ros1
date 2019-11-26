@@ -32,16 +32,15 @@ typedef actionlib::ActionClient<recorder_msgs::RollingRecorderAction> RollingRec
 class RollingRecorderNodeFixture : public ::testing::Test
 {
 protected:
-
-  std::shared_ptr<RollingRecorderActionClient> action_client;
-  std::shared_ptr<Aws::Rosbag::RollingRecorder> rolling_recorder;
-
   void SetUp() override
   {
     ros::NodeHandle nh("~");
     action_client = std::make_shared<RollingRecorderActionClient>(nh, "RosbagRollingRecord");
     rolling_recorder = std::make_shared<Aws::Rosbag::RollingRecorder>();
   }
+
+  std::shared_ptr<RollingRecorderActionClient> action_client;
+  std::shared_ptr<Aws::Rosbag::RollingRecorder> rolling_recorder;
 };
 
 TEST_F(RollingRecorderNodeFixture, TestActionReceivedbyActionServer)
