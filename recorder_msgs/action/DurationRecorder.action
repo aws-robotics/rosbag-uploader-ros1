@@ -13,7 +13,7 @@ duration duration
 string[] topics_to_record
 ----
 #Result
-RecorderStatus status
+RecorderResult result
 ----
 #Feedback
 # This is system time

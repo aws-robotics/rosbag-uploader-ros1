@@ -20,6 +20,7 @@ add_message_files(
     DIRECTORY msg
     FILES
     RecorderStatus.msg
+    RecorderResult.msg
 )
 
 generate_messages(
