@@ -47,8 +47,6 @@ public:
     virtual Aws::S3::S3ErrorCode PutObject(const std::string& file_path, const std::string& bucket, const std::string& key);
 
 private:
-    // Maximum retries for putting objects into S3
-    int max_retries_;
     std::unique_ptr<Aws::S3::S3Client> s3_client_;
 };
 

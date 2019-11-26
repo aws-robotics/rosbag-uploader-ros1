@@ -39,7 +39,6 @@ public:
     MOCK_CONST_METHOD1(PutObject, Model::PutObjectOutcome(const Model::PutObjectRequest &));
 };
 
-
 class S3FacadeTest : public ::testing::Test
 {
 protected:
@@ -64,7 +63,6 @@ protected:
     }
 };
 
-
 TEST_F(S3FacadeTest, TestPutObjectSuccess)
 {
     Model::PutObjectResult result;
@@ -86,7 +84,7 @@ TEST_F(S3FacadeTest, TestPutObjectFileDoesntExist)
     auto s3_facade = std::make_shared<S3Facade>(std::move(client));
 
     auto result = s3_facade->putObject(upload_file, "bucket", "key");
-    EXPECT_EQ(S3ErrorCode::FILE_NOT_FOUND, result);   
+    EXPECT_EQ(S3ErrorCode::FILE_COULDNT_BE_READ, result);   
 }
 
 TEST_F(S3FacadeTest, TestPutObjectInvalidCredentials)
@@ -101,7 +99,6 @@ TEST_F(S3FacadeTest, TestPutObjectInvalidCredentials)
     EXPECT_EQ(S3ErrorCode::S3_ACCESS_DENIED, facade_result);
 }
 
-
 TEST_F(S3FacadeTest, TestPutObjectS3BucketDoesntExist)
 {
     Aws::Client::AWSError<S3Errors> error(S3Errors::NO_SUCH_BUCKET, false);
@@ -112,52 +109,6 @@ TEST_F(S3FacadeTest, TestPutObjectS3BucketDoesntExist)
 
     auto facade_result = s3_facade->putObject(upload_file, "bucket", "key");
     EXPECT_EQ(S3ErrorCode::S3_NO_SUCH_BUCKET, facade_result);
-}
-
-
-TEST_F(S3FacadeTest, TestSucceedsAfterRetries)
-{
-    Aws::Client::AWSError<S3Errors> error(S3Errors::NO_SUCH_BUCKET, true);
-    Model::PutObjectOutcome retriable_outcome(error);
-    Model::PutObjectResult result;
-    Model::PutObjectOutcome success_outcome(result);
-    EXPECT_CALL(*client, PutObject(_))
-        .Times(3) // equal to max_retries_
-        .WillOnce(Return(retriable_outcome))
-        .WillOnce(Return(retriable_outcome))
-        .WillOnce(Return(success_outcome));    
-    auto s3_facade = std::make_shared<S3Facade>(std::move(client));
-
-    auto facade_result = s3_facade->putObject(upload_file, "bucket", "key");
-    EXPECT_EQ(S3ErrorCode::SUCCESS, facade_result);
-}
-
-TEST_F(S3FacadeTest, TestFailsAfterMaxRetries)
-{
-    Aws::Client::AWSError<S3Errors> error(S3Errors::UNKNOWN, true);
-    Model::PutObjectOutcome retriable_outcome(error);
-    EXPECT_CALL(*client, PutObject(_))
-        .Times(3) // equal to max_retries_
-        .WillOnce(Return(retriable_outcome))
-        .WillOnce(Return(retriable_outcome))
-        .WillOnce(Return(retriable_outcome));    
-    auto s3_facade = std::make_shared<S3Facade>(std::move(client));
-
-    auto facade_result = s3_facade->putObject(upload_file, "bucket", "key");
-    EXPECT_EQ(S3ErrorCode::FAILED, facade_result);
-}
-
-TEST_F(S3FacadeTest, TestDoesntRetryNonRetriable)
-{
-    Aws::Client::AWSError<S3Errors> error(S3Errors::UNKNOWN, false);
-    Model::PutObjectOutcome nonretriable_outcome(error);
-    EXPECT_CALL(*client, PutObject(_))
-        .Times(1) // equal to max_retries_
-        .WillOnce(Return(nonretriable_outcome));    
-    auto s3_facade = std::make_shared<S3Facade>(std::move(client));
-
-    auto facade_result = s3_facade->putObject(upload_file, "bucket", "key");
-    EXPECT_EQ(S3ErrorCode::FAILED, facade_result);
 }
 
 int main(int argc, char** argv)

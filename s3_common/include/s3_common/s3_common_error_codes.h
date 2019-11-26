@@ -29,8 +29,8 @@ enum S3ErrorCode
   SUCCESS = 0,
   // Generic failure
   FAILED,
-  // The local file was not found
-  FILE_NOT_FOUND,
+  // The local file was not found or couldn't be opened
+  FILE_COULDNT_BE_READ,
   // Access to S3 resources was denied
   S3_ACCESS_DENIED,
   // S3 bucket doesn't exist
