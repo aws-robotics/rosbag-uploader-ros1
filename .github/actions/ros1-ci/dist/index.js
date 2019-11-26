@@ -954,9 +954,11 @@ const exec = __importStar(__webpack_require__(986));
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield exec.exec("cd", [core.getInput('package-path')]);
-            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y"]);
-            yield exec.exec("colcon", ["build"]);
+            const execOptions = {
+                cwd: core.getInput('package-path')
+            };
+            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y"], execOptions);
+            yield exec.exec("colcon", ["build"], execOptions);
         }
         catch (error) {
             core.setFailed(error.message);
