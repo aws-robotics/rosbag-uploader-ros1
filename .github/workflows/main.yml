@@ -1,17 +1,15 @@
 on: [push, pull_request]
 
 jobs:
-  hello_world_job:
+  build:
     runs-on: ubuntu-latest
-    name: A job to say hello
+    name: Build and Test
     steps:
     - name: Checkout
       uses: actions/checkout@v1
-    - name: Hello world action step
-      id: hello
+    - name: Build
+      id: build
       uses: ./.github/actions/ros1-ci/
       with:
-        who-to-greet: 'Mona the Octocat'
-    # Use the output from the `hello` step
-    - name: Get the output time
-      run: echo "The time was ${{ steps.hello.outputs.time }}"
+        ros-distro: kinetic
+        package-path: ./
