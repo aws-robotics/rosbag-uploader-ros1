@@ -957,7 +957,7 @@ function installPackages() {
             const aptPackages = [
                 "lcov",
                 "python-pip",
-                "python-pip3",
+                "python3-pip",
                 "python-rosinstall",
                 "libgtest-dev",
                 "cmake",
