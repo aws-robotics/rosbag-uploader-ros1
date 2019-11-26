@@ -46,16 +46,6 @@ private:
 public:
     DurationRecorder();
     ~DurationRecorder() = default;
-
-    /**
-    * @brief delete a rosbag file that has alreaady been uploaded to an Amazon S3 bucket
-    *
-    * Delete file at rosbag_file_path.
-    *
-    * @param rosbag_file_path path to the rosbag file to be deleted
-    * @return error code, SUCCESS if the file is sucessfully deleted
-    */
-    Aws::Rosbag::RecorderErrorCode DeleteRosbag(const std::string & rosbag_file_path);
 };
 
 }  // namespace Rosbag

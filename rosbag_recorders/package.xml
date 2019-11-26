@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>rosbag_recorders</name>
+  <name>rosbag_cloud_recorders</name>
   <version>0.0.0</version>
   <description>Duration recorder and rolling recorder for recoding rosbag files.</description>
 

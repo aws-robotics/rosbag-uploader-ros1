@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(rosbag_recorders)
+project(rosbag_cloud_recorders)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -29,11 +29,11 @@ find_package(catkin REQUIRED COMPONENTS
     rosbag
 )
 
-set(ROSBAG_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
+set(ROSBAG_CLOUD_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES ${ROSBAG_RECORDER_LIB_TARGET}
+    LIBRARIES ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     CATKIN_DEPENDS actionlib actionlib_msgs recorder_msgs roscpp rosbag
 )
 
@@ -48,15 +48,16 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${ROSBAG_RECORDER_LIB_TARGET}
+add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     src/duration_recorder/duration_recorder.cpp
+    src/utils/rosbag_file_manager.cpp
 )
 
-target_link_libraries(${ROSBAG_RECORDER_LIB_TARGET}
+target_link_libraries(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_LIBRARIES}
 )
 
-add_dependencies(${ROSBAG_RECORDER_LIB_TARGET}
+add_dependencies(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_EXPORTED_TARGETS}
 )
 
@@ -65,7 +66,7 @@ add_executable(
 )
 
 target_link_libraries(duration_recorder
-    ${ROSBAG_RECORDER_LIB_TARGET}
+    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
 )
 
 #############
@@ -73,7 +74,7 @@ target_link_libraries(duration_recorder
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS duration_recorder ${ROSBAG_RECORDER_LIB_TARGET}
+install(TARGETS duration_recorder ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -98,9 +99,10 @@ if(CATKIN_ENABLE_TESTING)
   target_include_directories(test_duration_recorder PRIVATE
     include
     ${catkin_INCLUDE_DIRS}
+    ${GTEST_LIBRARIES}
   )
   target_link_libraries(test_duration_recorder
-    ${ROSBAG_RECORDER_LIB_TARGET}
+    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_LIBRARIES}
   )
 endif()

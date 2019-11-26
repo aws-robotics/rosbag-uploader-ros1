@@ -13,7 +13,6 @@
  * permissions and limitations under the License.
  */
 
-#include <fstream>
 #include <actionlib/server/action_server.h>
 #include <actionlib_msgs/GoalID.h>
 #include <ros/ros.h>
@@ -48,15 +47,6 @@ void DurationRecorder::GoalCallBack(DurationRecorderActionServer::GoalHandle goa
 void DurationRecorder::CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle)
 {
   (void) goal_handle;
-}
-
-Aws::Rosbag::RecorderErrorCode DurationRecorder::DeleteRosbag(const std::string & rosbag_file_path)
-{
-  std::ifstream rosbag_file(rosbag_file_path);
-  if (rosbag_file.good()) {
-    return Aws::Rosbag::RecorderErrorCode::SUCCESS;
-  }
-  return Aws::Rosbag::RecorderErrorCode::FAILED;
 }
 
 }  // namespace Rosbag

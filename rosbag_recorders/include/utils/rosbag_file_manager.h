@@ -15,25 +15,37 @@
 
 #pragma once
 
+#include <recorder_common_error_codes.h>
+#include <string>
+#include <fstream>
+
 namespace Aws
 {
 namespace Rosbag
 {
-
-/**
- * Error codes for S3.
- */
-enum RecorderErrorCode
+namespace Utils
 {
-  // Operation was successfuly
-  SUCCESS = 0,
-  // Generic failure
-  FAILED,
-  // The local rosgbag file was not found
-  ROSBAG_FILE_NOT_FOUND,
-  // Fail to remove local rosgbag file
-  ROSBAG_REMOVAL_FAILED
+
+class RosbagFileManager
+{
+ public:
+  /**
+   * Default Constructor.
+   */
+  RosbagFileManager() = default;
+  ~RosbagFileManager() = default;
+
+  /**
+  * @brief delete a rosbag file that has alreaady been uploaded to an Amazon S3 bucket
+  *
+  * Delete file at rosbag_file_path.
+  *
+  * @param rosbag_file_path path to the rosbag file to be deleted
+  * @return error code, SUCCESS if the file is sucessfully deleted
+  */
+  Aws::Rosbag::RecorderErrorCode DeleteRosbag(const std::string & rosbag_file_path);
 };
 
+}  // namespace Utils
 }  // namespace Rosbag
 }  // namespace Aws
