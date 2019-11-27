@@ -13,8 +13,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v1
-    - name: Setup
-      uses: ./.github/actions/setup-ros1/
     - name: Build
       uses: ./.github/actions/ros1-ci/
       with:

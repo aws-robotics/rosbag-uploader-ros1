@@ -1,5 +1,0 @@
-name: 'setup-ros1'
-description: 'Setup a Colcon build environment for a ROS1 package'
-runs:
-  using: 'node12'
-  main: 'dist/index.js'

@@ -952,6 +952,35 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
 const path = __importStar(__webpack_require__(622));
+function installPackages() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const aptPackages = [
+                "lcov",
+                "python-pip",
+                "python3-pip",
+                "python-rosinstall",
+                "libgtest-dev",
+                "cmake",
+                "python3-colcon-common-extensions"
+            ];
+            const python2Packages = [
+                "coverage"
+            ];
+            const python3Packages = [
+                "setuptools"
+            ];
+            yield exec.exec("sudo", ["apt-get", "update"]);
+            yield exec.exec("sudo", ["apt-get", "install", "-y"].concat(aptPackages));
+            yield exec.exec("sudo", ["pip", "install", "-U"].concat(python2Packages));
+            yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
+            yield exec.exec("rosdep", ["update"]);
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -1011,6 +1040,7 @@ function build() {
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        yield installPackages();
         yield build();
     });
 }
