@@ -40,10 +40,13 @@ async function build() {
     if (PACKAGES_TO_TEST.length) {
       const colconCmakeTestArgs = [
         "--packages-select",
-        PACKAGES_TO_TEST,
-        "--cmake-target",
-        "tests"
-      ]
+      ].concat(
+        PACKAGES_TO_TEST.split(" "),
+        [
+          "--cmake-target",
+          "tests"
+        ]
+      )
       await exec.exec("colcon", ["build"].concat(colconCmakeTestArgs), getExecOptions());
     }
 

@@ -984,10 +984,10 @@ function build() {
             if (PACKAGES_TO_TEST.length) {
                 const colconCmakeTestArgs = [
                     "--packages-select",
-                    PACKAGES_TO_TEST,
+                ].concat(PACKAGES_TO_TEST.split(" "), [
                     "--cmake-target",
                     "tests"
-                ];
+                ]);
                 yield exec.exec("colcon", ["build"].concat(colconCmakeTestArgs), getExecOptions());
             }
             // Add the future install bin directory to PATH.
