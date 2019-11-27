@@ -29,7 +29,7 @@ using namespace Aws::Rosbag;
 using namespace rosbag;
 
 
-typedef actionlib::ActionClient<recorder_msgs::DurationRecorderAction> DurationRecorderActionClient;
+using DurationRecorderActionClient = actionlib::ActionClient<recorder_msgs::DurationRecorderAction>;
 
 class DurationRecorderNodeFixture : public ::testing::Test
 {
@@ -37,14 +37,14 @@ protected:
   void SetUp() override
   {
     ros::NodeHandle nh("~");
-    action_client = std::make_shared<DurationRecorderActionClient>(nh, "RosbagDurationRecord");
-    duration_recorder = std::make_shared<Aws::Rosbag::DurationRecorder>();
-    rosbag_file_manager = std::make_shared<Aws::Rosbag::Utils::RosbagFileManager>();
+    action_client_ = std::make_shared<DurationRecorderActionClient>(nh, "RosbagDurationRecord");
+    duration_recorder_ = std::make_shared<Aws::Rosbag::DurationRecorder>();
+    rosbag_file_manager_ = std::make_shared<Aws::Rosbag::Utils::RosbagFileManager>();
   }
 
-  std::shared_ptr<DurationRecorderActionClient> action_client;
-  std::shared_ptr<Aws::Rosbag::DurationRecorder> duration_recorder;
-  std::shared_ptr<Aws::Rosbag::Utils::RosbagFileManager> rosbag_file_manager;
+  std::shared_ptr<DurationRecorderActionClient> action_client_;
+  std::shared_ptr<Aws::Rosbag::DurationRecorder> duration_recorder_;
+  std::shared_ptr<Aws::Rosbag::Utils::RosbagFileManager> rosbag_file_manager_;
 };
 
 TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
@@ -53,13 +53,13 @@ TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
   executor.start();
   bool message_received = false;
   // Wait 10 seconds for server to start
-  ASSERT_TRUE(action_client->waitForActionServerToStart(ros::Duration(10, 0)));
+  ASSERT_TRUE(action_client_->waitForActionServerToStart(ros::Duration(10, 0)));
   auto transition_call_back = [&message_received](DurationRecorderActionClient::GoalHandle goal_handle){
       EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
       message_received = true;
   };
   recorder_msgs::DurationRecorderGoal goal;
-  auto gh = action_client->sendGoal(goal, transition_call_back);
+  auto gh = action_client_->sendGoal(goal, transition_call_back);
   ros::Duration(1,0).sleep();
   ASSERT_TRUE(message_received);
   executor.stop();
@@ -69,12 +69,12 @@ TEST_F(DurationRecorderNodeFixture, TestRosbagRemovalSuccessfulCase)
 {
   std::ofstream file("./TestRosbagRemovalSuccessfulCase.bag");
   file.close();
-  EXPECT_EQ(rosbag_file_manager->DeleteRosbag("./TestRosbagRemovalSuccessfulCase.bag"), Aws::Rosbag::RecorderErrorCode::SUCCESS);
+  EXPECT_EQ(rosbag_file_manager_->DeleteRosbag("./TestRosbagRemovalSuccessfulCase.bag"), Aws::Rosbag::RecorderErrorCode::SUCCESS);
 }
 
 TEST_F(DurationRecorderNodeFixture, TestRosbagRemovalFailureCases)
 {
-  EXPECT_EQ(rosbag_file_manager->DeleteRosbag("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::ROSBAG_FILE_NOT_FOUND);
+  EXPECT_EQ(rosbag_file_manager_->DeleteRosbag("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::ROSBAG_FILE_NOT_FOUND);
 }
 
 int main(int argc, char** argv)

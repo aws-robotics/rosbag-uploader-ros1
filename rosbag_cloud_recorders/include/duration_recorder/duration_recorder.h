@@ -38,8 +38,8 @@ public:
   ~DurationRecorder() = default;
 
 private:
-  void GoalCallBack(DurationRecorderActionServer::GoalHandle goal);
-  void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
+  void GoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle);
+  void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle);
 
   ros::NodeHandle node_handle_;
   DurationRecorderActionServer action_server_;

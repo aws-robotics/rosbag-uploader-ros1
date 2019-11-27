@@ -20,8 +20,8 @@
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "rosbag_duration_recorder");
-  Aws::Rosbag::DurationRecorder duration_recorder();
-  Aws::Rosbag::Utils::RosbagFileManager rosbag_file_manager();
+  Aws::Rosbag::DurationRecorder duration_recorder;
+  // Aws::Rosbag::Utils::RosbagFileManager rosbag_file_manager; // unused variable
   ros::spin();
   return 0;
 }

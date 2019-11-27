@@ -25,7 +25,7 @@
 namespace Aws {
 namespace S3 {
 
-typedef actionlib::ActionServer<file_uploader_msgs::UploadFilesAction> UploadFilesActionServer;
+using UploadFilesActionServer = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>;
 
 /**
  * S3FileUploader is a node that responds to actions to upload files to s3
@@ -33,12 +33,12 @@ typedef actionlib::ActionServer<file_uploader_msgs::UploadFilesAction> UploadFil
 class S3FileUploader
 {
 public:
-  S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> facade);
+  explicit S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> s3_facade);
   ~S3FileUploader() = default;
 
 private:
-  void GoalCallBack(UploadFilesActionServer::GoalHandle goal);
-  void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal);
+  void GoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
+  void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
 
   ros::NodeHandle node_handle_;
   UploadFilesActionServer action_server_;

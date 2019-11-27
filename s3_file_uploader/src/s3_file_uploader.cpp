@@ -45,10 +45,10 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
 {
     goal_handle.setAccepted();
     auto goal = goal_handle.getGoal();
-    for (const auto file_name: goal->files) {
+    for (const auto& file_name: goal->files) {
         //bucket comes from config
-        AWS_LOG_INFO(__func__,"Uploading file %s to %s", file_name, goal->upload_location);
-        s3_facade_->putObject(file_name, "bucket", goal->upload_location);
+        AWS_LOG_INFO(__func__,"Uploading file %s to %s", file_name.c_str(), goal->upload_location.c_str());
+        s3_facade_->PutObject(file_name, "bucket", goal->upload_location);
     }
     file_uploader_msgs::UploadFilesResult result;
     goal_handle.setSucceeded(result, "");
