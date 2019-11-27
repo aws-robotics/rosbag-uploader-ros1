@@ -954,11 +954,11 @@ const exec = __importStar(__webpack_require__(986));
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const ROS_DISTRO = "kinetic";
             const execOptions = {
                 cwd: core.getInput('package-path')
             };
-            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y"], execOptions);
-            yield exec.exec("source", ["/opt/ros/kinetic/setup.sh"]);
+            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], execOptions);
             yield exec.exec("colcon", ["build"], execOptions);
         }
         catch (error) {
