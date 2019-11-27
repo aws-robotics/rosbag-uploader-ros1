@@ -20,29 +20,46 @@
 #include <ros/spinner.h>
 #include <rosbag/recorder.h>
 
-#include <recorder_msgs/DurationRecorderAction.h>
+#include <recorder_msgs/RollingRecorderAction.h>
 #include <recorder_common_error_codes.h>
+
 
 namespace Aws {
 namespace Rosbag {
 
-typedef actionlib::ActionServer<recorder_msgs::DurationRecorderAction> DurationRecorderActionServer;
+typedef actionlib::ActionServer<recorder_msgs::RollingRecorderAction> RollingRecorderActionServer;
 
 /**
- *  Duration recorder is a node that responds to actions to record rosbag files
+ * Rolling recorder is a node that responds to actions to record rosbag files
  */
-class DurationRecorder
+class RollingRecorder
 {
 public:
-  DurationRecorder();
-  ~DurationRecorder() = default;
+  RollingRecorder();
+  ~RollingRecorder() = default;
+
+  /**
+   * Activate the rolling recorder so that it is recording rosbags in the background
+   */
+  RecorderErrorCode StartRollingRecorder();
+
+  /**
+   * Deactivate the rolling recorder so that it stops recording rosbags in the background
+   */
+  RecorderErrorCode StopRollingRecorder();
+
+  /**
+   * Returns boolean indicating whether or not the rolling recorder is currently recording in the
+   * background
+   */
+  bool IsRollingRecorderActive();
 
 private:
-  void GoalCallBack(DurationRecorderActionServer::GoalHandle goal);
-  void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
+  void GoalCallBack(RollingRecorderActionServer::GoalHandle goal);
+  void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal);
 
   ros::NodeHandle node_handle_;
-  DurationRecorderActionServer action_server_;
+  RollingRecorderActionServer action_server_;
   std::unique_ptr<rosbag::Recorder> rosbag_recorder_;
 };
 
