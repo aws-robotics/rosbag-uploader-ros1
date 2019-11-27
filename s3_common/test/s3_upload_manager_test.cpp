@@ -32,7 +32,6 @@ using ::testing::IgnoreResult;
 using ::testing::Return;
 using ::testing::_;
 
-
 class MockS3Facade : public S3Facade
 {
 public:
@@ -47,7 +46,6 @@ protected:
     std::vector<UploadDescription> uploads;
     std::vector<UploadDescription> completed_uploads;
     int num_feedback_calls;
-
     void SetUp() override
     {
         num_feedback_calls = 0;
@@ -121,6 +119,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
 
 TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
 {
+<<<<<<< HEAD
     EXPECT_CALL(*facade,PutObject(_,_,_))
         .WillOnce(Return(S3ErrorCode::SUCCESS))
         .WillOnce(Return(S3ErrorCode::FAILED));
