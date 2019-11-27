@@ -1,8 +1,8 @@
 name: 'ros1-ci'
 description: 'Build and Test your ROS1 Package'
 inputs:
-  package-path:
-    description: 'Path to folder where your package src folder is located'
+  workspace-dir:
+    description: 'Path to the workspace folder of your package'
     default: './'
   ros-distro:
     description: 'Distribution of ROS you are using [kinetic|melodic]'

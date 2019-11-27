@@ -18,5 +18,5 @@ jobs:
     - name: Build
       uses: ./.github/actions/ros1-ci/
       with:
-        package-path: ./
+        workspace-dir: ./
         ros-distro: kinetic
