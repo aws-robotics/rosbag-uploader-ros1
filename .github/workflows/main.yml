@@ -5,9 +5,9 @@ on:
       - master
 
 jobs:
-  build:
+  kinetic:
     runs-on: ubuntu-latest
-    name: Kinetic Build
+    name: Kinetic
     container:
       image: ros:kinetic-ros-core
     steps:
@@ -20,3 +20,18 @@ jobs:
       with:
         workspace-dir: ./
         ros-distro: kinetic
+  melodic:
+    runs-on: ubuntu-latest
+    name: Melodic
+    container:
+      image: ros:melodic-ros-core
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+    - name: Setup
+      uses: ./.github/actions/setup-ros1/
+    - name: Build
+      uses: ./.github/actions/ros1-ci/
+      with:
+        workspace-dir: ./
+        ros-distro: melodic
