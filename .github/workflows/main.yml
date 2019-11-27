@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build and Test
+    name: Kinetic Build
     container:
       image: ros:kinetic-ros-core
     steps:
@@ -19,3 +19,4 @@ jobs:
       uses: ./.github/actions/ros1-ci/
       with:
         package-path: ./
+        ros-distro: kinetic

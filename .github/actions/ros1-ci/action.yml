@@ -3,8 +3,10 @@ description: 'Build and Test your ROS1 Package'
 inputs:
   package-path:
     description: 'Path to folder where your package src folder is located'
-    required: true
     default: './'
+  ros-distro:
+    description: 'Distribution of ROS you are using [kinetic|melodic]'
+    required: true
 runs:
   using: 'node12'
   main: 'dist/index.js'

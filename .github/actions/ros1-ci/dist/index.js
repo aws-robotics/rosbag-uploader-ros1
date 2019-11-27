@@ -954,9 +954,18 @@ const exec = __importStar(__webpack_require__(986));
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const ROS_DISTRO = "kinetic";
+            const ROS_DISTRO = core.getInput('ros-distro');
             const execOptions = {
-                cwd: core.getInput('package-path')
+                cwd: core.getInput('package-path'),
+                env: {
+                    CMAKE_PREFIX_PATH: `/opt/ros/${ROS_DISTRO}`,
+                    ROS_DISTRO: ROS_DISTRO,
+                    ROS_ETC_DIR: `/opt/ros/${ROS_DISTRO}/etc/ros`,
+                    ROS_PACKAGE_PATH: `/opt/ros/${ROS_DISTRO}/share`,
+                    ROS_PYTHON_VERSION: "2",
+                    ROS_ROOT: `/opt/ros/${ROS_DISTRO}/share/ros`,
+                    ROS_VERSION: "1"
+                }
             };
             yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], execOptions);
             yield exec.exec("colcon", ["build"], execOptions);
