@@ -106,13 +106,3 @@ TEST_F(S3FacadeTest, TestPutObjectS3BucketDoesntExist)
     auto facade_result = s3_facade->PutObject(upload_file, "bucket", "key");
     EXPECT_EQ(S3ErrorCode::S3_NO_SUCH_BUCKET, facade_result);
 }
-
-int main(int argc, char** argv)
-{
-    Aws::SDKOptions options;
-    Aws::InitAPI(options);
-    ::testing::InitGoogleTest(&argc, argv);
-    auto result = RUN_ALL_TESTS();
-    Aws::ShutdownAPI(options);
-    return result;
-}
