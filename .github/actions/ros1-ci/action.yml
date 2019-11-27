@@ -1,6 +1,9 @@
 name: 'ros1-ci'
 description: 'Build and Test your ROS1 Package'
 inputs:
+  coverage:
+    description: 'Boolean - Should code coverage be run'
+    default: true
   language:
     description: 'Language your ROS package is in [cpp|python]'
     required: true
@@ -10,6 +13,9 @@ inputs:
   ros-distro:
     description: 'Distribution of ROS you are using [kinetic|melodic]'
     required: true
+  test:
+    description: 'Boolean - Should tests be run'
+    default: true
   workspace-dir:
     description: 'Path to the workspace folder of your package'
     default: './'

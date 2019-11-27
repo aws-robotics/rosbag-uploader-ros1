@@ -1,21 +1,40 @@
 # ROS1 CI Github Action
 
-This action prints "Hello World" or "Hello" + the name of a person to greet to the log.
+This action will build, test, and generate code coverage for your ROS1 package. 
 
 ## Inputs
 
-### `who-to-greet`
+### `coverage`
 
-**Required** The name of the person to greet. Default `"World"`.
+Boolean - Should code coverage be run. **Default: true**
 
-## Outputs
+### `language`
 
-### `time`
+**Required** The language your ROS package is in `[cpp|python]`
 
-The time we greeted you.
+### `packages-to-test`
+
+**Required** Space separated string of packages you want to run tests for
+
+### `ros-distro`
+
+**Required** Distribution of ROS you are using `[kinetic|melodic]`
+
+### `test`
+
+Boolean - Should tests be run. **Default: true** 
+
+### `workspace-dir`
+
+Path to the workspace folder of your package. **Default: ./**
 
 ## Example usage
 
-uses: actions/hello-world-javascript-action@v1
+uses: ros-tooling/ros1-ci@v1
 with:
-  who-to-greet: 'Mona the Octocat'
+  coverage: true
+  language: 'python'
+  packages-to-test: 'my-cool-package another-package'
+  ros-distro: 'kinetic'
+  test: true
+  workspace-dir: './packages/'

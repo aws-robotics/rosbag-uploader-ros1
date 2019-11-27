@@ -16,7 +16,12 @@ jobs:
     - name: Build
       uses: ./.github/actions/ros1-ci/
       with:
-        ros-distro: kinetic
+        coverage: true
         language: cpp
-        workspace-dir: ./
         packages-to-test: "s3_common s3_file_uploader"
+        ros-distro: kinetic
+        workspace-dir: ./
+    - name: Upload Coverage
+      uses: actions/upload-artifact@v1
+      with:
+        name: coverage.tar

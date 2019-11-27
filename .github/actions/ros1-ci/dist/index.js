@@ -952,7 +952,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
 const path = __importStar(__webpack_require__(622));
-function installPackages() {
+const COVERAGE_ARTIFACT_NAME = "coverage.tar";
+function getExecOptions() {
+    const workspaceDir = core.getInput('workspace-dir');
+    const rosDistro = core.getInput('ros-distro');
+    const execOptions = {
+        cwd: workspaceDir,
+        env: Object.assign({}, process.env, {
+            CMAKE_PREFIX_PATH: `/opt/ros/${rosDistro}`,
+            ROS_DISTRO: rosDistro,
+            ROS_ETC_DIR: `/opt/ros/${rosDistro}/etc/ros`,
+            ROS_PACKAGE_PATH: `/opt/ros/${rosDistro}/share`,
+            ROS_PYTHON_VERSION: "2",
+            ROS_ROOT: `/opt/ros/${rosDistro}/share/ros`,
+            ROS_VERSION: "1"
+        })
+    };
+    return execOptions;
+}
+function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const aptPackages = [
@@ -984,25 +1002,8 @@ function installPackages() {
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const WORKSPACE_DIR = core.getInput('workspace-dir');
-            const ROS_DISTRO = core.getInput('ros-distro');
-            const PACKAGES_TO_TEST = core.getInput('packages-to-test');
-            function getExecOptions() {
-                const execOptions = {
-                    cwd: WORKSPACE_DIR,
-                    env: Object.assign({}, process.env, {
-                        CMAKE_PREFIX_PATH: `/opt/ros/${ROS_DISTRO}`,
-                        ROS_DISTRO: ROS_DISTRO,
-                        ROS_ETC_DIR: `/opt/ros/${ROS_DISTRO}/etc/ros`,
-                        ROS_PACKAGE_PATH: `/opt/ros/${ROS_DISTRO}/share`,
-                        ROS_PYTHON_VERSION: "2",
-                        ROS_ROOT: `/opt/ros/${ROS_DISTRO}/share/ros`,
-                        ROS_VERSION: "1"
-                    })
-                };
-                return execOptions;
-            }
-            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
+            const rosDistro = core.getInput('ros-distro');
+            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", rosDistro], getExecOptions());
             const colconCmakeArgs = [
                 "--cmake-args",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
@@ -1010,10 +1011,25 @@ function build() {
                 "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
             ];
             yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
-            if (PACKAGES_TO_TEST.length) {
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
+function test() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (!core.getInput('test')) {
+                console.log("Skipping testing as test flag is false");
+                return;
+            }
+            const workspaceDir = core.getInput('workspace-dir');
+            const packagesToTest = core.getInput('packages-to-test');
+            if (packagesToTest.length) {
                 const colconCmakeTestArgs = [
                     "--packages-select",
-                ].concat(PACKAGES_TO_TEST.split(" "), [
+                ].concat(packagesToTest.split(" "), [
                     "--cmake-target",
                     "tests"
                 ]);
@@ -1029,7 +1045,7 @@ function build() {
             //   Path entries ending in /bin or /sbin are automatically converted to
             //   their parent directories:
             //   PATH
-            core.addPath(path.join(WORKSPACE_DIR, "install", "bin"));
+            core.addPath(path.join(workspaceDir, "install", "bin"));
             yield exec.exec("colcon", ["test"], getExecOptions());
             yield exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
         }
@@ -1038,10 +1054,47 @@ function build() {
         }
     });
 }
+function coverage() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (!core.getInput('coverage')) {
+                console.log("Skipping producing code coverage as coverage flag is false");
+                return;
+            }
+            const packageLanguage = core.getInput('language');
+            const packagesToTest = core.getInput('packages-to-test');
+            const workspaceDir = core.getInput('workspace-dir');
+            const execOptions = getExecOptions();
+            if (packageLanguage == "cpp") {
+                yield exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
+                yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '--output-file', 'coverage.info'], execOptions);
+                yield exec.exec("lcov", ["--list", "coverage.info"], execOptions);
+                yield exec.exec("mv", ["coverage.info", "coverage.xml"], execOptions);
+            }
+            else if (packageLanguage == "python") {
+                const allPackages = packagesToTest.split(" ");
+                allPackages.forEach((packageName) => __awaiter(this, void 0, void 0, function* () {
+                    const packageExecOptions = getExecOptions();
+                    const workingDir = path.join(workspaceDir, 'build', packageName);
+                    packageExecOptions.cwd = workingDir;
+                    yield exec.exec("coverage", ["xml"], packageExecOptions);
+                    yield exec.exec("mv", ["coverage.xml", `coverage-${packageName}.info`], packageExecOptions);
+                }));
+            }
+            // Create coverage artifact for exporting
+            yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage*.info"], execOptions);
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield installPackages();
+        yield setup();
         yield build();
+        yield test();
+        yield coverage();
     });
 }
 run();

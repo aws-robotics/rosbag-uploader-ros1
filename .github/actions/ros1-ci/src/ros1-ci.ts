@@ -4,8 +4,27 @@ import * as github from '@actions/github';
 import { ExecOptions } from '@actions/exec/lib/interfaces';
 import * as path from 'path';
 
+const COVERAGE_ARTIFACT_NAME = "coverage.tar"
 
-async function installPackages() {
+function getExecOptions() {
+  const workspaceDir = core.getInput('workspace-dir');
+  const rosDistro = core.getInput('ros-distro');
+  const execOptions: ExecOptions = {
+    cwd: workspaceDir,
+    env: Object.assign({}, process.env, {
+      CMAKE_PREFIX_PATH: `/opt/ros/${rosDistro}`,
+      ROS_DISTRO: rosDistro,
+      ROS_ETC_DIR: `/opt/ros/${rosDistro}/etc/ros`,
+      ROS_PACKAGE_PATH: `/opt/ros/${rosDistro}/share`,
+      ROS_PYTHON_VERSION: "2",
+      ROS_ROOT: `/opt/ros/${rosDistro}/share/ros`,
+      ROS_VERSION: "1"
+    })
+  };
+  return execOptions
+}
+
+async function setup() {
   try {
     const aptPackages = [
       "lcov", 
@@ -37,31 +56,10 @@ async function installPackages() {
   }
 }
 
-
 async function build() {
   try {
-
-    const WORKSPACE_DIR = core.getInput('workspace-dir');
-    const ROS_DISTRO = core.getInput('ros-distro');
-    const PACKAGES_TO_TEST = core.getInput('packages-to-test');
-    
-    function getExecOptions() {
-      const execOptions: ExecOptions = {
-        cwd: WORKSPACE_DIR,
-        env: Object.assign({}, process.env, {
-          CMAKE_PREFIX_PATH: `/opt/ros/${ROS_DISTRO}`,
-          ROS_DISTRO: ROS_DISTRO,
-          ROS_ETC_DIR: `/opt/ros/${ROS_DISTRO}/etc/ros`,
-          ROS_PACKAGE_PATH: `/opt/ros/${ROS_DISTRO}/share`,
-          ROS_PYTHON_VERSION: "2",
-          ROS_ROOT: `/opt/ros/${ROS_DISTRO}/share/ros`,
-          ROS_VERSION: "1"
-        })
-      };
-      return execOptions
-    }
-
-    await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
+    const rosDistro = core.getInput('ros-distro');
+    await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", rosDistro], getExecOptions());
 
     const colconCmakeArgs = [
       "--cmake-args", 
@@ -70,12 +68,25 @@ async function build() {
       "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
     ]
     await exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
 
-    if (PACKAGES_TO_TEST.length) {
+async function test() {
+  try {
+    if (!core.getInput('test')) {
+      console.log("Skipping testing as test flag is false");
+      return;
+    }
+    const workspaceDir = core.getInput('workspace-dir');
+    const packagesToTest = core.getInput('packages-to-test');
+
+    if (packagesToTest.length) {
       const colconCmakeTestArgs = [
         "--packages-select",
       ].concat(
-        PACKAGES_TO_TEST.split(" "),
+        packagesToTest.split(" "),
         [
           "--cmake-target",
           "tests"
@@ -94,7 +105,7 @@ async function build() {
     //   Path entries ending in /bin or /sbin are automatically converted to
     //   their parent directories:
     //   PATH
-    core.addPath(path.join(WORKSPACE_DIR, "install", "bin"))
+    core.addPath(path.join(workspaceDir, "install", "bin"))
 
     await exec.exec("colcon", ["test"], getExecOptions());
     await exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
@@ -104,9 +115,49 @@ async function build() {
   }
 }
 
+async function coverage() {
+  try {
+    if (!core.getInput('coverage')) {
+      console.log("Skipping producing code coverage as coverage flag is false")
+      return;
+    } 
+
+    const packageLanguage = core.getInput('language');
+    const packagesToTest = core.getInput('packages-to-test');
+    const workspaceDir = core.getInput('workspace-dir');
+    
+    const execOptions = getExecOptions();
+
+    if (packageLanguage == "cpp") {
+      await exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
+      await exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '--output-file', 'coverage.info'], execOptions);
+      await exec.exec("lcov", ["--list", "coverage.info"], execOptions);
+      await exec.exec("mv", ["coverage.info", "coverage.xml"], execOptions);
+    } 
+    else if (packageLanguage == "python") {
+      const allPackages = packagesToTest.split(" ")
+      allPackages.forEach(async (packageName) => {
+        const packageExecOptions = getExecOptions();
+        const workingDir = path.join(workspaceDir, 'build', packageName);
+        packageExecOptions.cwd = workingDir;
+
+        await exec.exec("coverage", ["xml"], packageExecOptions);
+        await exec.exec("mv", ["coverage.xml", `coverage-${packageName}.info`], packageExecOptions);
+      });
+    }
+
+    // Create coverage artifact for exporting
+    await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage*.info"], execOptions)
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
+
 async function run() {
-  await installPackages();
+  await setup();
   await build();
+  await test();
+  await coverage();
 }
 
 run();
