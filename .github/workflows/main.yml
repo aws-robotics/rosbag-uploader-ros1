@@ -18,20 +18,7 @@ jobs:
     - name: Build
       uses: ./.github/actions/ros1-ci/
       with:
-        workspace-dir: ./
         ros-distro: kinetic
-  melodic:
-    runs-on: ubuntu-latest
-    name: Melodic
-    container:
-      image: ros:melodic-ros-core
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-    - name: Setup
-      uses: ./.github/actions/setup-ros1/
-    - name: Build
-      uses: ./.github/actions/ros1-ci/
-      with:
+        language: cpp
         workspace-dir: ./
-        ros-distro: melodic
+        packages-to-test: "s3_common s3_file_uploader"

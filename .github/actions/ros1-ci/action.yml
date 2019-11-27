@@ -1,12 +1,18 @@
 name: 'ros1-ci'
 description: 'Build and Test your ROS1 Package'
 inputs:
-  workspace-dir:
-    description: 'Path to the workspace folder of your package'
-    default: './'
+  language:
+    description: 'Language your ROS package is in [cpp|python]'
+    required: true
+  packages-to-test: 
+    description: 'Space separated string of packages you want to run tests for'
+    required: false
   ros-distro:
     description: 'Distribution of ROS you are using [kinetic|melodic]'
     required: true
+  workspace-dir:
+    description: 'Path to the workspace folder of your package'
+    default: './'
 runs:
   using: 'node12'
   main: 'dist/index.js'

@@ -951,24 +951,58 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
+const path = __importStar(__webpack_require__(622));
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const WORKSPACE_DIR = core.getInput('workspace-dir');
             const ROS_DISTRO = core.getInput('ros-distro');
-            const execOptions = {
-                cwd: core.getInput('workspace-dir'),
-                env: Object.assign({}, process.env, {
-                    CMAKE_PREFIX_PATH: `/opt/ros/${ROS_DISTRO}`,
-                    ROS_DISTRO: ROS_DISTRO,
-                    ROS_ETC_DIR: `/opt/ros/${ROS_DISTRO}/etc/ros`,
-                    ROS_PACKAGE_PATH: `/opt/ros/${ROS_DISTRO}/share`,
-                    ROS_PYTHON_VERSION: "2",
-                    ROS_ROOT: `/opt/ros/${ROS_DISTRO}/share/ros`,
-                    ROS_VERSION: "1"
-                })
-            };
-            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], execOptions);
-            yield exec.exec("colcon", ["build"], execOptions);
+            const PACKAGES_TO_TEST = core.getInput('packages-to-test');
+            function getExecOptions() {
+                const execOptions = {
+                    cwd: WORKSPACE_DIR,
+                    env: Object.assign({}, process.env, {
+                        CMAKE_PREFIX_PATH: `/opt/ros/${ROS_DISTRO}`,
+                        ROS_DISTRO: ROS_DISTRO,
+                        ROS_ETC_DIR: `/opt/ros/${ROS_DISTRO}/etc/ros`,
+                        ROS_PACKAGE_PATH: `/opt/ros/${ROS_DISTRO}/share`,
+                        ROS_PYTHON_VERSION: "2",
+                        ROS_ROOT: `/opt/ros/${ROS_DISTRO}/share/ros`,
+                        ROS_VERSION: "1"
+                    })
+                };
+                return execOptions;
+            }
+            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
+            const colconCmakeArgs = [
+                "--cmake-args",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
+                "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
+            ];
+            yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
+            if (PACKAGES_TO_TEST.length) {
+                const colconCmakeTestArgs = [
+                    "--packages-select",
+                    PACKAGES_TO_TEST,
+                    "--cmake-target",
+                    "tests"
+                ];
+                yield exec.exec("colcon", ["build"].concat(colconCmakeTestArgs), getExecOptions());
+            }
+            // Add the future install bin directory to PATH.
+            // This enables cmake find_package to find packages installed in the
+            // colcon install directory, even if local_setup.sh has not been sourced.
+            //
+            // From the find_package doc:
+            // https://cmake.org/cmake/help/latest/command/find_package.html
+            //   5. Search the standard system environment variables.
+            //   Path entries ending in /bin or /sbin are automatically converted to
+            //   their parent directories:
+            //   PATH
+            core.addPath(path.join(WORKSPACE_DIR, "install", "bin"));
+            yield exec.exec("colcon", ["test"], getExecOptions());
+            yield exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
         }
         catch (error) {
             core.setFailed(error.message);
