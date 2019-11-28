@@ -132,7 +132,6 @@ async function coverage() {
       await exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
       await exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '--output-file', 'coverage.info'], execOptions);
       await exec.exec("lcov", ["--list", "coverage.info"], execOptions);
-      await exec.exec("mv", ["coverage.info", "coverage.xml"], execOptions);
     } 
     else if (packageLanguage == "python") {
       const allPackages = packagesToTest.split(" ")

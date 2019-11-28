@@ -1069,7 +1069,6 @@ function coverage() {
                 yield exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
                 yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '--output-file', 'coverage.info'], execOptions);
                 yield exec.exec("lcov", ["--list", "coverage.info"], execOptions);
-                yield exec.exec("mv", ["coverage.info", "coverage.xml"], execOptions);
             }
             else if (packageLanguage == "python") {
                 const allPackages = packagesToTest.split(" ");
