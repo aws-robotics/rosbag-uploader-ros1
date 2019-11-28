@@ -47,6 +47,9 @@ TEST_F(RollingRecorderNodeFixture, TestActionReceivedbyActionServer)
 {
   ros::AsyncSpinner executor(0);
   executor.start();
+
+  rolling_recorder->StartRollingRecorder();
+
   bool message_received = false;
   // Wait 10 seconds for server to start
   ASSERT_TRUE(action_client->waitForActionServerToStart(ros::Duration(10, 0)));
@@ -57,7 +60,9 @@ TEST_F(RollingRecorderNodeFixture, TestActionReceivedbyActionServer)
   recorder_msgs::RollingRecorderGoal goal;
   auto gh = action_client->sendGoal(goal, transition_call_back);
   ros::Duration(1, 0).sleep();
+
   ASSERT_TRUE(message_received);
+
   executor.stop();
 }
 
