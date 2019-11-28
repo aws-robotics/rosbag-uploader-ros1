@@ -1080,6 +1080,7 @@ function coverage() {
                     yield exec.exec("mv", ["coverage.xml", `coverage-${packageName}.info`], packageExecOptions);
                 }));
             }
+            yield exec.exec("find", [".", "-name", "'*'"], execOptions);
             // Create coverage artifact for exporting
             yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage*.info"], execOptions);
         }

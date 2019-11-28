@@ -145,6 +145,8 @@ async function coverage() {
       });
     }
 
+    await exec.exec("find", [".", "-name", "'*'"], execOptions);
+
     // Create coverage artifact for exporting
     await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage*.info"], execOptions)
   } catch (error) {
