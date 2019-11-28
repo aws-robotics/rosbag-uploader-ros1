@@ -132,23 +132,25 @@ async function coverage() {
       await exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
       await exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '--output-file', 'coverage.info'], execOptions);
       await exec.exec("lcov", ["--list", "coverage.info"], execOptions);
+      await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions)
     } 
     else if (packageLanguage == "python") {
       const allPackages = packagesToTest.split(" ")
-      allPackages.forEach(async (packageName) => {
+      await Promise.all(allPackages.map(async (packageName) => {
         const packageExecOptions = getExecOptions();
         const workingDir = path.join(workspaceDir, 'build', packageName);
         packageExecOptions.cwd = workingDir;
+        const coverageFileName = `coverage-${packageName}.info`
 
         await exec.exec("coverage", ["xml"], packageExecOptions);
-        await exec.exec("mv", ["coverage.xml", `coverage-${packageName}.info`], packageExecOptions);
+        await exec.exec("mv", ["coverage.xml", coverageFileName], packageExecOptions);
+        return coverageFileName;
+      })).then(async (coverageFiles) => {
+        await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME].concat(coverageFiles), execOptions)
       });
     }
 
-    await exec.exec("find", [".", "-name", "'*'"], execOptions);
-
     // Create coverage artifact for exporting
-    await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage*.info"], execOptions)
   } catch (error) {
     core.setFailed(error.message);
   }

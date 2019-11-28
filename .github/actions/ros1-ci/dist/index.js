@@ -1069,20 +1069,23 @@ function coverage() {
                 yield exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
                 yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '--output-file', 'coverage.info'], execOptions);
                 yield exec.exec("lcov", ["--list", "coverage.info"], execOptions);
+                yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions);
             }
             else if (packageLanguage == "python") {
                 const allPackages = packagesToTest.split(" ");
-                allPackages.forEach((packageName) => __awaiter(this, void 0, void 0, function* () {
+                yield Promise.all(allPackages.map((packageName) => __awaiter(this, void 0, void 0, function* () {
                     const packageExecOptions = getExecOptions();
                     const workingDir = path.join(workspaceDir, 'build', packageName);
                     packageExecOptions.cwd = workingDir;
+                    const coverageFileName = `coverage-${packageName}.info`;
                     yield exec.exec("coverage", ["xml"], packageExecOptions);
-                    yield exec.exec("mv", ["coverage.xml", `coverage-${packageName}.info`], packageExecOptions);
+                    yield exec.exec("mv", ["coverage.xml", coverageFileName], packageExecOptions);
+                    return coverageFileName;
+                }))).then((coverageFiles) => __awaiter(this, void 0, void 0, function* () {
+                    yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME].concat(coverageFiles), execOptions);
                 }));
             }
-            yield exec.exec("find", [".", "-name", "'*'"], execOptions);
             // Create coverage artifact for exporting
-            yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage*.info"], execOptions);
         }
         catch (error) {
             core.setFailed(error.message);
