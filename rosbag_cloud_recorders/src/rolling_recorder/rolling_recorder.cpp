@@ -47,7 +47,7 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
 
 void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
-  (void) goal_handle;
+  (void) goal_handle; // unused argument
 }
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
