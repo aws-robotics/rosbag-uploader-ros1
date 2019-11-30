@@ -27,11 +27,15 @@ class S3Facade
 {
 public:
     S3Facade();
-    S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
+    S3Facade(const S3Facade & other) = delete;
+    explicit S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
+
     virtual ~S3Facade() = default;
 
+    S3Facade & operator=(const S3Facade & other) = delete;
+
     /**
-    * @brief Call s3 putObject api to upload file to s3
+    * @brief Call s3 PutObject api to upload file to s3
     *
     * Synchronous call to S3. Uploads file at file_path to s3.
     *
@@ -40,7 +44,7 @@ public:
     * @param key object key for upload
     * @return error code, SUCCESS if the file is uploaded,
     */
-    virtual Aws::S3::S3ErrorCode putObject(const std::string& file_path, const std::string& bucket, const std::string& key);
+    virtual Aws::S3::S3ErrorCode PutObject(const std::string& file_path, const std::string& bucket, const std::string& key);
 
 private:
     std::unique_ptr<Aws::S3::S3Client> s3_client_;

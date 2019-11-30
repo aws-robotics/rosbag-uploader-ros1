@@ -26,7 +26,7 @@
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <s3_file_uploader/s3_file_uploader.h>
 
-typedef actionlib::ActionClient<file_uploader_msgs::UploadFilesAction> UploadFilesActionClient;
+using UploadFilesActionClient = actionlib::ActionClient<file_uploader_msgs::UploadFilesAction>;
 
 using ::testing::Return;
 using ::testing::_;
@@ -34,8 +34,8 @@ using ::testing::_;
 class MockS3Facade : public Aws::S3::S3Facade
 {
 public:
-    MockS3Facade() : S3Facade() {}
-    MOCK_METHOD3(putObject, Aws::S3::S3ErrorCode(const std::string &, const std::string &, const std::string &));
+    MockS3Facade() = default;
+    MOCK_METHOD3(PutObject, Aws::S3::S3ErrorCode(const std::string &, const std::string &, const std::string &));
 };
 
 
@@ -45,7 +45,7 @@ TEST(S3UploaderTest, TestActionReceived)
     executor.start();
     bool message_received = false;
     auto s3_facade = std::make_unique<MockS3Facade>();
-    ON_CALL(*s3_facade, putObject(_,_,_))
+    ON_CALL(*s3_facade, PutObject(_,_,_))
     .WillByDefault(Return(Aws::S3::S3ErrorCode::SUCCESS));
 
     Aws::S3::S3FileUploader file_uploader(std::move(s3_facade));

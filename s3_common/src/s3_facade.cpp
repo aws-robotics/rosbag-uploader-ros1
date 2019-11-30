@@ -35,12 +35,12 @@ S3Facade::S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client)
 }
 
 
-Aws::S3::S3ErrorCode S3Facade::putObject(
+Aws::S3::S3ErrorCode S3Facade::PutObject(
     const std::string & file_path,
     const std::string & bucket,
     const std::string & key)
 {
-    AWS_LOG_INFO(__func__, "Upload: %s to s3://%s/%s", file_path, bucket, key);
+    AWS_LOG_INFO(__func__, "Upload: %s to s3://%s/%s", file_path.c_str(), bucket.c_str(), key.c_str());
     return Aws::S3::S3ErrorCode::SUCCESS;
 }
 

@@ -26,16 +26,15 @@ using namespace Aws::S3;
 class MockS3Client : public S3Client
 {
 public:
-    MockS3Client() : S3Client() {}
+    MockS3Client() = default;
     MOCK_METHOD1(PutObject, Model::PutObjectOutcome(const Model::PutObjectRequest &));
-
 };
 
 TEST(S3FacadeTest, TestPutObjectReturns)
 {
     auto client = std::make_unique<MockS3Client>();
     S3Facade s3_facade(std::move(client));
-    auto result = s3_facade.putObject("file_name", "bucket", "key");
+    auto result = s3_facade.PutObject("file_name", "bucket", "key");
     EXPECT_EQ(S3ErrorCode::SUCCESS, result);
 }
 

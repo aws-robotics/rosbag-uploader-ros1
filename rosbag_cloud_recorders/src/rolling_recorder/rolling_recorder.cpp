@@ -45,8 +45,9 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
   goal_handle.setRejected();
 }
 
-void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle /*goal_handle*/)
+void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
+  (void) goal_handle; // unused argument
 }
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
@@ -55,9 +56,8 @@ RecorderErrorCode RollingRecorder::StartRollingRecorder()
   if (successful_start) {
     action_server_.start();
     return SUCCESS;
-  } else {
-    return FAILED;
   }
+  return FAILED;
 }
 
 RecorderErrorCode RollingRecorder::StopRollingRecorder()
