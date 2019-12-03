@@ -22,24 +22,15 @@
 
 #include <s3_common/s3_common_error_codes.h>
 #include <s3_common/s3_facade.h>
-
+#include <s3_common/utils.h>
 
 #include <aws/s3/model/PutObjectRequest.h>
-
-bool file_exists(const std::string& name)
-{
-    std::ifstream ifile(name);
-    return ifile.good();
-}
 
 
 namespace Aws
 {
 namespace S3
 {
-
-// TODO: Make this configurable
-static const int MAX_RETRIES = 3;
 
 S3Facade::S3Facade() 
 : s3_client_(std::make_unique<Aws::S3::S3Client>())
@@ -57,14 +48,14 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
     const std::string & bucket,
     const std::string & key)
 {
-    AWS_LOG_INFO(__func__, "Upload: %s to s3://%s/%s", file_path, bucket, key);
-    if (!file_exists(file_path)) {
-        AWS_LOG_ERROR(__func__, "Upload failed, file %s couldn't be opened for reading", file_path);
+    AWS_LOGSTREAM_INFO(__func__, "Upload: "<<file_path<<" to s3://"<<bucket<<"/"<<key);
+    if (!fileExists(file_path)) {
+        AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file "<<file_path<<" couldn't be opened for reading");
         return Aws::S3::S3ErrorCode::FILE_COULDNT_BE_READ;
     }
     const std::shared_ptr<Aws::IOStream> file_data = 
-            std::make_shared<Aws::FStream>(file_path.c_str(), 
-                                          std::ios_base::in | std::ios_base::binary);
+            std::make_shared<Aws::FStream>(file_path.c_str(),
+                                           std::ios_base::in | std::ios_base::binary);
     Aws::S3::Model::PutObjectRequest putObjectRequest;
     putObjectRequest.SetBucket(bucket.c_str());
     putObjectRequest.SetKey(key.c_str());
@@ -74,8 +65,7 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
 
     if (!outcome.IsSuccess()) {
         auto error = outcome.GetError();
-        AWS_LOG_ERROR(__func__, "Failed to upload %s to s3://%s/%s with message: %s",
-            file_path, bucket, key, error.GetMessage());
+        AWS_LOGSTREAM_ERROR(__func__, "Failed to upload "<<file_path<<" to s3://"<<bucket<<"/"<<key<<" with message: "<<error.GetMessage());
         auto error_type = error.GetErrorType();
         if (error_type == Aws::S3::S3Errors::ACCESS_DENIED) {
             return Aws::S3::S3ErrorCode::S3_ACCESS_DENIED;
@@ -86,7 +76,7 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
         }
                 
     } else {
-        AWS_LOG_INFO(__func__, "Successfully uploaded %s to s3://%s/%s", file_path, bucket, key);
+        AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
         return Aws::S3::S3ErrorCode::SUCCESS;
     }
 }

@@ -16,7 +16,6 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string>
-#include <sys/stat.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -25,6 +24,7 @@
 #include <aws/s3/S3Client.h>
 #include <aws/s3/model/PutObjectRequest.h>
 #include <s3_common/s3_facade.h>
+#include <s3_common/utils.h>
 
 using namespace Aws::S3;
 
@@ -44,10 +44,6 @@ class S3FacadeTest : public ::testing::Test
 protected:
     std::unique_ptr<MockS3Client> client;
     std::string upload_file;
-    bool uploadFileExists() {
-        struct stat buffer;
-        return (stat(upload_file.c_str(), &buffer) == 0);
-    }
     
     void SetUp() override {
         client = std::make_unique<MockS3Client>();
@@ -57,7 +53,7 @@ protected:
         upload_file = std::string(upload_file_path);
     }
     void TearDown() override {
-        if (uploadFileExists()) {
+        if (fileExists(upload_file)) {
             remove(upload_file.c_str());
         }
     }
