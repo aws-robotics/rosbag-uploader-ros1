@@ -17,7 +17,7 @@
 #include <fstream>
 #include <string>
 
-inline bool fileExists(const std::string& name)
+inline bool FileExists(const std::string& name)
 {
     std::ifstream ifile(name);
     return ifile.good();
