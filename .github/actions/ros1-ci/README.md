@@ -1,6 +1,53 @@
 # ROS1 CI Github Action
 
-This action will build, test, and generate code coverage for your ROS1 package. 
+This action will build, test, and generate code coverage for your ROS1 package.
+It must be run in an environment that has all core ROS1 dependencies already installed for the ROS1 distro you are using (Kinetic, Melodic etc). 
+
+You can either use the action [setup-ros1] to create this environment or use the [ros-core docker container], see usage section to see how to use this container. 
+
+## Usage
+
+Using a [ros-core docker container] docker container:
+
+```
+jobs:
+  build-kinetic:
+    runs-on: ubuntu-latest
+    name: Build Kinetic
+    container:
+      image: ros:kinetic-ros-core
+    steps:
+    - name: Build
+      uses: actions/ros1-ci@v1
+      with:
+        coverage: true
+        language: cpp
+        packages-to-test: "s3_common s3_file_uploader"
+        ros-distro: kinetic
+        test: true
+        workspace-dir: ./
+```
+
+Using [setup-ros1]:
+
+```
+jobs:
+  build-kinetic:
+    runs-on: ubuntu-latest
+    name: Build Kinetic
+    steps:
+    - name: Setup
+      uses: actions/setup-ros1@v1
+    - name: Build
+      uses: actions/ros1-ci@v1
+      with:
+        coverage: true
+        language: cpp
+        packages-to-test: "s3_common s3_file_uploader"
+        ros-distro: kinetic
+        test: true
+        workspace-dir: ./
+```
 
 ## Inputs
 
@@ -28,13 +75,5 @@ Boolean - Should tests be run. **Default: true**
 
 Path to the workspace folder of your package. **Default: ./**
 
-## Example usage
-
-uses: ros-tooling/ros1-ci@v1
-with:
-  coverage: true
-  language: 'python'
-  packages-to-test: 'my-cool-package another-package'
-  ros-distro: 'kinetic'
-  test: true
-  workspace-dir: './packages/'
+[setup-ros1]: https://github.com/ros-tooling/setup-ros1
+[ros-core docker container]: https://hub.docker.com/_/ros/
