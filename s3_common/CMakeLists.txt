@@ -37,10 +37,19 @@ endif()
 add_library(${PROJECT_NAME} SHARED
     src/s3_facade.cpp
 )
-target_link_libraries(${PROJECT_NAME} ${AWS_LINK_LIBS})
+
+target_link_libraries(${PROJECT_NAME} 
+  ${AWS_LINK_LIBS}
+  ${aws_common_LIBRARIES})
+
 target_include_directories(${PROJECT_NAME}
-  PRIVATE ${AWSSDK_INCLUDE_DIRS}
-  include ${aws_common_INCLUDE_DIRS})
+  PRIVATE
+  ${AWSSDK_INCLUDE_DIRS}
+  ${aws_common_INCLUDE_DIRS})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
 
 #############
 ## Install ##

@@ -12,30 +12,13 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 #pragma once
 
-namespace Aws
-{
-namespace S3
-{
+#include <fstream>
+#include <string>
 
-/**
- * Error codes for S3.
- */
-enum S3ErrorCode
+inline bool FileExists(const std::string& name)
 {
-  // Operation was successfuly
-  SUCCESS = 0,
-  // Generic failure
-  FAILED,
-  // The local file was not found or couldn't be opened
-  FILE_COULDNT_BE_READ,
-  // Access to S3 resources was denied
-  S3_ACCESS_DENIED,
-  // S3 bucket doesn't exist
-  S3_NO_SUCH_BUCKET
-};
-
-}  // namespace S3
-}  // namespace Aws
+    std::ifstream ifile(name);
+    return ifile.good();
+}

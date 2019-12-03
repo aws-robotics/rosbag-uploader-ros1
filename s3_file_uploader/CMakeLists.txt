@@ -133,10 +133,10 @@ if(CATKIN_ENABLE_TESTING)
         ${TEST_LINK_LIBS}
         ${GMOCK_BOTH_LIBRARIES}
       )
+
     else()
         include_directories(/usr/include/gmock /usr/src/gmock)
         add_library(${PROJECT_NAME}_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
-
         add_rostest_gtest(${TEST_TARGET}
           ${TEST_FILES}
         )
