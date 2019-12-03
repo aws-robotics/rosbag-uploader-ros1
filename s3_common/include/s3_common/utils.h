@@ -12,11 +12,12 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+#pragma once
 
 #include <fstream>
 #include <string>
 
-bool fileExists(const std::string& name)
+inline bool fileExists(const std::string& name)
 {
     std::ifstream ifile(name);
     return ifile.good();
