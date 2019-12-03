@@ -66,23 +66,30 @@ TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
   executor.stop();
 }
 
-// TEST_F(DurationRecorderNodeFixture, TestActionServerStateChange)
-// {
-//   ros::AsyncSpinner executor(0);
-//   executor.start();
-//   ASSERT_TRUE(action_client->waitForActionServerToStart(ros::Duration(10, 0)));
-//   auto transition_call_back = (DurationRecorderActionClient::GoalHandle goal_handle) {
-//
-//   };
-//   recorder_msgs::DurationRecorderGoal goal;
-//   auto gh = action_client->sendGoal(goal, transition_call_back);
-//   ros::Duration(1, 0).sleep();
-//   executor.stop();
-// }
-//
-// ros::Duration(20, 0).sleep();
-// EXPECT_EQ(goal_handle.getCommState(), actionlib::CommState::StateEnum::DONE);
-// EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
+TEST_F(DurationRecorderNodeFixture, TestActionServerStateChange)
+{
+  ros::AsyncSpinner executor(0);
+  executor.start();
+  bool action_completed = false;
+  int retry = 5;
+  // Wait 10 seconds for server to start
+  ASSERT_TRUE(action_client->waitForActionServerToStart(ros::Duration(10, 0)));
+  recorder_msgs::DurationRecorderGoal goal;
+  DurationRecorderActionClient::GoalHandle goal_handle = action_client->sendGoal(goal);
+  while (retry > 0) {
+    if (actionlib::CommState::StateEnum::DONE == goal_handle.getCommState().state_) {
+      action_completed = true;
+    }
+    if (action_completed) {
+      break;
+    }
+    ros::Duration(5, 0).sleep();
+    retry--;
+  }
+  EXPECT_TRUE(action_completed);
+  EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
+  executor.stop();
+}
 
 TEST_F(DurationRecorderNodeFixture, TestRosbagRemovalSuccessfulCase)
 {
