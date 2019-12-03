@@ -25,6 +25,8 @@
 #include <s3_common/s3_upload_manager.h>
 
 using namespace Aws::S3;
+using ::testing::DoAll;
+using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
 using ::testing::_;
 
@@ -90,13 +92,83 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
 }
 
 
-TEST(S3UploadManagerTest, TestUploadFilesFailsManagerUploading)
+TEST_F(S3UploadManagerTest, TestUploadFilesFailsManagerUploading)
 {
+    std::atomic<bool> continue_execution(false);
+    std::atomic<S3ErrorCode> result1;
+    //Keep the upload manager busy
+    auto wait_loop = [&continue_execution]()
+    {
+        while(!continue_execution.load())
+        {
+            sleep(1);//something like this
+        }
+    };
+    EXPECT_CALL(*facade,putObject(_,_,_))
+        .WillOnce(DoAll(
+            InvokeWithoutArgs(wait_loop),
+            Return(S3ErrorCode::SUCCESS)));
+    S3UploadManager manager(std::move(facade));
+    auto thread = std::thread([&]()
+        {
+            result1 = manager.uploadFiles(uploads, "bucket",
+                boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
+        }
+    );
+    //EXPECT_FALSE(manager.isAvailable());
+    auto result2 = manager.uploadFiles(uploads, "bucket",
+        boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
+    // The manager is busy and should reject the upload request
+    EXPECT_EQ(result2, S3ErrorCode::FAILED);
+    continue_execution.store(true);
+    thread.join();
+    // The first request should continue uninterrupted
+    EXPECT_EQ(result1, S3ErrorCode::SUCCESS);
+    EXPECT_EQ(num_feedback_calls, uploads.size());
 }
 /*
 TEST(S3UploadManagerTest, TestCancelUploadSucceeds)
 {
+    std::atomic<bool> continue_execution(false);
+    std::atomic<S3ErrorCode> result1;
+    //Keep the upload manager busy
+    auto wait_loop = [&continue_execution]()
+    {
+        while(!continue_execution.load())
+        {
+            sleep(1);//something like this
+        }
+    }
+    EXPECT_CALL(*facade,putObject(_,_,_))
+        //(execute wait_loop)
+        .WillOnce(Return(S3ErrorCode::SUCCESS))
+    S3UploadManager manager(std::move(facade));
+    // Start up a 
+    auto upload_thread = std::thread([&]()
+        {
+            manager.uploadFiles(uploads, "bucket",
+                boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
+        }
+    );
+    auto cancel_thread = std::thread([&manager])
+    EXPECT_FALSE(manager.isAvailable());
+    auto result2 = manager.uploadFiles(uploads, "bucket",
+        boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
+    // The manager is busy and should reject the upload request
+    EXPECT_EQ(result2, S3ErrorCode::FAILED);
+    continue_execution.store(true);
+    thread.join();
+    // The first request should continue uninterrupted
+    EXPECT_EQ(result1, S3ErrorCode::SUCCESS);
+    EXPECT_EQ(num_feedback_calls, uploads.size());
+    EXPECT_TRUE(manager.isAvailable());
+
 }
-TEST(S3UploadManagerTest, TestCancelUploadFailsNotUploading)
+*/
+TEST_F(S3UploadManagerTest, TestCancelUploadFailsNotUploading)
 {
-}*/
+    S3UploadManager manager(std::move(facade));
+    EXPECT_TRUE(manager.isAvailable());
+    auto result = manager.cancelUpload();
+    EXPECT_FALSE(result);
+}
