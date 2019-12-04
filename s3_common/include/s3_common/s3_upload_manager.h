@@ -62,10 +62,8 @@ private:
         boost::function<void (std::vector<std::string>&)> feedback_callback);
 
     S3UploadManagerState manager_status_;
-    mutable std::mutex mutex_;
+    mutable std::recursive_mutex mutex_; // Guards manager_status_
     std::unique_ptr<S3Facade> s3_facade_;
-    S3ErrorCode upload_result_;
-    std::thread worker_;
 };
 
 

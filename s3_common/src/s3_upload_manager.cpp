@@ -36,20 +36,17 @@ S3UploadManager::S3UploadManager():
 
 S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
     manager_status_(S3UploadManagerState::AVAILABLE),
-    s3_facade_(std::move(s3_facade)),
-    upload_result_(S3ErrorCode::SUCCESS)
+    s3_facade_(std::move(s3_facade))
 {
 }
 
 bool S3UploadManager::CancelUpload()
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (manager_status_ != S3UploadManagerState::UPLOADING) {
-            return false;
-        }
-        manager_status_ = S3UploadManagerState::CANCELLING;
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (manager_status_ != S3UploadManagerState::UPLOADING) {
+        return false;
     }
+    manager_status_ = S3UploadManagerState::CANCELLING;
     return true;
 }
 
@@ -59,57 +56,45 @@ S3ErrorCode S3UploadManager::UploadFiles(
         boost::function<void (std::vector<std::string>&)> feedback_callback)
 {
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (!IsAvailable())
-        {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if (!IsAvailable()) {
             return S3ErrorCode::FAILED;
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
-        upload_result_ = S3ErrorCode::SUCCESS;
     }
-    worker_ = std::thread([&]{RunUploadFiles(upload_descriptions, bucket, feedback_callback);});
-    if (worker_.joinable())
-    {
-        worker_.join();
-    }
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        manager_status_ = S3UploadManagerState::AVAILABLE;
-    }
-    return upload_result_;
-}
 
-void S3UploadManager::RunUploadFiles(
-        const std::vector<UploadDescription> & upload_descriptions,
-        const std::string & bucket,
-        boost::function<void (std::vector<std::string>&)> feedback_callback)
-{
+    S3ErrorCode upload_result = S3ErrorCode::SUCCESS;
     std::vector<std::string> uploaded_files;
+
     for (const auto upload_description: upload_descriptions) {
-        if(manager_status_ == S3UploadManagerState::CANCELLING) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            upload_result_ = S3ErrorCode::CANCELLED;
-            return;
+        {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+            if(manager_status_ == S3UploadManagerState::CANCELLING) {              
+                upload_result = S3ErrorCode::CANCELLED;
+                break;
+            }
         }
         auto file_path = upload_description.file_path;
         auto object_key = upload_description.object_key;
         //bucket comes from config
         AWS_LOG_INFO(__func__,"Uploading file %s to %s", file_path, object_key);
-        auto result = s3_facade_->PutObject(file_path, bucket, object_key);
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            upload_result_ = result;
-        }
-        if (result != S3ErrorCode::SUCCESS) {
-            return;
+        upload_result = s3_facade_->PutObject(file_path, bucket, object_key);
+        if (upload_result != S3ErrorCode::SUCCESS) {
+            break;
         }
         uploaded_files.push_back(file_path);
         feedback_callback(uploaded_files);
     }
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        manager_status_ = S3UploadManagerState::AVAILABLE;
+    }
+    return upload_result;
 }
 
 bool S3UploadManager::IsAvailable() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     return manager_status_ == S3UploadManagerState::AVAILABLE;
 }
 
