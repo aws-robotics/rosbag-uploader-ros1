@@ -41,8 +41,8 @@ S3UploadManager::S3UploadManager(const Aws::Client::ClientConfiguration &config)
 
 S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
     manager_status_(S3UploadManagerState::AVAILABLE),
-    mutex_(),
-    s3_facade_(std::move(s3_facade))
+    s3_facade_(std::move(s3_facade)),
+    upload_result_(S3ErrorCode::SUCCESS)
 {
 }
 
