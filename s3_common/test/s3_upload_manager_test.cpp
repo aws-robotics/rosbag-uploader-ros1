@@ -28,10 +28,6 @@
 using namespace Aws::S3;
 using ::testing::DoAll;
 using ::testing::InvokeWithoutArgs;
-<<<<<<< HEAD
-using ::testing::IgnoreResult;
-=======
->>>>>>> Add test for Manager state
 using ::testing::Return;
 using ::testing::_;
 
@@ -122,7 +118,6 @@ TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
 
 TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
 {
-<<<<<<< HEAD
     EXPECT_CALL(*facade,PutObject(_,_,_))
         .WillOnce(Return(S3ErrorCode::SUCCESS))
         .WillOnce(Return(S3ErrorCode::FAILED));
@@ -138,7 +133,6 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
     EXPECT_TRUE(manager.IsAvailable());
 }
 
-<<<<<<< HEAD
 TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
 {
     std::unique_ptr<S3UploadManager> manager;
@@ -182,47 +176,10 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     EXPECT_EQ(uploads.size(), num_feedback_calls);
 
     EXPECT_TRUE(manager->IsAvailable());
-=======
-
-TEST_F(S3UploadManagerTest, TestUploadFilesFailsManagerUploading)
-{
-    std::atomic<bool> continue_execution(false);
-    std::atomic<S3ErrorCode> result1;
-    //Keep the upload manager busy
-    auto wait_loop = [&continue_execution]()
-    {
-        while(!continue_execution.load())
-        {
-            sleep(1);//something like this
-        }
-    };
-    EXPECT_CALL(*facade,putObject(_,_,_))
-        .WillOnce(DoAll(
-            InvokeWithoutArgs(wait_loop),
-            Return(S3ErrorCode::SUCCESS)));
-    S3UploadManager manager(std::move(facade));
-    auto thread = std::thread([&]()
-        {
-            result1 = manager.uploadFiles(uploads, "bucket",
-                boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
-        }
-    );
-    //EXPECT_FALSE(manager.isAvailable());
-    auto result2 = manager.uploadFiles(uploads, "bucket",
-        boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
-    // The manager is busy and should reject the upload request
-    EXPECT_EQ(result2, S3ErrorCode::FAILED);
-    continue_execution.store(true);
-    thread.join();
-    // The first request should continue uninterrupted
-    EXPECT_EQ(result1, S3ErrorCode::SUCCESS);
-    EXPECT_EQ(num_feedback_calls, uploads.size());
->>>>>>> Add test for Manager state
 }
 
 TEST_F(S3UploadManagerTest, TestCancelUpload)
 {
-<<<<<<< HEAD
     std::unique_ptr<S3UploadManager> manager;
     bool is_uploading = false;
     // Pause the execution of the facade to simulate waiting for upload to S3
@@ -262,48 +219,3 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
 
     EXPECT_TRUE(manager->IsAvailable());
 }
-=======
-    std::atomic<bool> continue_execution(false);
-    std::atomic<S3ErrorCode> result1;
-    //Keep the upload manager busy
-    auto wait_loop = [&continue_execution]()
-    {
-        while(!continue_execution.load())
-        {
-            sleep(1);//something like this
-        }
-    }
-    EXPECT_CALL(*facade,putObject(_,_,_))
-        //(execute wait_loop)
-        .WillOnce(Return(S3ErrorCode::SUCCESS))
-    S3UploadManager manager(std::move(facade));
-    // Start up a 
-    auto upload_thread = std::thread([&]()
-        {
-            manager.uploadFiles(uploads, "bucket",
-                boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
-        }
-    );
-    auto cancel_thread = std::thread([&manager])
-    EXPECT_FALSE(manager.isAvailable());
-    auto result2 = manager.uploadFiles(uploads, "bucket",
-        boost::bind(&S3UploadManagerTest::feedbackCallback, this, _1));
-    // The manager is busy and should reject the upload request
-    EXPECT_EQ(result2, S3ErrorCode::FAILED);
-    continue_execution.store(true);
-    thread.join();
-    // The first request should continue uninterrupted
-    EXPECT_EQ(result1, S3ErrorCode::SUCCESS);
-    EXPECT_EQ(num_feedback_calls, uploads.size());
-    EXPECT_TRUE(manager.isAvailable());
-
-}
-*/
-TEST_F(S3UploadManagerTest, TestCancelUploadFailsNotUploading)
-{
-    S3UploadManager manager(std::move(facade));
-    EXPECT_TRUE(manager.isAvailable());
-    auto result = manager.cancelUpload();
-    EXPECT_FALSE(result);
-}
->>>>>>> Add test for Manager state

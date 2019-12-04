@@ -80,7 +80,7 @@ S3ErrorCode S3UploadManager::UploadFiles(
         }
         auto file_path = upload_description.file_path;
         auto object_key = upload_description.object_key;
-        //bucket comes from config
+        //bucket comes from configD
         AWS_LOGSTREAM_INFO(__func__,"Uploading file " << file_path << " to " << object_key);
         upload_result = s3_facade_->PutObject(file_path, bucket, object_key);
         if (upload_result != S3ErrorCode::SUCCESS) {
