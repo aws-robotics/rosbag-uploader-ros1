@@ -99,7 +99,7 @@ void S3UploadManager::runUploadFiles(
         auto object_key = upload_description.object_key;
         //bucket comes from config
         AWS_LOG_INFO(__func__,"Uploading file %s to %s", file_path, object_key);
-        auto result = s3_facade_->putObject(file_path, bucket, object_key);
+        auto result = s3_facade_->PutObject(file_path, bucket, object_key);
         {
             std::lock_guard<std::mutex> lock(mutex_);
             upload_result_ = result;
