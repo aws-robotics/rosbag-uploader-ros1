@@ -50,8 +50,7 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
     const std::string & key)
 {
     AWS_LOGSTREAM_INFO(__func__, "Upload: "<<file_path<<" to s3://"<<bucket<<"/"<<key);
-    if (!FileExists(file_path))
-    {
+    if (!FileExists(file_path)) {
         AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file "<<file_path<<" couldn't be opened for reading");
         return Aws::S3::S3ErrorCode::FILE_COULDNT_BE_READ;
     }
