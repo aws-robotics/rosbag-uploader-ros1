@@ -34,6 +34,7 @@ DurationRecorder::DurationRecorder() :
     action_server_(node_handle_, "RosbagDurationRecord", false)
 {
   rosbag_recorder_ = nullptr;
+  current_goal_handle_ = nullptr;
   action_server_.registerGoalCallback(
       boost::bind(&DurationRecorder::GoalCallBack, this, _1));
   action_server_.registerCancelCallback(
@@ -43,28 +44,43 @@ DurationRecorder::DurationRecorder() :
 
 void DurationRecorder::GoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle)
 {
-  //TODO(abbyxu): check map for goal status
+  AWS_LOG_INFO(__func__, "A new goal has been recieved by the goal action server");
+
+  recorder_msgs::DurationRecorderResult recording_result;
+  recorder_msgs::RecorderResult t_recording_result;
+  if(current_goal_handle_) {
+    if (*current_goal_handle_ == goal_handle) {
+      AWS_LOG_INFO(__func__, "New goal recieved by the goal action server is the same goal as the goal duration action server is processing.");
+    } else {
+      AWS_LOG_WARN(__func__, "Reject new goal due to duration recorder action recorder is processing another goal.");
+      GenerateResult(recording_result, t_recording_result, 2, "Rejected because currently processing another goal.");
+      goal_handle.setRejected();
+    }
+    return;
+  }
 
   goal_handle.setAccepted();
+  SetCurrentGoalHandle(goal_handle);
+
   AWS_LOG_INFO(__func__, "Publishing feedback...");
   recorder_msgs::DurationRecorderFeedback record_rosbag_action_feedback;
   GenerateFeedback(record_rosbag_action_feedback, 0);
   goal_handle.publishFeedback(record_rosbag_action_feedback);
   AWS_LOG_INFO(__func__, "Starting duration recorder...")
   boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal = goal_handle.getGoal();
-  recorder_msgs::DurationRecorderResult recording_result;
-  recorder_msgs::RecorderResult t_recording_result;
 
   //TODO(abbyxu): add retry logic
   if (!StartDurationRecorder(goal)) {
     AWS_LOG_ERROR(__func__, "Duration recording finished with a status: Failed");
     GenerateResult(recording_result, t_recording_result, 2, "Duration recording failed.");
     goal_handle.setAborted(recording_result, "");
+    ReleaseCurrentGoalHandle();
     return;
   }
   AWS_LOG_INFO(__func__, "Duration recording finished with a status: Succeeded");
   GenerateResult(recording_result, t_recording_result, 0, "Duration recording succeeded.");
   goal_handle.setSucceeded(recording_result, "");
+  ReleaseCurrentGoalHandle();
 }
 
 void DurationRecorder::GenerateResult(recorder_msgs::DurationRecorderResult & recording_result, recorder_msgs::RecorderResult & t_recording_result, uint stage, std::string message)
@@ -91,7 +107,8 @@ void DurationRecorder::ConfigureRecorderOptions(boost::shared_ptr<const recorder
   AWS_LOG_INFO(__func__, "Finished configuring duration recorder...");
 }
 
-int DurationRecorder::StartDurationRecorder(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal) {
+int DurationRecorder::StartDurationRecorder(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal)
+{
   if (!rosbag_recorder_) {
     rosbag::RecorderOptions recorder_options = {};
     ConfigureRecorderOptions(goal, recorder_options);
@@ -101,6 +118,16 @@ int DurationRecorder::StartDurationRecorder(boost::shared_ptr<const recorder_msg
   }
   AWS_LOG_INFO(__func__, "Recording rosbag...");
   return rosbag_recorder_->run();
+}
+
+void DurationRecorder::SetCurrentGoalHandle(DurationRecorderActionServer::GoalHandle & new_goal_handle)
+{
+  current_goal_handle_ = &new_goal_handle;
+}
+
+void DurationRecorder::ReleaseCurrentGoalHandle()
+{
+  current_goal_handle_ = nullptr;
 }
 
 void DurationRecorder::CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle)

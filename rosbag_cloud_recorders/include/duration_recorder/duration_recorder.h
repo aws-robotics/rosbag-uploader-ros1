@@ -29,6 +29,7 @@ namespace Rosbag
 {
 
 typedef actionlib::ActionServer<recorder_msgs::DurationRecorderAction> DurationRecorderActionServer;
+typedef actionlib::ActionServer<recorder_msgs::DurationRecorderAction>::GoalHandle GoalHandle;
 
 /**
  *  Duration recorder is a node that responds to actions to record rosbag files
@@ -36,20 +37,23 @@ typedef actionlib::ActionServer<recorder_msgs::DurationRecorderAction> DurationR
 class DurationRecorder
 {
 private:
-    ros::NodeHandle node_handle_;
-    DurationRecorderActionServer action_server_;
-    std::unique_ptr<rosbag::Recorder> rosbag_recorder_;
+  ros::NodeHandle node_handle_;
+  DurationRecorderActionServer action_server_;
+  std::unique_ptr<rosbag::Recorder> rosbag_recorder_;
+  GoalHandle * current_goal_handle_;
 
-    void GoalCallBack(DurationRecorderActionServer::GoalHandle goal);
-    void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
-    void GenerateResult(recorder_msgs::DurationRecorderResult & recording_result, recorder_msgs::RecorderResult & t_recording_result, uint stage, std::string message);
-    void GenerateFeedback(recorder_msgs::DurationRecorderFeedback & record_rosbag_action_feedback, uint stage);
-    void ConfigureRecorderOptions(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal, rosbag::RecorderOptions recorder_options);
-    int StartDurationRecorder(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal);
+  void ReleaseCurrentGoalHandle();
+  void SetCurrentGoalHandle(DurationRecorderActionServer::GoalHandle & new_goal_handle);
+  void GoalCallBack(DurationRecorderActionServer::GoalHandle goal);
+  void CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal);
+  void GenerateResult(recorder_msgs::DurationRecorderResult & recording_result, recorder_msgs::RecorderResult & t_recording_result, uint stage, std::string message);
+  void GenerateFeedback(recorder_msgs::DurationRecorderFeedback & record_rosbag_action_feedback, uint stage);
+  void ConfigureRecorderOptions(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal, rosbag::RecorderOptions recorder_options);
+  int StartDurationRecorder(boost::shared_ptr<const recorder_msgs::DurationRecorderGoal> goal);
 
 public:
-    DurationRecorder();
-    ~DurationRecorder() = default;
+  DurationRecorder();
+  ~DurationRecorder() = default;
 };
 
 }  // namespace Rosbag
