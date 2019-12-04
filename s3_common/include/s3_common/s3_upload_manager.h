@@ -46,7 +46,7 @@ class S3UploadManager
 {
 public:
     S3UploadManager();
-    S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
+    explicit S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
     virtual ~S3UploadManager() = default;
 
     virtual bool CancelUpload();

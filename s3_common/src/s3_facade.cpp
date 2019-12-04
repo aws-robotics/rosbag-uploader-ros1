@@ -24,26 +24,13 @@
 #include <s3_common/s3_facade.h>
 #include <s3_common/utils.h>
 
-#include <aws/s3/model/PutObjectRequest.h>
-
-
-
-#include <aws/s3/model/PutObjectRequest.h>
-
-bool file_exists(const std::string& name)
-{
-    std::ifstream ifile(name);
-    return ifile.good();
-}
-
-
 namespace Aws
 {
 namespace S3
 {
 
 S3Facade::S3Facade() 
-: s3_client_(std::make_unique<S3Client>())
+: S3Facade(std::make_unique<S3Client>())
 {
 }
 
@@ -52,15 +39,14 @@ S3Facade::S3Facade(std::unique_ptr<S3Client> s3_client)
 {
 }
 
-
-
 Aws::S3::S3ErrorCode S3Facade::PutObject(
     const std::string & file_path,
     const std::string & bucket,
     const std::string & key)
 {
     AWS_LOGSTREAM_INFO(__func__, "Upload: "<<file_path<<" to s3://"<<bucket<<"/"<<key);
-    if (!FileExists(file_path)) {
+    if (!FileExists(file_path))
+    {
         AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file "<<file_path<<" couldn't be opened for reading");
         return Aws::S3::S3ErrorCode::FILE_COULDNT_BE_READ;
     }
@@ -74,7 +60,8 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
 
     auto outcome = s3_client_->PutObject(put_object_request);
 
-    if (!outcome.IsSuccess()) {
+    if (!outcome.IsSuccess())
+    {
         auto error = outcome.GetError();
         AWS_LOGSTREAM_ERROR(__func__, "Failed to upload "<<file_path<<" to s3://"<<bucket<<"/"<<key<<" with message: "<<error.GetMessage());
         auto error_type = error.GetErrorType();
@@ -86,10 +73,9 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
         }
         return Aws::S3::S3ErrorCode::FAILED;
                 
-    } else {
-        AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
-        return Aws::S3::S3ErrorCode::SUCCESS;
-    }
+    } 
+    AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
+    return Aws::S3::S3ErrorCode::SUCCESS;
 }
 
 

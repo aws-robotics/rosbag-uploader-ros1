@@ -29,7 +29,6 @@ public:
     S3Facade();
     S3Facade(const S3Facade & other) = delete;
     explicit S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
-
     virtual ~S3Facade() = default;
 
     S3Facade & operator=(const S3Facade & other) = delete;

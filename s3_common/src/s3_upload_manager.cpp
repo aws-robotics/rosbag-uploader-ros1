@@ -30,16 +30,14 @@ namespace S3
 {
 
 S3UploadManager::S3UploadManager():
-    manager_status_(S3UploadManagerState::AVAILABLE),
-    mutex_(),
-    s3_facade_(std::make_unique<S3Facade>())
+    S3UploadManager(std::make_unique<S3Facade>())
 {
 }
 
 S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
     manager_status_(S3UploadManagerState::AVAILABLE),
-    mutex_(),
-    s3_facade_(std::move(s3_facade))
+    s3_facade_(std::move(s3_facade)),
+    upload_result_(S3ErrorCode::SUCCESS)
 {
 }
 
@@ -65,14 +63,13 @@ S3ErrorCode S3UploadManager::UploadFiles(
         if (!IsAvailable())
         {
             return S3ErrorCode::FAILED;
-        } else
-        {
-            manager_status_ = S3UploadManagerState::UPLOADING;
-            upload_result_ = S3ErrorCode::SUCCESS;
         }
+        manager_status_ = S3UploadManagerState::UPLOADING;
+        upload_result_ = S3ErrorCode::SUCCESS;
     }
     worker_ = std::thread([&]{RunUploadFiles(upload_descriptions, bucket, feedback_callback);});
-    if (worker_.joinable()){
+    if (worker_.joinable())
+    {
         worker_.join();
     }
     {
