@@ -43,7 +43,7 @@ S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
 {
 }
 
-bool S3UploadManager::cancelUpload()
+bool S3UploadManager::CancelUpload()
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -52,22 +52,17 @@ bool S3UploadManager::cancelUpload()
         }
         manager_status_ = S3UploadManagerState::CANCELLING;
     }
-    worker_.join();
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        manager_status_ = S3UploadManagerState::AVAILABLE;
-    }
     return true;
 }
 
-S3ErrorCode S3UploadManager::uploadFiles(
+S3ErrorCode S3UploadManager::UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
         boost::function<void (std::vector<std::string>&)> feedback_callback)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (manager_status_ != S3UploadManagerState::AVAILABLE)
+        if (!IsAvailable())
         {
             return S3ErrorCode::FAILED;
         } else
@@ -76,8 +71,10 @@ S3ErrorCode S3UploadManager::uploadFiles(
             upload_result_ = S3ErrorCode::SUCCESS;
         }
     }
-    worker_ = std::thread([&]{runUploadFiles(upload_descriptions, bucket, feedback_callback);});
-    worker_.join();
+    worker_ = std::thread([&]{RunUploadFiles(upload_descriptions, bucket, feedback_callback);});
+    if (worker_.joinable()){
+        worker_.join();
+    }
     {
         std::lock_guard<std::mutex> lock(mutex_);
         manager_status_ = S3UploadManagerState::AVAILABLE;
@@ -85,7 +82,7 @@ S3ErrorCode S3UploadManager::uploadFiles(
     return upload_result_;
 }
 
-void S3UploadManager::runUploadFiles(
+void S3UploadManager::RunUploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
         boost::function<void (std::vector<std::string>&)> feedback_callback)
@@ -93,6 +90,8 @@ void S3UploadManager::runUploadFiles(
     std::vector<std::string> uploaded_files;
     for (const auto upload_description: upload_descriptions) {
         if(manager_status_ == S3UploadManagerState::CANCELLING) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            upload_result_ = S3ErrorCode::CANCELLED;
             return;
         }
         auto file_path = upload_description.file_path;
@@ -112,7 +111,7 @@ void S3UploadManager::runUploadFiles(
     }
 }
 
-bool S3UploadManager::isAvailable()
+bool S3UploadManager::IsAvailable() const
 {
     return manager_status_ == S3UploadManagerState::AVAILABLE;
 }

@@ -49,14 +49,14 @@ public:
     S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
     virtual ~S3UploadManager() = default;
 
-    virtual bool cancelUpload();
-    virtual S3ErrorCode uploadFiles(
+    virtual bool CancelUpload();
+    virtual S3ErrorCode UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
         boost::function<void (std::vector<std::string>&)> feedback_callback);
-    virtual bool isAvailable();
+    virtual bool IsAvailable() const;
 private:
-    void runUploadFiles(
+    void RunUploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
         boost::function<void (std::vector<std::string>&)> feedback_callback);

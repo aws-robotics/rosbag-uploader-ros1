@@ -27,6 +27,8 @@ enum S3ErrorCode
 {
   // Operation was successfuly
   SUCCESS = 0,
+  // Upload was cancelled
+  CANCELLED,
   // Generic failure
   FAILED,
   // The local file was not found or couldn't be opened
