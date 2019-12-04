@@ -28,6 +28,7 @@
 using namespace Aws::S3;
 using ::testing::DoAll;
 using ::testing::InvokeWithoutArgs;
+using ::testing::IgnoreResult;
 using ::testing::Return;
 using ::testing::_;
 
@@ -96,7 +97,6 @@ public:
         return std::async(std::launch::async, upload);
     } 
 };
-
 
 TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
 {
