@@ -1,25 +1,37 @@
+import * as path from 'path';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
-import * as github from '@actions/github';
 import { ExecOptions } from '@actions/exec/lib/interfaces';
-import * as path from 'path';
 
-const COVERAGE_ARTIFACT_NAME = "coverage.tar"
+const COVERAGE_ARTIFACT_NAME = "coverage.tar";
+const ROS_ENV_VARIABLES: any = {};
 
-function getExecOptions() {
+async function loadROSEnvVariables() {
+  const rosDistro = core.getInput('ros-distro');
+  const options = {
+    listeners: {
+      stdout: (data: Buffer) => {
+        const lines = data.toString().split("\n");
+        lines.forEach(line => {
+          const contents = line.trim().split("=");
+          ROS_ENV_VARIABLES[contents[0]] = contents.slice(1).join("=");
+        });
+      }
+    }
+  };
+
+  await exec.exec("bash", [
+  "-c",
+  `source /opt/ros/${rosDistro}/setup.bash && printenv`
+  ], options)
+}
+
+function getExecOptions(): ExecOptions {
   const workspaceDir = core.getInput('workspace-dir');
   const rosDistro = core.getInput('ros-distro');
   const execOptions: ExecOptions = {
     cwd: workspaceDir,
-    env: Object.assign({}, process.env, {
-      CMAKE_PREFIX_PATH: `/opt/ros/${rosDistro}`,
-      ROS_DISTRO: rosDistro,
-      ROS_ETC_DIR: `/opt/ros/${rosDistro}/etc/ros`,
-      ROS_PACKAGE_PATH: `/opt/ros/${rosDistro}/share`,
-      ROS_PYTHON_VERSION: "2",
-      ROS_ROOT: `/opt/ros/${rosDistro}/share/ros`,
-      ROS_VERSION: "1"
-    })
+    env: Object.assign({}, process.env, ROS_ENV_VARIABLES)
   };
   return execOptions
 }
@@ -50,6 +62,8 @@ async function setup() {
     await exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
 
     await exec.exec("rosdep", ["update"]);
+
+    await loadROSEnvVariables();
 
   } catch (error) {
     core.setFailed(error.message);

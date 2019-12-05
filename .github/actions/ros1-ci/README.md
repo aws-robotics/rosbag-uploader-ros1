@@ -1,7 +1,7 @@
 # ROS1 CI Github Action
 
 This action will build, test, and generate code coverage for your ROS1 package.
-It must be run in an environment that has all core ROS1 dependencies already installed for the ROS1 distro you are using (Kinetic, Melodic etc). 
+It must run in an environment that has all core ROS1 dependencies already installed for the ROS1 distro you are using (Kinetic, Melodic etc). 
 
 You can either use the action [setup-ros1] to create this environment or use the [ros-core docker container], see usage section to see how to use this container. 
 

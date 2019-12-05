@@ -949,24 +949,37 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
-const path = __importStar(__webpack_require__(622));
 const COVERAGE_ARTIFACT_NAME = "coverage.tar";
+const ROS_ENV_VARIABLES = {};
+function loadROSEnvVariables() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const rosDistro = core.getInput('ros-distro');
+        const options = {
+            listeners: {
+                stdout: (data) => {
+                    const lines = data.toString().split("\n");
+                    lines.forEach(line => {
+                        const contents = line.trim().split("=");
+                        ROS_ENV_VARIABLES[contents[0]] = contents.slice(1).join("=");
+                    });
+                }
+            }
+        };
+        yield exec.exec("bash", [
+            "-c",
+            `source /opt/ros/${rosDistro}/setup.bash && printenv`
+        ], options);
+    });
+}
 function getExecOptions() {
     const workspaceDir = core.getInput('workspace-dir');
     const rosDistro = core.getInput('ros-distro');
     const execOptions = {
         cwd: workspaceDir,
-        env: Object.assign({}, process.env, {
-            CMAKE_PREFIX_PATH: `/opt/ros/${rosDistro}`,
-            ROS_DISTRO: rosDistro,
-            ROS_ETC_DIR: `/opt/ros/${rosDistro}/etc/ros`,
-            ROS_PACKAGE_PATH: `/opt/ros/${rosDistro}/share`,
-            ROS_PYTHON_VERSION: "2",
-            ROS_ROOT: `/opt/ros/${rosDistro}/share/ros`,
-            ROS_VERSION: "1"
-        })
+        env: Object.assign({}, process.env, ROS_ENV_VARIABLES)
     };
     return execOptions;
 }
@@ -993,6 +1006,7 @@ function setup() {
             yield exec.exec("sudo", ["pip", "install", "-U"].concat(python2Packages));
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
+            yield loadROSEnvVariables();
         }
         catch (error) {
             core.setFailed(error.message);

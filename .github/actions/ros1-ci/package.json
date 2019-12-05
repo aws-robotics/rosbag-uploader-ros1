@@ -1,27 +1,44 @@
 {
   "name": "ros1-ci",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Github Action to build and test a ROS1 package",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/ros1-ci.ts -o dist",
+    "lint": "eslint src/**.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aws-robotics/action-ros1-ci.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "ros1",
+    "kinetic",
+    "melodic",
+    "setup"
+  ],
+  "author": "AWS RoboMaker",
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/aws-robotics/action-ros1-ci/issues"
+  },
   "homepage": "https://github.com/aws-robotics/action-ros1-ci.git#readme",
   "dependencies": {
     "@actions/core": "^1.2.0",
-    "@actions/exec": "^1.0.1",
-    "@actions/github": "^1.1.0"
+    "@actions/exec": "^1.0.1"
   },
   "devDependencies": {
-    "typescript": "^3.7.2",
-    "@zeit/ncc": "^0.20.5"
+    "@typescript-eslint/eslint-plugin": "^2.10.0",
+    "@typescript-eslint/parser": "^2.10.0",
+    "@zeit/ncc": "^0.20.5",
+    "eslint": "^6.7.2",
+    "typescript": "^3.7.2"
   }
 }
