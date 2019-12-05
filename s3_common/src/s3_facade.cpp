@@ -60,7 +60,7 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
     auto outcome = s3_client_->PutObject(put_object_request);
 
     if (!outcome.IsSuccess()) {
-        auto error = outcome.GetError();
+        const auto& error = outcome.GetError();
         AWS_LOGSTREAM_ERROR(__func__, "Failed to upload "<<file_path<<" to s3://"<<bucket<<"/"<<key<<" with message: "<<error.GetMessage());
         auto error_type = error.GetErrorType();
         if (error_type == Aws::S3::S3Errors::ACCESS_DENIED) {

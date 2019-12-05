@@ -50,6 +50,12 @@ bool S3UploadManager::CancelUpload()
     return true;
 }
 
+std::vector<UploadDescription> S3UploadManager::GetCompletedUploads()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    return completed_uploads_;
+};
+
 S3ErrorCode S3UploadManager::UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
@@ -61,13 +67,13 @@ S3ErrorCode S3UploadManager::UploadFiles(
             return S3ErrorCode::FAILED;
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
+        completed_uploads_.clear();
     }
 
     S3ErrorCode upload_result = S3ErrorCode::SUCCESS;
-    std::vector<UploadDescription> uploaded_files;
     int num_files = upload_descriptions.size();
     int num_uploaded = 0;
-    for (const auto upload_description: upload_descriptions) {
+    for (const auto& upload_description: upload_descriptions) {
         {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
             if(manager_status_ == S3UploadManagerState::CANCELLING) {              
@@ -78,12 +84,15 @@ S3ErrorCode S3UploadManager::UploadFiles(
         auto file_path = upload_description.file_path;
         auto object_key = upload_description.object_key;
         //bucket comes from config
-        AWS_LOG_INFO(__func__,"Uploading file %s to %s", file_path, object_key);
+        AWS_LOGSTREAM_INFO(__func__,"Uploading file " << file_path << " to " << object_key);
         upload_result = s3_facade_->PutObject(file_path, bucket, object_key);
         if (upload_result != S3ErrorCode::SUCCESS) {
             break;
         }
-        uploaded_files.push_back(upload_description);
+        {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+            completed_uploads_.push_back(upload_description);
+        }
         num_uploaded += 1;
         feedback_callback(num_uploaded, num_files-num_uploaded);
     }
