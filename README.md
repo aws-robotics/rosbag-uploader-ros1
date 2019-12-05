@@ -33,3 +33,8 @@ This library is licensed under the Apache 2.0 License.
 - Then run tests
 
     colcon test
+
+### Simple Upload File Test
+```
+ rostopic pub  /s3_file_uploader/UploadFiles/goal   file_uploader_msgs/UploadFilesActionGoal "{goal: { files:['/tmp/test_file.txt'], upload_location: 'foo/bar' } }"
+```

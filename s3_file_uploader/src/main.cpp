@@ -14,20 +14,37 @@
  */
 
 #include <aws/core/Aws.h>
-
+#include <aws/core/utils/logging/AWSLogging.h>
+#include <aws/core/utils/logging/LogMacros.h>
+#include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 #include <ros/ros.h>
-#include <s3_common/s3_facade.h>
+#include <s3_common/s3_upload_manager.h>
 #include <s3_file_uploader/s3_file_uploader.h>
 
+using namespace Aws::S3;
 
 int main(int argc, char* argv[])
 {
     Aws::SDKOptions options;
     Aws::InitAPI(options);
-    ros::init(argc, argv, "s3_file_uploader");
-    auto s3_facade = std::make_unique<Aws::S3::S3Facade>();
-    Aws::S3::S3FileUploader file_uploader(std::move(s3_facade));
-    ros::spin();
+
+    char node_name[] = "s3_file_uploader";
+    ros::init(argc, argv, node_name);    
+    Aws::Utils::Logging::InitializeAWSLogging(
+        Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(node_name));
+
+    AWS_LOGSTREAM_INFO(__func__, "Starting S3FileUploader node");
+
+    ros::AsyncSpinner executor(0);
+    executor.start();
+
+    auto upload_manager = std::make_unique<S3UploadManager>();
+    S3FileUploader file_uploader(std::move(upload_manager));
+
+    ros::waitForShutdown();
+    executor.stop();
     Aws::ShutdownAPI(options);
+    Aws::Utils::Logging::ShutdownAWSLogging();
+
     return 0;
 }

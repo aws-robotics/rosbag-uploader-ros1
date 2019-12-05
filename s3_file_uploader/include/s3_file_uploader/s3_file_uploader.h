@@ -17,10 +17,9 @@
 
 #include <actionlib/server/action_server.h>
 #include <ros/ros.h>
-#include <ros/spinner.h>
 
 #include <file_uploader_msgs/UploadFilesAction.h>
-#include <s3_common/s3_facade.h>
+#include <s3_common/s3_upload_manager.h>
 
 namespace Aws {
 namespace S3 {
@@ -33,16 +32,16 @@ using UploadFilesActionServer = actionlib::ActionServer<file_uploader_msgs::Uplo
 class S3FileUploader
 {
 public:
-  explicit S3FileUploader(std::unique_ptr<Aws::S3::S3Facade> s3_facade);
+  explicit S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager);
   ~S3FileUploader() = default;
 
 private:
   void GoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
-
+  void PublishFeedback(const std::vector<UploadDescription>& uploaded_files );
   ros::NodeHandle node_handle_;
   UploadFilesActionServer action_server_;
-  std::unique_ptr<Aws::S3::S3Facade> s3_facade_;
+  std::unique_ptr<S3UploadManager> upload_manager_;
 };
 
 }  // namespace S3

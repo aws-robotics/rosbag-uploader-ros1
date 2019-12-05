@@ -60,7 +60,7 @@ public:
     /* Cancel the current upload
      * @return true if the cancel was successful, false if the no upload was in progress
      */
-    virtual bool CancelUpload();
+    virtual void CancelUpload();
 
     /* Upload a list of files to S3
      * @param upload_descriptions a vector of files to upload to S3

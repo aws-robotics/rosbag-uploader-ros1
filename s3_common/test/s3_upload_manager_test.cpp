@@ -99,9 +99,6 @@ public:
 
         manager = std::unique_ptr<S3UploadManager>(new S3UploadManager(std::move(facade)));
 
-        // upload hasn't started, nothing to cancel
-        EXPECT_FALSE(manager->CancelUpload());
-
         auto upload = [this, &manager, callback]() {
             return manager->UploadFiles(this->uploads, "bucket", callback);
         };
@@ -218,9 +215,7 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
 
     EXPECT_FALSE(manager->IsAvailable());
     // First call to cancel should succeed
-    EXPECT_TRUE(manager->CancelUpload());
-    // Subsequent cancel request should still succeed
-    EXPECT_TRUE(manager->CancelUpload());
+    manager->CancelUpload();
 
     // Finish execution of file upload
     pause_mutex.unlock();

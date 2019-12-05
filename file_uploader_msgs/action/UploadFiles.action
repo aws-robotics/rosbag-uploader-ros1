@@ -5,8 +5,10 @@ string[] files
 string upload_location
 ----
 # Feedback
-# The files that have been uploaded so far
-string[] files_uploaded
+# Number of files that have been uploaded
+int16 num_uploaded
+# Number of files that are remaining to upload
+int16 num_remaining
 ----
 # Result
 UploaderResult result

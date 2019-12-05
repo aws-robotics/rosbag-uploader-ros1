@@ -45,14 +45,12 @@ S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
 {
 }
 
-bool S3UploadManager::CancelUpload()
+void S3UploadManager::CancelUpload()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (IsAvailable()) {
-        return false;
+    if (!IsAvailable()) {
+        manager_status_ = S3UploadManagerState::CANCELLING;
     }
-    manager_status_ = S3UploadManagerState::CANCELLING;
-    return true;
 }
 
 S3ErrorCode S3UploadManager::UploadFiles(
@@ -69,6 +67,7 @@ S3ErrorCode S3UploadManager::UploadFiles(
     }
     std::vector<UploadDescription> completed_uploads;
     S3ErrorCode upload_result = S3ErrorCode::SUCCESS;
+    std::vector<UploadDescription> uploaded_files;
     for (const auto& upload_description: upload_descriptions) {
         {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
