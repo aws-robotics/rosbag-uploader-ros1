@@ -132,7 +132,16 @@ void DurationRecorder::ReleaseCurrentGoalHandle()
 
 void DurationRecorder::CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle)
 {
-  (void) goal_handle;
+  if (!current_goal_handle_) {
+    return;
+  }
+  AWS_LOG_INFO(__func__, "Canceling current goal");
+
+  recorder_msgs::DurationRecorderResult recording_result;
+  recorder_msgs::RecorderResult t_recording_result;
+  GenerateResult(recording_result, t_recording_result, 0, "Cancel request received.");
+  goal_handle.setCanceled(recording_result, "");
+  ReleaseCurrentGoalHandle();
 }
 
 }  // namespace Rosbag
