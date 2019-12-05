@@ -53,14 +53,9 @@ public:
     virtual S3ErrorCode UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
-        boost::function<void (std::vector<std::string>&)> feedback_callback);
+        boost::function<void (int, int)> feedback_callback);
     virtual bool IsAvailable() const;
 private:
-    void RunUploadFiles(
-        const std::vector<UploadDescription> & upload_descriptions,
-        const std::string & bucket,
-        boost::function<void (std::vector<std::string>&)> feedback_callback);
-
     S3UploadManagerState manager_status_;
     mutable std::recursive_mutex mutex_; // Guards manager_status_
     std::unique_ptr<S3Facade> s3_facade_;
