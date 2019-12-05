@@ -55,6 +55,12 @@ bool S3UploadManager::CancelUpload()
     return true;
 }
 
+std::vector<UploadDescription> S3UploadManager::GetCompletedUploads()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    return completed_uploads_;
+};
+
 S3ErrorCode S3UploadManager::UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
@@ -66,6 +72,7 @@ S3ErrorCode S3UploadManager::UploadFiles(
             return S3ErrorCode::UPLOADER_BUSY;
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
+        completed_uploads_.clear();
     }
     std::vector<UploadDescription> completed_uploads;
     S3ErrorCode upload_result = S3ErrorCode::SUCCESS;
@@ -79,7 +86,7 @@ S3ErrorCode S3UploadManager::UploadFiles(
         }
         auto file_path = upload_description.file_path;
         auto object_key = upload_description.object_key;
-        //bucket comes from configD
+        //bucket comes from config
         AWS_LOGSTREAM_INFO(__func__,"Uploading file " << file_path << " to " << object_key);
         upload_result = s3_facade_->PutObject(file_path, bucket, object_key);
         if (upload_result != S3ErrorCode::SUCCESS) {
