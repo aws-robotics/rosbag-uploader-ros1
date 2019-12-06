@@ -34,6 +34,11 @@ S3UploadManager::S3UploadManager():
 {
 }
 
+S3UploadManager::S3UploadManager(const Aws::Client::ClientConfiguration &config):
+    S3UploadManager(std::make_unique<S3Facade>(config))
+{
+}
+
 S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
     manager_status_(S3UploadManagerState::AVAILABLE),
     s3_facade_(std::move(s3_facade))
@@ -64,7 +69,7 @@ S3ErrorCode S3UploadManager::UploadFiles(
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         if (!IsAvailable()) {
-            return S3ErrorCode::FAILED;
+            return S3ErrorCode::UPLOADER_BUSY;
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
         completed_uploads_.clear();

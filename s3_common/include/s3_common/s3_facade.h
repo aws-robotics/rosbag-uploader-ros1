@@ -28,6 +28,7 @@ class S3Facade
 public:
     S3Facade();
     S3Facade(const S3Facade & other) = delete;
+    explicit S3Facade(const Aws::Client::ClientConfiguration &config);
     explicit S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
     virtual ~S3Facade() = default;
 
@@ -46,6 +47,7 @@ public:
     virtual Aws::S3::S3ErrorCode PutObject(const std::string& file_path, const std::string& bucket, const std::string& key);
 
 private:
+    Aws::Client::ClientConfiguration config_;
     std::unique_ptr<Aws::S3::S3Client> s3_client_;
 };
 

@@ -97,9 +97,9 @@ TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
     EXPECT_TRUE(manager.GetCompletedUploads().empty());
     auto result = manager.UploadFiles(uploads, "bucket",
         [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
-    EXPECT_EQ(result, S3ErrorCode::SUCCESS);
-    EXPECT_EQ(num_feedback_calls, uploads.size());
-    EXPECT_EQ(manager.GetCompletedUploads(), uploads);
+    EXPECT_EQ(S3ErrorCode::SUCCESS, result);
+    EXPECT_EQ(uploads.size(), num_feedback_calls);
+    EXPECT_EQ(uploads, manager.GetCompletedUploads());
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -112,10 +112,10 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
     EXPECT_TRUE(manager.IsAvailable());
     auto result = manager.UploadFiles(uploads, "bucket",
         [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
-    EXPECT_EQ(result, S3ErrorCode::FAILED);
-    EXPECT_EQ(num_feedback_calls, 1);
-    EXPECT_EQ(manager.GetCompletedUploads().size(), 1);
-    EXPECT_EQ(manager.GetCompletedUploads().at(0), uploads.at(0));
+    EXPECT_EQ(S3ErrorCode::FAILED, result);
+    EXPECT_EQ(1, num_feedback_calls);
+    EXPECT_EQ(1, manager.GetCompletedUploads().size());
+    EXPECT_EQ(uploads.at(0), manager.GetCompletedUploads().at(0));
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -153,7 +153,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     auto result2 = manager.UploadFiles(uploads, "bucket",
         [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
     // The manager is busy and should reject the upload request
-    EXPECT_EQ(result2, S3ErrorCode::FAILED);
+    EXPECT_EQ(S3ErrorCode::UPLOADER_BUSY, result2);
     // No files have been uploaded
     EXPECT_TRUE(manager.GetCompletedUploads().empty());
 
@@ -162,9 +162,9 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     thread.join();
 
     // The first request should continue uninterrupted
-    EXPECT_EQ(result1, S3ErrorCode::SUCCESS);
-    EXPECT_EQ(num_feedback_calls, uploads.size());
-    EXPECT_EQ(manager.GetCompletedUploads(), uploads);
+    EXPECT_EQ(S3ErrorCode::SUCCESS, result1);
+    EXPECT_EQ(uploads.size(), num_feedback_calls);
+    EXPECT_EQ(uploads, manager.GetCompletedUploads());
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -208,9 +208,9 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
     pause_mutex.unlock();
     thread.join();
 
-    EXPECT_EQ(result, S3ErrorCode::CANCELLED);
-    EXPECT_EQ(num_feedback_calls, 1);
-    EXPECT_EQ(manager.GetCompletedUploads().size(), 1);
-    EXPECT_EQ(manager.GetCompletedUploads().at(0), uploads.at(0));
+    EXPECT_EQ(S3ErrorCode::CANCELLED, result);
+    EXPECT_EQ(1, num_feedback_calls);
+    EXPECT_EQ(1, manager.GetCompletedUploads().size());
+    EXPECT_EQ(uploads.at(0), manager.GetCompletedUploads().at(0));
     EXPECT_TRUE(manager.IsAvailable());
 }

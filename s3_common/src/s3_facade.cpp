@@ -34,6 +34,12 @@ S3Facade::S3Facade()
 {
 }
 
+S3Facade::S3Facade(const Aws::Client::ClientConfiguration &config)
+: config_(config),
+s3_client_(std::make_unique<S3Client>(config_))
+{
+}
+
 S3Facade::S3Facade(std::unique_ptr<S3Client> s3_client)
 : s3_client_(std::move(s3_client))
 {

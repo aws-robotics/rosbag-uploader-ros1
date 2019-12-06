@@ -50,6 +50,7 @@ class S3UploadManager
 {
 public:
     S3UploadManager();
+    explicit S3UploadManager(const Aws::Client::ClientConfiguration &config);
     explicit S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
     virtual ~S3UploadManager() = default;
 

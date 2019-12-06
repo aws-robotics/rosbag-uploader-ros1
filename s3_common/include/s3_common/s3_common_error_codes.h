@@ -29,6 +29,8 @@ enum S3ErrorCode
   SUCCESS = 0,
   // Upload was cancelled
   CANCELLED,
+  // Upload rejected because another upload request was active
+  UPLOADER_BUSY,
   // Generic failure
   FAILED,
   // The local file was not found or couldn't be opened
