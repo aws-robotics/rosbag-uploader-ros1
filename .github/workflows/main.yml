@@ -25,3 +25,4 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: coverage.tar
+        path: ./coverage.tar

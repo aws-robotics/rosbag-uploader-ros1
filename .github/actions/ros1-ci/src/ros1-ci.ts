@@ -39,13 +39,13 @@ function getExecOptions(): ExecOptions {
 async function setup() {
   try {
     const aptPackages = [
-      "lcov", 
-      "python-pip", 
-      "python3-pip", 
-      "python-rosinstall", 
-      "libgtest-dev", 
-      "cmake", 
-      "python3-colcon-common-extensions"
+      "cmake",
+      "lcov",
+      "libgtest-dev",
+      "python-pip",
+      "python-rosinstall",
+      "python3-colcon-common-extensions",
+      "python3-pip"
     ];
 
     const python2Packages = [
@@ -75,12 +75,15 @@ async function build() {
     const rosDistro = core.getInput('ros-distro');
     await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", rosDistro], getExecOptions());
 
-    const colconCmakeArgs = [
-      "--cmake-args", 
-      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", 
-      "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'", 
-      "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
-    ]
+    let colconCmakeArgs: any = []
+    if (core.getInput('coverage')) {
+      colconCmakeArgs = colconCmakeArgs.concat([
+        "--cmake-args",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
+        "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
+      ]);
+    }
     await exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
   } catch (error) {
     core.setFailed(error.message);
@@ -149,7 +152,7 @@ async function coverage() {
       await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions)
     } 
     else if (packageLanguage == "python") {
-      const allPackages = packagesToTest.split(" ")
+      const allPackages = packagesToTest.split(RegExp('\\s'))
       await Promise.all(allPackages.map(async (packageName) => {
         const packageExecOptions = getExecOptions();
         const workingDir = path.join(workspaceDir, 'build', packageName);
