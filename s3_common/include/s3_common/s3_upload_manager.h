@@ -73,7 +73,6 @@ public:
         const std::string & bucket,
         const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
     virtual bool IsAvailable() const;
-    virtual std::vector<UploadDescription> GetCompletedUploads();
 private:
     // The current state of the upload manager
     S3UploadManagerState manager_status_;
@@ -81,7 +80,6 @@ private:
     mutable std::recursive_mutex mutex_;
     // Facade for interaction with S3 client
     std::unique_ptr<S3Facade> s3_facade_;
-    std::vector<UploadDescription> completed_uploads_;
 };
 
 

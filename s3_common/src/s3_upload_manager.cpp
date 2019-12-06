@@ -55,12 +55,6 @@ bool S3UploadManager::CancelUpload()
     return true;
 }
 
-std::vector<UploadDescription> S3UploadManager::GetCompletedUploads()
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    return completed_uploads_;
-};
-
 S3ErrorCode S3UploadManager::UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
@@ -72,7 +66,6 @@ S3ErrorCode S3UploadManager::UploadFiles(
             return S3ErrorCode::UPLOADER_BUSY;
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
-        completed_uploads_.clear();
     }
     std::vector<UploadDescription> completed_uploads;
     S3ErrorCode upload_result = S3ErrorCode::SUCCESS;
