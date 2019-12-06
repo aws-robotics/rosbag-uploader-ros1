@@ -77,7 +77,6 @@ public:
         completed_uploads = callback_uploads;
     }
 
-<<<<<<< HEAD
     std::future<S3ErrorCode> UploadFilesUntilUnlocked(std::unique_ptr<S3UploadManager> & manager,
                                                       std::mutex & lock_during_uploading,
                                                       std::condition_variable & notify_is_uploading,
@@ -108,15 +107,6 @@ public:
         };
 
         return std::async(std::launch::async, upload);
-=======
-    std::thread UploadFilesUntilUnlocked(S3UploadManager& manager, S3ErrorCode& result) {
-        return std::thread([&]()
-            {
-                result = manager.UploadFiles(uploads, "bucket",
-                    [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
-            }
-        );
->>>>>>> Refactor threading tests, linting
     } 
 };
 
@@ -129,11 +119,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
 
     S3UploadManager manager(std::move(facade));
     EXPECT_TRUE(manager.IsAvailable());
-<<<<<<< HEAD
     EXPECT_TRUE(completed_uploads.empty());
-=======
-    EXPECT_TRUE(manager.GetCompletedUploads().empty());
->>>>>>> Refactor threading tests, linting
     auto result = manager.UploadFiles(uploads, "bucket",
                     [this](const std::vector<UploadDescription>& callback_uploads)
                     {this->FeedbackCallback(callback_uploads);});
@@ -151,19 +137,12 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
     S3UploadManager manager(std::move(facade));
     EXPECT_TRUE(manager.IsAvailable());
     auto result = manager.UploadFiles(uploads, "bucket",
-<<<<<<< HEAD
                     [this](const std::vector<UploadDescription>& callback_uploads)
                     {this->FeedbackCallback(callback_uploads);});
     EXPECT_EQ(S3ErrorCode::FAILED, result);
     EXPECT_EQ(1, num_feedback_calls);
     EXPECT_EQ(1, completed_uploads.size());
     EXPECT_EQ(uploads.at(0), completed_uploads.at(0));
-=======
-        [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
-    EXPECT_EQ(result, S3ErrorCode::FAILED);
-    EXPECT_EQ(num_feedback_calls, 1);
-    EXPECT_EQ(manager.GetCompletedUploads().size(), 1);
->>>>>>> Refactor threading tests, linting
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -175,23 +154,10 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     std::mutex pause_mutex;
     // Used to notify main thread that the upload has started
     std::condition_variable upload_cv;
-<<<<<<< HEAD
 
     auto feedback_callback = [this](const std::vector<UploadDescription> & callback_uploads) {
         this->FeedbackCallback(callback_uploads);
     };
-=======
-    S3ErrorCode result1;
-
-
-    EXPECT_CALL(*facade, PutObject(_,_,_))
-        .WillOnce(DoAll(
-            InvokeWithoutArgs([&upload_cv, &pause_mutex](){WaitUntilUnlocked(pause_mutex, upload_cv);}),
-            Return(S3ErrorCode::SUCCESS)))
-        .WillOnce(Return(S3ErrorCode::SUCCESS));
-    
-    S3UploadManager manager(std::move(facade));
->>>>>>> Refactor threading tests, linting
 
     // Pause execution of file upload
     pause_mutex.lock();
