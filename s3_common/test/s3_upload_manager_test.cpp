@@ -99,6 +99,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
         [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
     EXPECT_EQ(result, S3ErrorCode::SUCCESS);
     EXPECT_EQ(num_feedback_calls, uploads.size());
+    EXPECT_EQ(manager.GetCompletedUploads(), uploads);
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -114,6 +115,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
     EXPECT_EQ(result, S3ErrorCode::FAILED);
     EXPECT_EQ(num_feedback_calls, 1);
     EXPECT_EQ(manager.GetCompletedUploads().size(), 1);
+    EXPECT_EQ(manager.GetCompletedUploads().at(0), uploads.at(0));
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -162,6 +164,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     // The first request should continue uninterrupted
     EXPECT_EQ(result1, S3ErrorCode::SUCCESS);
     EXPECT_EQ(num_feedback_calls, uploads.size());
+    EXPECT_EQ(manager.GetCompletedUploads(), uploads);
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -208,5 +211,6 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
     EXPECT_EQ(result, S3ErrorCode::CANCELLED);
     EXPECT_EQ(num_feedback_calls, 1);
     EXPECT_EQ(manager.GetCompletedUploads().size(), 1);
+    EXPECT_EQ(manager.GetCompletedUploads().at(0), uploads.at(0));
     EXPECT_TRUE(manager.IsAvailable());
 }

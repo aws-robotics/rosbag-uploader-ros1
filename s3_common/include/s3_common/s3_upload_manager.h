@@ -40,6 +40,10 @@ struct UploadDescription
 {
     std::string file_path;
     std::string object_key;
+    bool operator==(const UploadDescription& rhs) const
+    {
+        return file_path == rhs.file_path && object_key == rhs.object_key;
+    }
 };
 
 class S3UploadManager
