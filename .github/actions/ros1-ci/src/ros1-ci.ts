@@ -5,9 +5,9 @@ import { ExecOptions } from '@actions/exec/lib/interfaces';
 
 const COVERAGE_ARTIFACT_NAME = "coverage.tar";
 const ROS_ENV_VARIABLES: any = {};
+const ROS_DISTRO = core.getInput('ros-distro', {required: true});
 
 async function loadROSEnvVariables() {
-  const rosDistro = core.getInput('ros-distro');
   const options = {
     listeners: {
       stdout: (data: Buffer) => {
@@ -23,13 +23,12 @@ async function loadROSEnvVariables() {
 
   await exec.exec("bash", [
   "-c",
-  `source /opt/ros/${rosDistro}/setup.bash && printenv`
+  `source /opt/ros/${ROS_DISTRO}/setup.bash && printenv`
   ], options)
 }
 
 function getExecOptions(): ExecOptions {
   const workspaceDir = core.getInput('workspace-dir');
-  const rosDistro = core.getInput('ros-distro');
   const execOptions: ExecOptions = {
     cwd: workspaceDir,
     env: Object.assign({}, process.env, ROS_ENV_VARIABLES)
@@ -73,8 +72,7 @@ async function setup() {
 
 async function build() {
   try {
-    const rosDistro = core.getInput('ros-distro');
-    await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", rosDistro], getExecOptions());
+    await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
 
     let colconCmakeArgs: any = []
     if (core.getInput('coverage')) {

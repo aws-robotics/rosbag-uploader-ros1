@@ -9,7 +9,7 @@ inputs:
     required: true
   packages-to-test: 
     description: 'Space separated string of packages you want to run tests for'
-    required: false
+    default: ''
   ros-distro:
     description: 'Distribution of ROS you are using [kinetic|melodic]'
     required: true
@@ -17,7 +17,7 @@ inputs:
     description: 'Boolean - Should tests be run'
     default: true
   workspace-dir:
-    description: 'Path to the workspace folder of your package'
+    description: 'Path to the workspace folder that contains your package/s'
     default: './'
 runs:
   using: 'node12'
