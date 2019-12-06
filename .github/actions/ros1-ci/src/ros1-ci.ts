@@ -13,6 +13,7 @@ async function loadROSEnvVariables() {
       stdout: (data: Buffer) => {
         const lines = data.toString().split("\n");
         lines.forEach(line => {
+          if (line.trim().length === 0) return;
           const contents = line.trim().split("=");
           ROS_ENV_VARIABLES[contents[0]] = contents.slice(1).join("=");
         });

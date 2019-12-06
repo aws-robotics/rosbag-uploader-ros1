@@ -962,6 +962,8 @@ function loadROSEnvVariables() {
                 stdout: (data) => {
                     const lines = data.toString().split("\n");
                     lines.forEach(line => {
+                        if (line.trim().length === 0)
+                            return;
                         const contents = line.trim().split("=");
                         ROS_ENV_VARIABLES[contents[0]] = contents.slice(1).join("=");
                     });
@@ -987,13 +989,13 @@ function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const aptPackages = [
-                "lcov",
-                "python-pip",
-                "python3-pip",
-                "python-rosinstall",
-                "libgtest-dev",
                 "cmake",
-                "python3-colcon-common-extensions"
+                "lcov",
+                "libgtest-dev",
+                "python-pip",
+                "python-rosinstall",
+                "python3-colcon-common-extensions",
+                "python3-pip"
             ];
             const python2Packages = [
                 "coverage"
@@ -1018,12 +1020,15 @@ function build() {
         try {
             const rosDistro = core.getInput('ros-distro');
             yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", rosDistro], getExecOptions());
-            const colconCmakeArgs = [
-                "--cmake-args",
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-                "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
-                "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
-            ];
+            let colconCmakeArgs = [];
+            if (core.getInput('coverage')) {
+                colconCmakeArgs = colconCmakeArgs.concat([
+                    "--cmake-args",
+                    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                    "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
+                    "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
+                ]);
+            }
             yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
         }
         catch (error) {
@@ -1086,7 +1091,7 @@ function coverage() {
                 yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions);
             }
             else if (packageLanguage == "python") {
-                const allPackages = packagesToTest.split(" ");
+                const allPackages = packagesToTest.split(RegExp('\\s'));
                 yield Promise.all(allPackages.map((packageName) => __awaiter(this, void 0, void 0, function* () {
                     const packageExecOptions = getExecOptions();
                     const workingDir = path.join(workspaceDir, 'build', packageName);
