@@ -77,13 +77,9 @@ public:
 private:
     // The current state of the upload manager
     S3UploadManagerState manager_status_;
-<<<<<<< HEAD
     // Guards manager_status_
     mutable std::recursive_mutex mutex_;
     // Facade for interaction with S3 client
-=======
-    mutable std::recursive_mutex mutex_; // Guards manager_status_ and uploads_completed_
->>>>>>> Refactor threading tests, linting
     std::unique_ptr<S3Facade> s3_facade_;
     std::vector<UploadDescription> completed_uploads_;
 };
