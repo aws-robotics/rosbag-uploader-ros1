@@ -58,14 +58,12 @@ public:
     virtual S3ErrorCode UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
-        boost::function<void (int, int)> feedback_callback);
+        boost::function<void (const std::vector<UploadDescription>&)> feedback_callback);
     virtual bool IsAvailable() const;
-    virtual std::vector<UploadDescription> GetCompletedUploads();
 private:
     S3UploadManagerState manager_status_;
     mutable std::recursive_mutex mutex_; // Guards manager_status_ and uploads_completed_
     std::unique_ptr<S3Facade> s3_facade_;
-    std::vector<UploadDescription> completed_uploads_;
 };
 
 

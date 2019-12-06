@@ -55,16 +55,10 @@ bool S3UploadManager::CancelUpload()
     return true;
 }
 
-std::vector<UploadDescription> S3UploadManager::GetCompletedUploads()
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    return completed_uploads_;
-};
-
 S3ErrorCode S3UploadManager::UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
-        boost::function<void (int, int)> feedback_callback)
+        boost::function<void (const std::vector<UploadDescription>&)> feedback_callback)
 {
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -72,12 +66,9 @@ S3ErrorCode S3UploadManager::UploadFiles(
             return S3ErrorCode::UPLOADER_BUSY;
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
-        completed_uploads_.clear();
     }
-
+    std::vector<UploadDescription> completed_uploads;
     S3ErrorCode upload_result = S3ErrorCode::SUCCESS;
-    int num_files = upload_descriptions.size();
-    int num_uploaded = 0;
     for (const auto& upload_description: upload_descriptions) {
         {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -96,10 +87,9 @@ S3ErrorCode S3UploadManager::UploadFiles(
         }
         {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
-            completed_uploads_.push_back(upload_description);
+            completed_uploads.push_back(upload_description);
         }
-        num_uploaded += 1;
-        feedback_callback(num_uploaded, num_files-num_uploaded);
+        feedback_callback(completed_uploads);
     }
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);

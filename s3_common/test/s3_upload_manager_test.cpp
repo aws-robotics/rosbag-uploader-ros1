@@ -56,6 +56,7 @@ class S3UploadManagerTest : public ::testing::Test
 protected:
     std::unique_ptr<MockS3Facade> facade;
     std::vector<UploadDescription> uploads;
+    std::vector<UploadDescription> completed_uploads;
     int num_feedback_calls;
     void SetUp() override
     {
@@ -68,18 +69,19 @@ protected:
             };
     }
 public:
-    void FeedbackCallback(int num_uploaded, int num_remaining)
+    void FeedbackCallback(const std::vector<UploadDescription>& callback_uploads)
     {
         num_feedback_calls++;
-        EXPECT_EQ(num_uploaded, num_feedback_calls);
-        EXPECT_EQ(num_remaining, uploads.size()-num_uploaded);
+        EXPECT_EQ(callback_uploads.size(), num_feedback_calls);
+        completed_uploads = callback_uploads;
     }
 
     std::thread UploadFilesUntilUnlocked(S3UploadManager& manager, S3ErrorCode& result) {
         return std::thread([&]()
             {
                 result = manager.UploadFiles(uploads, "bucket",
-                    [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
+                    [this](const std::vector<UploadDescription>& callback_uploads)
+                    {this->FeedbackCallback(callback_uploads);});
             }
         );
     } 
@@ -94,12 +96,13 @@ TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
 
     S3UploadManager manager(std::move(facade));
     EXPECT_TRUE(manager.IsAvailable());
-    EXPECT_TRUE(manager.GetCompletedUploads().empty());
+    EXPECT_TRUE(completed_uploads.empty());
     auto result = manager.UploadFiles(uploads, "bucket",
-        [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
+                    [this](const std::vector<UploadDescription>& callback_uploads)
+                    {this->FeedbackCallback(callback_uploads);});
     EXPECT_EQ(S3ErrorCode::SUCCESS, result);
     EXPECT_EQ(uploads.size(), num_feedback_calls);
-    EXPECT_EQ(uploads, manager.GetCompletedUploads());
+    EXPECT_EQ(uploads, completed_uploads);
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -111,11 +114,12 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
     S3UploadManager manager(std::move(facade));
     EXPECT_TRUE(manager.IsAvailable());
     auto result = manager.UploadFiles(uploads, "bucket",
-        [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
+                    [this](const std::vector<UploadDescription>& callback_uploads)
+                    {this->FeedbackCallback(callback_uploads);});
     EXPECT_EQ(S3ErrorCode::FAILED, result);
     EXPECT_EQ(1, num_feedback_calls);
-    EXPECT_EQ(1, manager.GetCompletedUploads().size());
-    EXPECT_EQ(uploads.at(0), manager.GetCompletedUploads().at(0));
+    EXPECT_EQ(1, completed_uploads.size());
+    EXPECT_EQ(uploads.at(0), completed_uploads.at(0));
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -151,11 +155,12 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     EXPECT_FALSE(manager.IsAvailable());
 
     auto result2 = manager.UploadFiles(uploads, "bucket",
-        [this](int num_uploaded, int num_remaining) {this->FeedbackCallback(num_uploaded, num_remaining);});
+                    [this](const std::vector<UploadDescription>& callback_uploads)
+                    {this->FeedbackCallback(callback_uploads);});
     // The manager is busy and should reject the upload request
     EXPECT_EQ(S3ErrorCode::UPLOADER_BUSY, result2);
     // No files have been uploaded
-    EXPECT_TRUE(manager.GetCompletedUploads().empty());
+    EXPECT_TRUE(completed_uploads.empty());
 
     // Finish execution of file upload
     pause_mutex.unlock();
@@ -164,7 +169,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     // The first request should continue uninterrupted
     EXPECT_EQ(S3ErrorCode::SUCCESS, result1);
     EXPECT_EQ(uploads.size(), num_feedback_calls);
-    EXPECT_EQ(uploads, manager.GetCompletedUploads());
+    EXPECT_EQ(uploads, completed_uploads);
     EXPECT_TRUE(manager.IsAvailable());
 }
 
@@ -210,7 +215,7 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
 
     EXPECT_EQ(S3ErrorCode::CANCELLED, result);
     EXPECT_EQ(1, num_feedback_calls);
-    EXPECT_EQ(1, manager.GetCompletedUploads().size());
-    EXPECT_EQ(uploads.at(0), manager.GetCompletedUploads().at(0));
+    EXPECT_EQ(1, completed_uploads.size());
+    EXPECT_EQ(uploads.at(0), completed_uploads.at(0));
     EXPECT_TRUE(manager.IsAvailable());
 }
