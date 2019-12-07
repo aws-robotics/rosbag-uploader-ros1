@@ -72,28 +72,25 @@ public:
                                                       std::condition_variable & notify_is_uploading,
                                                       const boost::function<void(const std::vector<UploadDescription>&)> callback,
                                                       int additional_returns = 0) {
-        auto upload = [this, &manager, additional_returns, &uploading_until_unlocked, &notify_is_uploading, callback]() {
-            auto & mock_calls = EXPECT_CALL(*facade, PutObject(_,_,_))
-                .WillOnce(DoAll(
-                    InvokeWithoutArgs([&uploading_until_unlocked, &notify_is_uploading]() {
-                        // std::cout << "notifying is uploading" << std::endl;
-                        // Notify that the function is entered and blocking
-                        notify_is_uploading.notify_all();
+        auto & mock_calls = EXPECT_CALL(*facade, PutObject(_,_,_))
+            .WillOnce(DoAll(
+                InvokeWithoutArgs([&uploading_until_unlocked, &notify_is_uploading]() {
+                    // Notify that the function is entered and blocking
+                    notify_is_uploading.notify_all();
+                    // Block until the mutex has been unlocked
+                    std::unique_lock<std::mutex> lock(uploading_until_unlocked);
+                }),
+                Return(S3ErrorCode::SUCCESS)));
+        for (int i = 0; i < additional_returns; ++i) {
+            mock_calls.WillOnce(Return(S3ErrorCode::SUCCESS));
+        }
 
-                        // std::cout << "locked on uploading" << std::endl;
-                        // Block until the mutex has been unlocked
-                        std::unique_lock<std::mutex> lock(uploading_until_unlocked);
-                    }),
-                    Return(S3ErrorCode::SUCCESS)));
-            for (int i = 0; i < additional_returns; ++i) {
-                mock_calls.WillOnce(Return(S3ErrorCode::SUCCESS));
-            }
+        manager = std::unique_ptr<S3UploadManager>(new S3UploadManager(std::move(facade)));
 
-            manager = std::unique_ptr<S3UploadManager>(new S3UploadManager(std::move(facade)));
+        // upload hasn't started, nothing to cancel
+        EXPECT_FALSE(manager->CancelUpload());
 
-            // upload hasn't started, nothing to cancel
-            EXPECT_FALSE(manager->CancelUpload());
-
+        auto upload = [this, &manager, callback]() {
             return manager->UploadFiles(this->uploads, "bucket", callback);
         };
 
@@ -157,11 +154,8 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     // Wait until upload has started so that manager should be busy.
     {
         std::mutex cv_mutex;
-        // std::cout << "acquiring cv lock" << std::endl;
         std::unique_lock<std::mutex> lk(cv_mutex);
-        // std::cout << "waiting on upload to start" << std::endl;
         upload_cv.wait(lk);
-        // std::cout << "upload has started" << std::endl;
     }
 
     EXPECT_FALSE(manager->IsAvailable());
@@ -204,11 +198,8 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
     // Wait until upload has started so that manager should be busy.
     {
         std::mutex cv_mutex;
-        // std::cout << "acquiring cv lock" << std::endl;
         std::unique_lock<std::mutex> lk(cv_mutex);
-        // std::cout << "waiting on upload to start" << std::endl;
         upload_cv.wait(lk);
-        // std::cout << "upload has started" << std::endl;
     }
 
     EXPECT_FALSE(manager->IsAvailable());
