@@ -32,24 +32,13 @@ using ::testing::IgnoreResult;
 using ::testing::Return;
 using ::testing::_;
 
+
 class MockS3Facade : public S3Facade
 {
 public:
     MockS3Facade() : S3Facade() {}
     MOCK_METHOD3(PutObject, S3ErrorCode(const std::string &, const std::string &, const std::string &));
 };
-
-
-// This function simulates a busy process that will block until mutex is unlocked
-void WaitUntilUnlocked(
-    std::mutex& mutex,
-    std::condition_variable& cv)
-{
-    // Notify that the function is entered and blocking
-    cv.notify_all();
-    // Block until the mutex has been unlocked
-    std::unique_lock<std::mutex> lock(mutex);
-}
 
 class S3UploadManagerTest : public ::testing::Test
 {
@@ -58,6 +47,7 @@ protected:
     std::vector<UploadDescription> uploads;
     std::vector<UploadDescription> completed_uploads;
     int num_feedback_calls;
+
     void SetUp() override
     {
         num_feedback_calls = 0;
@@ -68,6 +58,7 @@ protected:
                 {"file2", "location2"}
             };
     }
+
 public:
     void FeedbackCallback(const std::vector<UploadDescription>& callback_uploads)
     {
@@ -76,14 +67,37 @@ public:
         completed_uploads = callback_uploads;
     }
 
-    std::thread UploadFilesUntilUnlocked(S3UploadManager& manager, S3ErrorCode& result) {
-        return std::thread([&]()
-            {
-                result = manager.UploadFiles(uploads, "bucket",
-                    [this](const std::vector<UploadDescription>& callback_uploads)
-                    {this->FeedbackCallback(callback_uploads);});
+    std::future<S3ErrorCode> UploadFilesUntilUnlocked(std::unique_ptr<S3UploadManager> & manager,
+                                                      std::mutex & uploading_until_unlocked,
+                                                      std::condition_variable & notify_is_uploading,
+                                                      const boost::function<void(const std::vector<UploadDescription>&)> callback,
+                                                      int additional_returns = 0) {
+        auto upload = [this, &manager, additional_returns, &uploading_until_unlocked, &notify_is_uploading, callback]() {
+            auto & mock_calls = EXPECT_CALL(*facade, PutObject(_,_,_))
+                .WillOnce(DoAll(
+                    InvokeWithoutArgs([&uploading_until_unlocked, &notify_is_uploading]() {
+                        // std::cout << "notifying is uploading" << std::endl;
+                        // Notify that the function is entered and blocking
+                        notify_is_uploading.notify_all();
+
+                        // std::cout << "locked on uploading" << std::endl;
+                        // Block until the mutex has been unlocked
+                        std::unique_lock<std::mutex> lock(uploading_until_unlocked);
+                    }),
+                    Return(S3ErrorCode::SUCCESS)));
+            for (int i = 0; i < additional_returns; ++i) {
+                mock_calls.WillOnce(Return(S3ErrorCode::SUCCESS));
             }
-        );
+
+            manager = std::unique_ptr<S3UploadManager>(new S3UploadManager(std::move(facade)));
+
+            // upload hasn't started, nothing to cancel
+            EXPECT_FALSE(manager->CancelUpload());
+
+            return manager->UploadFiles(this->uploads, "bucket", callback);
+        };
+
+        return std::async(std::launch::async, upload);
     } 
 };
 
@@ -125,38 +139,35 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
 
 TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
 {
+    std::unique_ptr<S3UploadManager> manager;
     // Pause the execution of the facade to simulate waiting for upload to S3
     std::mutex pause_mutex;
     // Used to notify main thread that the upload has started
     std::condition_variable upload_cv;
-    S3ErrorCode result1;
 
-
-    EXPECT_CALL(*facade, PutObject(_,_,_))
-        .WillOnce(DoAll(
-            InvokeWithoutArgs([&upload_cv, &pause_mutex](){WaitUntilUnlocked(pause_mutex, upload_cv);}),
-            Return(S3ErrorCode::SUCCESS)))
-        .WillOnce(Return(S3ErrorCode::SUCCESS));
-    
-    S3UploadManager manager(std::move(facade));
+    auto feedback_callback = [this](const std::vector<UploadDescription> & callback_uploads) {
+        this->FeedbackCallback(callback_uploads);
+    };
 
     // Pause execution of file upload
     pause_mutex.lock();
 
-    auto thread = UploadFilesUntilUnlocked(manager, result1);
+    std::future<S3ErrorCode> result1 = UploadFilesUntilUnlocked(manager, pause_mutex, upload_cv, feedback_callback, 1);
 
     // Wait until upload has started so that manager should be busy.
     {
         std::mutex cv_mutex;
+        // std::cout << "acquiring cv lock" << std::endl;
         std::unique_lock<std::mutex> lk(cv_mutex);
+        // std::cout << "waiting on upload to start" << std::endl;
         upload_cv.wait(lk);
+        // std::cout << "upload has started" << std::endl;
     }
 
-    EXPECT_FALSE(manager.IsAvailable());
+    EXPECT_FALSE(manager->IsAvailable());
 
-    auto result2 = manager.UploadFiles(uploads, "bucket",
-                    [this](const std::vector<UploadDescription>& callback_uploads)
-                    {this->FeedbackCallback(callback_uploads);});
+    S3ErrorCode result2 = manager->UploadFiles(uploads, "bucket", feedback_callback);
+
     // The manager is busy and should reject the upload request
     EXPECT_EQ(S3ErrorCode::UPLOADER_BUSY, result2);
     // No files have been uploaded
@@ -164,58 +175,55 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
 
     // Finish execution of file upload
     pause_mutex.unlock();
-    thread.join();
 
     // The first request should continue uninterrupted
-    EXPECT_EQ(S3ErrorCode::SUCCESS, result1);
-    EXPECT_EQ(uploads.size(), num_feedback_calls);
+    EXPECT_EQ(S3ErrorCode::SUCCESS, result1.get());
     EXPECT_EQ(uploads, completed_uploads);
-    EXPECT_TRUE(manager.IsAvailable());
+    EXPECT_EQ(uploads.size(), num_feedback_calls);
+
+    EXPECT_TRUE(manager->IsAvailable());
 }
 
 TEST_F(S3UploadManagerTest, TestCancelUpload)
 {
+    std::unique_ptr<S3UploadManager> manager;
     // Pause the execution of the facade to simulate waiting for upload to S3
     std::mutex pause_mutex;
     // Used to notify main thread that the upload has started
     std::condition_variable upload_cv;
-    S3ErrorCode result;
 
-    EXPECT_CALL(*facade,PutObject(_,_,_))
-        .WillOnce(DoAll(
-            InvokeWithoutArgs([&upload_cv, &pause_mutex](){WaitUntilUnlocked(pause_mutex, upload_cv);}),
-            Return(S3ErrorCode::SUCCESS)));
-
-    S3UploadManager manager(std::move(facade));
-
-    // upload hasn't started, nothing to cancel
-    EXPECT_FALSE(manager.CancelUpload());
+    auto feedback_callback = [this](const std::vector<UploadDescription>& callback_uploads) {
+        this->FeedbackCallback(callback_uploads);
+    };
 
     // Pause execution of file upload
     pause_mutex.lock();
 
-    auto thread = UploadFilesUntilUnlocked(manager, result);
+    std::future<S3ErrorCode> result = UploadFilesUntilUnlocked(manager, pause_mutex, upload_cv, feedback_callback);
     
     // Wait until upload has started so that manager should be busy.
     {
         std::mutex cv_mutex;
+        // std::cout << "acquiring cv lock" << std::endl;
         std::unique_lock<std::mutex> lk(cv_mutex);
+        // std::cout << "waiting on upload to start" << std::endl;
         upload_cv.wait(lk);
+        // std::cout << "upload has started" << std::endl;
     }
 
-    EXPECT_FALSE(manager.IsAvailable());
+    EXPECT_FALSE(manager->IsAvailable());
     // First call to cancel should succeed
-    EXPECT_TRUE(manager.CancelUpload());
+    EXPECT_TRUE(manager->CancelUpload());
     // Subsequent cancel request should still succeed
-    EXPECT_TRUE(manager.CancelUpload());
+    EXPECT_TRUE(manager->CancelUpload());
 
     // Finish execution of file upload
     pause_mutex.unlock();
-    thread.join();
 
-    EXPECT_EQ(S3ErrorCode::CANCELLED, result);
+    EXPECT_EQ(S3ErrorCode::CANCELLED, result.get());
     EXPECT_EQ(1, num_feedback_calls);
     EXPECT_EQ(1, completed_uploads.size());
     EXPECT_EQ(uploads.at(0), completed_uploads.at(0));
-    EXPECT_TRUE(manager.IsAvailable());
+
+    EXPECT_TRUE(manager->IsAvailable());
 }
