@@ -68,17 +68,19 @@ public:
     }
 
     std::future<S3ErrorCode> UploadFilesUntilUnlocked(std::unique_ptr<S3UploadManager> & manager,
-                                                      std::mutex & uploading_until_unlocked,
+                                                      std::mutex & lock_during_uploading,
                                                       std::condition_variable & notify_is_uploading,
+                                                      bool & is_uploading,
                                                       const boost::function<void(const std::vector<UploadDescription>&)> callback,
                                                       int additional_returns = 0) {
         auto & mock_calls = EXPECT_CALL(*facade, PutObject(_,_,_))
             .WillOnce(DoAll(
-                InvokeWithoutArgs([&uploading_until_unlocked, &notify_is_uploading]() {
+                InvokeWithoutArgs([&is_uploading, &notify_is_uploading, &lock_during_uploading]() {
+                    is_uploading = true;
                     // Notify that the function is entered and blocking
                     notify_is_uploading.notify_all();
                     // Block until the mutex has been unlocked
-                    std::unique_lock<std::mutex> lock(uploading_until_unlocked);
+                    std::unique_lock<std::mutex> lock(lock_during_uploading);
                 }),
                 Return(S3ErrorCode::SUCCESS)));
         for (int i = 0; i < additional_returns; ++i) {
@@ -137,6 +139,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
 TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
 {
     std::unique_ptr<S3UploadManager> manager;
+    bool is_uploading = false;
     // Pause the execution of the facade to simulate waiting for upload to S3
     std::mutex pause_mutex;
     // Used to notify main thread that the upload has started
@@ -149,13 +152,13 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
     // Pause execution of file upload
     pause_mutex.lock();
 
-    std::future<S3ErrorCode> result1 = UploadFilesUntilUnlocked(manager, pause_mutex, upload_cv, feedback_callback, 1);
+    std::future<S3ErrorCode> result1 = UploadFilesUntilUnlocked(manager, pause_mutex, upload_cv, is_uploading, feedback_callback, 1);
 
     // Wait until upload has started so that manager should be busy.
     {
         std::mutex cv_mutex;
         std::unique_lock<std::mutex> lk(cv_mutex);
-        upload_cv.wait(lk);
+        upload_cv.wait(lk, [&is_uploading]() { return is_uploading; });
     }
 
     EXPECT_FALSE(manager->IsAvailable());
@@ -181,6 +184,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsWhileManagerUploading)
 TEST_F(S3UploadManagerTest, TestCancelUpload)
 {
     std::unique_ptr<S3UploadManager> manager;
+    bool is_uploading = false;
     // Pause the execution of the facade to simulate waiting for upload to S3
     std::mutex pause_mutex;
     // Used to notify main thread that the upload has started
@@ -193,13 +197,13 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
     // Pause execution of file upload
     pause_mutex.lock();
 
-    std::future<S3ErrorCode> result = UploadFilesUntilUnlocked(manager, pause_mutex, upload_cv, feedback_callback);
-    
+    std::future<S3ErrorCode> result = UploadFilesUntilUnlocked(manager, pause_mutex, upload_cv, is_uploading, feedback_callback);
+
     // Wait until upload has started so that manager should be busy.
     {
         std::mutex cv_mutex;
         std::unique_lock<std::mutex> lk(cv_mutex);
-        upload_cv.wait(lk);
+        upload_cv.wait(lk, [&is_uploading]() { return is_uploading; });
     }
 
     EXPECT_FALSE(manager->IsAvailable());
