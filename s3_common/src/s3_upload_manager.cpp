@@ -58,7 +58,7 @@ bool S3UploadManager::CancelUpload()
 S3ErrorCode S3UploadManager::UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
-        boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback)
+        const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback)
 {
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -85,10 +85,7 @@ S3ErrorCode S3UploadManager::UploadFiles(
         if (upload_result != S3ErrorCode::SUCCESS) {
             break;
         }
-        {
-            std::lock_guard<std::recursive_mutex> lock(mutex_);
-            completed_uploads.push_back(upload_description);
-        }
+        completed_uploads.push_back(upload_description);
         feedback_callback(completed_uploads);
     }
     {

@@ -46,23 +46,39 @@ struct UploadDescription
     }
 };
 
+// Manages uploading a list of files to Amazon S3
 class S3UploadManager
 {
 public:
+    // Uses default constructor for S3Facade
     S3UploadManager();
+    // Use the given ClientConfiguration for constructing an S3Facade
     explicit S3UploadManager(const Aws::Client::ClientConfiguration &config);
     explicit S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
     virtual ~S3UploadManager() = default;
 
+    /* Cancel the current upload
+     * @return true if the cancel was successful, false if the no upload was in progress
+     */
     virtual bool CancelUpload();
+
+    /* Upload a list of files to S3
+     * @param upload_descriptions a vector of files to upload to S3
+     * @param bucket the name of the s3 bucket to target. Must be in the same region as the client config
+     * @param feedback_callback called with the list of UploadDescriptions that have been finished
+     * @return An Error code describing the result of the upload.
+     */ 
     virtual S3ErrorCode UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
-        boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
+        const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
     virtual bool IsAvailable() const;
 private:
+    // The current state of the upload manager
     S3UploadManagerState manager_status_;
-    mutable std::recursive_mutex mutex_; // Guards manager_status_ and uploads_completed_
+    // Guards manager_status_
+    mutable std::recursive_mutex mutex_;
+    // Facade for interaction with S3 client
     std::unique_ptr<S3Facade> s3_facade_;
 };
 

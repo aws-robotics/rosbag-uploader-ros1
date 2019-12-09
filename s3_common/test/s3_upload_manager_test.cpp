@@ -71,7 +71,7 @@ public:
                                                       std::mutex & lock_during_uploading,
                                                       std::condition_variable & notify_is_uploading,
                                                       bool & is_uploading,
-                                                      const boost::function<void(const std::vector<UploadDescription>&)> callback,
+                                                      const boost::function<void(const std::vector<UploadDescription>&)>& callback,
                                                       int additional_returns = 0) {
         auto & mock_calls = EXPECT_CALL(*facade, PutObject(_,_,_))
             .WillOnce(DoAll(
