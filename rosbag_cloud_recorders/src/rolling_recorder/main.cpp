@@ -15,10 +15,12 @@
 
 #include <ros/ros.h>
 #include <rolling_recorder/rolling_recorder.h>
-
+#include <aws/core/utils/logging/LogMacros.h>
+#include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 
 int main(int argc, char* argv[])
 {
+  Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>("RosbagRollingRecord"));
   ros::init(argc, argv, "rosbag_rolling_recorder");
   ros::spin();
   return 0;

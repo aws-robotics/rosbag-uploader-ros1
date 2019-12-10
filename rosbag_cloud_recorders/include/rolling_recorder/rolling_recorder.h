@@ -22,7 +22,7 @@
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <rosbag/recorder.h>
-
+#include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <file_uploader_msgs/UploadFilesGoal.h>
@@ -40,7 +40,7 @@ namespace Rosbag
 {
 
 using RollingRecorderActionServer = actionlib::ActionServer<recorder_msgs::RollingRecorderAction>;
-using GoalHandle = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>::GoalHandle;
+using UploadFilesGoalHandle = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>::GoalHandle;
 using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploader_msgs::UploadFilesAction>;
 
 /**
@@ -67,7 +67,7 @@ public:
    * Returns boolean indicating whether or not the rolling recorder is currently recording in the
    * background
    */
-  bool IsRollingRecorderActive();
+  bool IsRollingRecorderActive() const;
 
 private:
   void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
@@ -76,7 +76,11 @@ private:
   void StartOldRosBagsPeriodicRemoval();
   file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
   RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
-
+  void ReleaseCurrentGoalHandle();
+  void SetCurrentGoalHandle(RollingRecorderActionServer::GoalHandle & new_goal_handle);
+  void GenerateResult(recorder_msgs::RollingRecorderResult & recording_result, recorder_msgs::RecorderResult & t_recording_result, uint stage, std::string message);
+  void GenerateFeedback(recorder_msgs::RollingRecorderFeedback & record_rosbag_action_feedback, uint stage);
+  bool ValidateGoal(boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal, double current_time_in_sec);
   enum LocalRosBagStatus { EXPIRED, ACTIVE, UPLOADED };
 
   std::unordered_map<std::string, Aws::Rosbag::RollingRecorder::LocalRosBagStatus> local_rosbag_status_;
@@ -85,6 +89,8 @@ private:
   std::unique_ptr<rosbag::Recorder> rosbag_rolling_recorder_;
   std::unique_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
   ros::Duration max_duration_;
+  RollingRecorderActionServer::GoalHandle * current_goal_handle_;
+  bool is_rolling_recorder_running_;
 };
 
 }  // namespace Rosbag

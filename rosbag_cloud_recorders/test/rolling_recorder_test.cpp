@@ -52,7 +52,10 @@ TEST_F(RollingRecorderNodeFixture, TestGetRollingRecorderHealthStatusApi)
 
 TEST_F(RollingRecorderNodeFixture, TestStartRollingRecorderApi)
 {
-  EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::SUCCESS, rolling_recorder_->StartRollingRecorder());
+  rolling_recorder_->StartRollingRecorder();
+
+  //  TODO: change to expect_true once StartRollingRecorder() is implemented
+  EXPECT_FALSE(rolling_recorder_->IsRollingRecorderActive());
 }
 
 TEST_F(RollingRecorderNodeFixture, TestStopRollingRecorderApi)
@@ -60,27 +63,29 @@ TEST_F(RollingRecorderNodeFixture, TestStopRollingRecorderApi)
   EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::SUCCESS, rolling_recorder_->StopRollingRecorder());
 }
 
-TEST_F(RollingRecorderNodeFixture, TestActionReceivedbyActionServer)
+TEST_F(RollingRecorderNodeFixture, TestInvalidGoalReceivedbyActionServer)
 {
   ros::AsyncSpinner executor(0);
   executor.start();
-
-  rolling_recorder_->StartRollingRecorder();
-
-  bool message_received = false;
+  bool action_completed = false;
+  int retry = 10;
   // Wait 10 seconds for server to start
   ASSERT_TRUE(action_client_->waitForActionServerToStart(ros::Duration(10, 0)));
-  auto transition_call_back = [&message_received](RollingRecorderActionClient::GoalHandle goal_handle)
-  {
-    EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
-    message_received = true;
-  };
+
   recorder_msgs::RollingRecorderGoal goal;
-  auto gh = action_client_->sendGoal(goal, transition_call_back);
-  ros::Duration(1, 0).sleep();
-
-  ASSERT_TRUE(message_received);
-
+  auto goal_handle = action_client_->sendGoal(goal);
+  while (retry > 0) {
+    if (actionlib::CommState::StateEnum::DONE == goal_handle.getCommState().state_) {
+      action_completed = true;
+    }
+    if (action_completed) {
+      break;
+    }
+    ros::Duration(5, 0).sleep();
+    retry--;
+  }
+  EXPECT_TRUE(action_completed);
+  EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
   executor.stop();
 }
 

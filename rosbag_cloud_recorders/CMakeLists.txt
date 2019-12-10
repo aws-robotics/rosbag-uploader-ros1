@@ -29,6 +29,8 @@ find_package(catkin REQUIRED COMPONENTS
     rosbag
     file_uploader_msgs
     roslint
+    aws_common
+    aws_ros1_common
 )
 
 set(ROSBAG_CLOUD_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
@@ -51,6 +53,8 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${AWSSDK_INCLUDE_DIR}
+    ${aws_common_INCLUDE_DIRS}
+    ${aws_ros1_common_INCLUDE_DIR}
 )
 
 add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
@@ -61,6 +65,8 @@ add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
 
 target_link_libraries(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_LIBRARIES}
+    ${aws_common_LIBRARIES}
+    ${aws_ros1_common_LIBRARIES}
 )
 
 add_dependencies(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
@@ -81,6 +87,8 @@ add_executable(
 
 target_link_libraries(rolling_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+    ${aws_common_LIBRARIES}
+    ${aws_ros1_common_LIBRARIES}
 )
 
 #############
