@@ -24,24 +24,25 @@
 #include <s3_common/s3_facade.h>
 #include <s3_common/utils.h>
 
-#include <aws/s3/model/PutObjectRequest.h>
-
-
 namespace Aws
 {
 namespace S3
 {
 
 S3Facade::S3Facade() 
-: s3_client_(std::make_unique<Aws::S3::S3Client>())
+: S3Facade(std::make_unique<S3Client>())
 {
 }
 
-S3Facade::S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client)
+S3Facade::S3Facade(const Aws::Client::ClientConfiguration& config)
+: s3_client_(std::make_unique<S3Client>(config))
+{
+}
+
+S3Facade::S3Facade(std::unique_ptr<S3Client> s3_client)
 : s3_client_(std::move(s3_client))
 {
 }
-
 
 Aws::S3::S3ErrorCode S3Facade::PutObject(
     const std::string & file_path,
@@ -64,7 +65,7 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
     auto outcome = s3_client_->PutObject(put_object_request);
 
     if (!outcome.IsSuccess()) {
-        auto error = outcome.GetError();
+        const auto& error = outcome.GetError();
         AWS_LOGSTREAM_ERROR(__func__, "Failed to upload "<<file_path<<" to s3://"<<bucket<<"/"<<key<<" with message: "<<error.GetMessage());
         auto error_type = error.GetErrorType();
         if (error_type == Aws::S3::S3Errors::ACCESS_DENIED) {
@@ -75,10 +76,9 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
         }
         return Aws::S3::S3ErrorCode::FAILED;
                 
-    } else {
-        AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
-        return Aws::S3::S3ErrorCode::SUCCESS;
-    }
+    } 
+    AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
+    return Aws::S3::S3ErrorCode::SUCCESS;
 }
 
 

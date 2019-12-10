@@ -26,10 +26,12 @@ namespace S3
 class S3Facade
 {
 public:
+    // Creates an S3Client with default ClientConfig
     S3Facade();
     S3Facade(const S3Facade & other) = delete;
+    // Provide the ClientConfiguration used to create the S3Client
+    explicit S3Facade(const Aws::Client::ClientConfiguration& config);
     explicit S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
-
     virtual ~S3Facade() = default;
 
     S3Facade & operator=(const S3Facade & other) = delete;

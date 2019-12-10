@@ -13,33 +13,15 @@
  * permissions and limitations under the License.
  */
 
-#pragma once
+#include <gtest/gtest.h>
+#include <aws/core/Aws.h>
 
-namespace Aws
+int main(int argc, char** argv)
 {
-namespace S3
-{
-
-/**
- * Error codes for S3.
- */
-enum S3ErrorCode
-{
-  // Operation was successfuly
-  SUCCESS = 0,
-  // Upload was cancelled
-  CANCELLED,
-  // Upload rejected because another upload request was active
-  UPLOADER_BUSY,
-  // Generic failure
-  FAILED,
-  // The local file was not found or couldn't be opened
-  FILE_COULDNT_BE_READ,
-  // Access to S3 resources was denied
-  S3_ACCESS_DENIED,
-  // S3 bucket doesn't exist
-  S3_NO_SUCH_BUCKET
-};
-
-}  // namespace S3
-}  // namespace Aws
+    Aws::SDKOptions options;
+    Aws::InitAPI(options);
+    ::testing::InitGoogleTest(&argc, argv);
+    auto result = RUN_ALL_TESTS();
+    Aws::ShutdownAPI(options);
+    return result;
+}

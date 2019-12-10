@@ -36,6 +36,7 @@ endif()
 
 add_library(${PROJECT_NAME} SHARED
     src/s3_facade.cpp
+    src/s3_upload_manager.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} 
@@ -92,7 +93,9 @@ find_common_test_packages()
 
 if(GMOCK_LIBRARY)
   add_common_gtest(test_s3_common
-    test/s3_common_test.cpp
+    test/main_test.cpp
+    test/s3_facade_test.cpp
+    test/s3_upload_manager_test.cpp
   )
 
   target_include_directories(test_s3_common
