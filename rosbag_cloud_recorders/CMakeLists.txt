@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
     recorder_msgs
     roscpp
     rosbag
+    file_uploader_msgs
 )
 
 set(ROSBAG_CLOUD_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
@@ -34,7 +35,7 @@ set(ROSBAG_CLOUD_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
-    CATKIN_DEPENDS actionlib actionlib_msgs recorder_msgs roscpp rosbag
+    CATKIN_DEPENDS actionlib actionlib_msgs recorder_msgs roscpp rosbag file_uploader_msgs
 )
 
 ###########

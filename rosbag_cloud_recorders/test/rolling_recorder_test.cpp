@@ -35,8 +35,10 @@ protected:
   void SetUp() override
   {
     ros::NodeHandle nh("~");
+    std::vector<std::string> topics_to_record;
+    topics_to_record.push_back("test");
     action_client_ = std::make_shared<RollingRecorderActionClient>(nh, "RosbagRollingRecord");
-    rolling_recorder_ = std::make_shared<Aws::Rosbag::RollingRecorder>();
+    rolling_recorder_ = std::make_shared<Aws::Rosbag::RollingRecorder>(ros::Duration(5), ros::Duration(10), topics_to_record);
   }
 
   std::shared_ptr<RollingRecorderActionClient> action_client_;

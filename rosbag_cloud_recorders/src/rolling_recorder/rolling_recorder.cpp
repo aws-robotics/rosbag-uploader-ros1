@@ -28,16 +28,22 @@
 namespace Aws {
 namespace Rosbag {
 
-RollingRecorder::RollingRecorder() :
+RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record) :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false)
 {
+  rosbag::RecorderOptions rolling_recorder_options;
+  rolling_recorder_options.max_duration = max_record_time;
+  rolling_recorder_options.topics = topics_to_record;
+  bag_rollover_time_ = bag_rollover_time;
+  rosbag_rolling_recorder_ = std::make_unique<rosbag::Recorder>(rolling_recorder_options);
   action_server_.registerGoalCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
     this->GoalCallBack(goal_handle);
   });
   action_server_.registerCancelCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
     this->CancelGoalCallBack(goal_handle);
   });
+
 }
 
 void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)

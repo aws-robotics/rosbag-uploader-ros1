@@ -21,13 +21,22 @@
 #include <rosbag/recorder.h>
 
 #include <recorder_msgs/RollingRecorderAction.h>
+#include <file_uploader_msgs/UploadFilesAction.h>
+#include <file_uploader_msgs/UploadFilesGoal.h>
 #include <recorder_common_error_codes.h>
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/client/action_client.h>
 
+#include <map>
+#include <string>
+#include <vector>
 
 namespace Aws {
 namespace Rosbag {
 
-typedef actionlib::ActionServer<recorder_msgs::RollingRecorderAction> RollingRecorderActionServer;
+using RollingRecorderActionServer = actionlib::ActionServer<recorder_msgs::RollingRecorderAction>;
+using GoalHandle = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>::GoalHandle;
+using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploader_msgs::UploadFilesAction> ;
 
 /**
  * Rolling recorder is a node that responds to actions to record rosbag files
@@ -35,7 +44,7 @@ typedef actionlib::ActionServer<recorder_msgs::RollingRecorderAction> RollingRec
 class RollingRecorder
 {
 public:
-  RollingRecorder();
+  RollingRecorder(ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record);
   ~RollingRecorder() = default;
 
   /**
@@ -57,10 +66,19 @@ public:
 private:
   void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
+  void GetRosgBagListToDelete(std::vector<std::string> & rosbags_to_be_deleted);
+  void StartOldRosBagsPeriodicRemoval();
+  void ConstructRosBagUploadGoal(file_uploader_msgs::UploadFilesGoal & goal);
+  RecorderErrorCode SendRosBagUploadGoal(file_uploader_msgs::UploadFilesGoal & goal);
 
+  enum LocalRosBagStatus { EXPIRED, ACTIVE, UPLOADED };
+
+  std::map<std::string, Aws::Rosbag::RollingRecorder::LocalRosBagStatus> local_rosbag_status_;
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
-  std::unique_ptr<rosbag::Recorder> rosbag_recorder_;
+  std::unique_ptr<rosbag::Recorder> rosbag_rolling_recorder_;
+  std::unique_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
+  ros::Duration bag_rollover_time_;
 };
 
 }  // namespace Rosbag

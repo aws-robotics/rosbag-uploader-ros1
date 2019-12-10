@@ -20,7 +20,6 @@
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "rosbag_rolling_recorder");
-  Aws::Rosbag::RollingRecorder rolling_recorder;
   ros::spin();
   return 0;
 }
