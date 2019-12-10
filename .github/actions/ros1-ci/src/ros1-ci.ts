@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import { ExecOptions } from '@actions/exec/lib/interfaces';
 
-const COVERAGE_ARTIFACT_NAME = "coverage.tar";
+const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES: any = {};
 const ROS_DISTRO = core.getInput('ros-distro', {required: true});
 
@@ -148,10 +148,11 @@ async function coverage() {
       await exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
       await exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '/opt/ros/*', '--output-file', 'coverage.info'], execOptions);
       await exec.exec("lcov", ["--list", "coverage.info"], execOptions);
-      await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions)
+      await exec.exec("mkdir", ["-p", COVERAGE_FOLDER_NAME])
+      await exec.exec("cp", ["coverage.info", COVERAGE_FOLDER_NAME], execOptions)
     } 
     else if (packageLanguage == "python") {
-      const allPackages = packagesToTest.split(RegExp('\\s'))
+      const allPackages = packagesToTest.split(RegExp('\\s'));
       await Promise.all(allPackages.map(async (packageName) => {
         const packageExecOptions = getExecOptions();
         const workingDir = path.join(workspaceDir, 'build', packageName);
@@ -159,11 +160,9 @@ async function coverage() {
         const coverageFileName = `coverage-${packageName}.info`
 
         await exec.exec("coverage", ["xml"], packageExecOptions);
-        await exec.exec("mv", ["coverage.xml", coverageFileName], packageExecOptions);
+        await exec.exec("mv", ["coverage.xml", path.join(workspaceDir, COVERAGE_FOLDER_NAME, coverageFileName)], packageExecOptions);
         return coverageFileName;
-      })).then(async (coverageFiles) => {
-        await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME].concat(coverageFiles), execOptions)
-      });
+      }));
     }
 
     // Create coverage artifact for exporting
