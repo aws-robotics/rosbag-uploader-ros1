@@ -19,8 +19,8 @@ jobs:
         coverage: true
         language: cpp
         packages-to-test: 
-          - s3_common 
-          - s3_file_uploader
+        - s3_common 
+        - s3_file_uploader
         ros-distro: kinetic
         workspace-dir: ./
     - name: Upload Coverage

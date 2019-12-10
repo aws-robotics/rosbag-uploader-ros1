@@ -952,7 +952,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
-const COVERAGE_ARTIFACT_NAME = "coverage.tar";
+const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES = {};
 const ROS_DISTRO = core.getInput('ros-distro', { required: true });
 function loadROSEnvVariables() {
@@ -1086,7 +1086,8 @@ function coverage() {
                 yield exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
                 yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '/opt/ros/*', '--output-file', 'coverage.info'], execOptions);
                 yield exec.exec("lcov", ["--list", "coverage.info"], execOptions);
-                yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions);
+                yield exec.exec("mkdir", ["-p", COVERAGE_FOLDER_NAME]);
+                yield exec.exec("cp", ["coverage.info", COVERAGE_FOLDER_NAME], execOptions);
             }
             else if (packageLanguage == "python") {
                 const allPackages = packagesToTest.split(RegExp('\\s'));
@@ -1096,11 +1097,9 @@ function coverage() {
                     packageExecOptions.cwd = workingDir;
                     const coverageFileName = `coverage-${packageName}.info`;
                     yield exec.exec("coverage", ["xml"], packageExecOptions);
-                    yield exec.exec("mv", ["coverage.xml", coverageFileName], packageExecOptions);
+                    yield exec.exec("mv", ["coverage.xml", path.join(workspaceDir, COVERAGE_FOLDER_NAME, coverageFileName)], packageExecOptions);
                     return coverageFileName;
-                }))).then((coverageFiles) => __awaiter(this, void 0, void 0, function* () {
-                    yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME].concat(coverageFiles), execOptions);
-                }));
+                })));
             }
             // Create coverage artifact for exporting
         }
