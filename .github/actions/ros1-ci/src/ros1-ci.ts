@@ -146,7 +146,7 @@ async function coverage() {
 
     if (packageLanguage == "cpp") {
       await exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
-      await exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '/opt/ros/*', '--output-file', 'coverage.info'], execOptions);
+      await exec.exec("lcov", ["--remove", "coverage.info", '\'/usr/*\'', '\'/opt/ros/*\'', '--output-file', 'coverage.info'], execOptions);
       await exec.exec("lcov", ["--list", "coverage.info"], execOptions);
       await exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions)
     } 
