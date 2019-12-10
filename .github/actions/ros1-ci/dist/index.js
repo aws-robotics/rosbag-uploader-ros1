@@ -954,9 +954,9 @@ const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
 const COVERAGE_ARTIFACT_NAME = "coverage.tar";
 const ROS_ENV_VARIABLES = {};
+const ROS_DISTRO = core.getInput('ros-distro', { required: true });
 function loadROSEnvVariables() {
     return __awaiter(this, void 0, void 0, function* () {
-        const rosDistro = core.getInput('ros-distro');
         const options = {
             listeners: {
                 stdout: (data) => {
@@ -972,13 +972,12 @@ function loadROSEnvVariables() {
         };
         yield exec.exec("bash", [
             "-c",
-            `source /opt/ros/${rosDistro}/setup.bash && printenv`
+            `source /opt/ros/${ROS_DISTRO}/setup.bash && printenv`
         ], options);
     });
 }
 function getExecOptions() {
     const workspaceDir = core.getInput('workspace-dir');
-    const rosDistro = core.getInput('ros-distro');
     const execOptions = {
         cwd: workspaceDir,
         env: Object.assign({}, process.env, ROS_ENV_VARIABLES)
@@ -1018,8 +1017,7 @@ function setup() {
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const rosDistro = core.getInput('ros-distro');
-            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", rosDistro], getExecOptions());
+            yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
             let colconCmakeArgs = [];
             if (core.getInput('coverage')) {
                 colconCmakeArgs = colconCmakeArgs.concat([
@@ -1086,7 +1084,7 @@ function coverage() {
             const execOptions = getExecOptions();
             if (packageLanguage == "cpp") {
                 yield exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
-                yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '--output-file', 'coverage.info'], execOptions);
+                yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '/opt/ros/*', '--output-file', 'coverage.info'], execOptions);
                 yield exec.exec("lcov", ["--list", "coverage.info"], execOptions);
                 yield exec.exec("tar", ["cvf", COVERAGE_ARTIFACT_NAME, "coverage.info"], execOptions);
             }
