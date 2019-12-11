@@ -14,7 +14,7 @@
   
   <depend>aws_common</depend>
 
-  <test_depend>google-mock</test_depend>
+  <test_depend condition="$ROS_VERSION == 1">google-mock</test_depend>
 
   <export>
     <build_type>cmake</build_type>

@@ -91,13 +91,13 @@ INSTALL(EXPORT ${PROJECT_NAME}-targets DESTINATION share/${PROJECT_NAME}/cmake)
 enable_testing()
 find_common_test_packages()
 
-if(GMOCK_LIBRARY)
-  add_common_gtest(test_s3_common
-    test/main_test.cpp
-    test/s3_facade_test.cpp
-    test/s3_upload_manager_test.cpp
-  )
+add_common_gtest(test_s3_common
+  test/main_test.cpp
+  test/s3_facade_test.cpp
+  test/s3_upload_manager_test.cpp
+)
 
+if(TARGET test_s3_common)
   target_include_directories(test_s3_common
     PRIVATE include
     PRIVATE ${aws_common_INCLUDE_DIRS}

@@ -108,11 +108,11 @@ if(CATKIN_ENABLE_TESTING)
   target_include_directories(test_duration_recorder PRIVATE
     include
     ${catkin_INCLUDE_DIRS}
-    ${GTEST_LIBRARIES}
   )
   target_link_libraries(test_duration_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
   )
 
   add_rostest_gtest(test_rolling_recorder
@@ -126,5 +126,6 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(test_rolling_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
   )
 endif()
