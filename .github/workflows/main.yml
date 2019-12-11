@@ -5,11 +5,14 @@ on:
       - master
 
 jobs:
-  kinetic:
+  build-test-codecov:
+    strategy:
+      matrix:
+        distro: ['kinetic', 'melodic']
     runs-on: ubuntu-latest
-    name: Kinetic
+    name: 'Build, Test, CodeCov'
     container:
-      image: ros:kinetic-ros-core
+      image: ros:${{ matrix.distro}}-ros-core
     steps:
     - name: Checkout
       uses: actions/checkout@v1
@@ -19,7 +22,7 @@ jobs:
         coverage: true
         language: cpp
         packages-to-test: "s3_common s3_file_uploader"
-        ros-distro: kinetic
+        ros-distro: ${{ matrix.distro }}
         workspace-dir: ./
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
