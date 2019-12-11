@@ -5,12 +5,12 @@ on:
       - master
 
 jobs:
-  build-test-codecov:
+  build:
     strategy:
       matrix:
         distro: ['kinetic', 'melodic']
     runs-on: ubuntu-latest
-    name: 'Build, Test, CodeCov'
+    name: 'Build + Test'
     container:
       image: ros:${{ matrix.distro}}-ros-core
     steps:
