@@ -32,13 +32,24 @@ using ::testing::IgnoreResult;
 using ::testing::Return;
 using ::testing::_;
 
-
 class MockS3Facade : public S3Facade
 {
 public:
     MockS3Facade() : S3Facade() {}
     MOCK_METHOD3(PutObject, S3ErrorCode(const std::string &, const std::string &, const std::string &));
 };
+
+
+// This function simulates a busy process that will block until mutex is unlocked
+void WaitUntilUnlocked(
+    std::mutex& mutex,
+    std::condition_variable& cv)
+{
+    // Notify that the function is entered and blocking
+    cv.notify_all();
+    // Block until the mutex has been unlocked
+    std::unique_lock<std::mutex> lock(mutex);
+}
 
 class S3UploadManagerTest : public ::testing::Test
 {
@@ -47,7 +58,6 @@ protected:
     std::vector<UploadDescription> uploads;
     std::vector<UploadDescription> completed_uploads;
     int num_feedback_calls;
-
     void SetUp() override
     {
         num_feedback_calls = 0;
@@ -88,9 +98,6 @@ public:
         }
 
         manager = std::unique_ptr<S3UploadManager>(new S3UploadManager(std::move(facade)));
-
-        // upload hasn't started, nothing to cancel
-        EXPECT_FALSE(manager->CancelUpload());
 
         auto upload = [this, &manager, callback]() {
             return manager->UploadFiles(this->uploads, "bucket", callback);
@@ -208,9 +215,7 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
 
     EXPECT_FALSE(manager->IsAvailable());
     // First call to cancel should succeed
-    EXPECT_TRUE(manager->CancelUpload());
-    // Subsequent cancel request should still succeed
-    EXPECT_TRUE(manager->CancelUpload());
+    manager->CancelUpload();
 
     // Finish execution of file upload
     pause_mutex.unlock();

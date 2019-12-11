@@ -23,38 +23,64 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
-#include <file_uploader_msgs/UploadFilesAction.h>
 #include <s3_file_uploader/s3_file_uploader.h>
+#include <file_uploader_msgs/UploadFilesAction.h>
+#include <s3_common/s3_upload_manager.h>
+
+using namespace Aws::S3;
 
 using UploadFilesActionClient = actionlib::ActionClient<file_uploader_msgs::UploadFilesAction>;
 
 using ::testing::Return;
 using ::testing::_;
 
-class MockS3Facade : public Aws::S3::S3Facade
+class MockS3UploadManager : public S3UploadManager
 {
 public:
-    MockS3Facade() = default;
-    MOCK_METHOD3(PutObject, Aws::S3::S3ErrorCode(const std::string &, const std::string &, const std::string &));
+    MockS3UploadManager() = default;
+    MOCK_METHOD3(UploadFiles, S3ErrorCode(const std::vector<UploadDescription> &,
+        const std::string &,
+        const boost::function<void (const std::vector<UploadDescription>&)>&));
+    MOCK_METHOD0(CancelUpload, void());
+    MOCK_CONST_METHOD0(IsAvailable,bool());
 };
 
 
-TEST(S3UploaderTest, TestActionReceived)
+class S3UploaderTest : public ::testing::Test
 {
-    ros::AsyncSpinner executor(0);
-    executor.start();
-    bool message_received = false;
-    auto s3_facade = std::make_unique<MockS3Facade>();
-    ON_CALL(*s3_facade, PutObject(_,_,_))
-    .WillByDefault(Return(Aws::S3::S3ErrorCode::SUCCESS));
+protected:
+    ros::AsyncSpinner executor;
+    ros::NodeHandle nh;
+    UploadFilesActionClient action_client;
+    std::unique_ptr<MockS3UploadManager> upload_manager;
 
-    Aws::S3::S3FileUploader file_uploader(std::move(s3_facade));
-    ros::NodeHandle nh("~");
-    UploadFilesActionClient action_client (nh, "UploadFiles");
+    void TearDown() override
+    {
+        executor.stop();
+    }
+public:
+    S3UploaderTest():
+        executor(0), nh("~"), action_client(nh, "UploadFiles"),
+        upload_manager(std::make_unique<MockS3UploadManager>())
+    {
+        executor.start();
+    }
+};
+
+TEST_F(S3UploaderTest, TestActionSucceeds)
+{
+    bool message_received = false;
+    EXPECT_CALL(*upload_manager, IsAvailable())
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*upload_manager, UploadFiles(_,_,_))
+        .WillOnce(Return(S3ErrorCode::SUCCESS));
+
+    S3FileUploader file_uploader(std::move(upload_manager));
     // Wait 10 seconds for server to start
     bool client_connected = action_client.waitForActionServerToStart(ros::Duration(10, 0));
     ASSERT_TRUE(client_connected);
-    auto transition_call_back = [&message_received](UploadFilesActionClient::GoalHandle gh){
+
+    auto transition_call_back = [&](UploadFilesActionClient::GoalHandle gh){
         if (gh.getCommState() == actionlib::CommState::StateEnum::DONE){
             EXPECT_EQ(actionlib::TerminalState::StateEnum::SUCCEEDED, gh.getTerminalState().state_);
             message_received = true;
@@ -65,7 +91,7 @@ TEST(S3UploaderTest, TestActionReceived)
     auto gh = action_client.sendGoal(goal, transition_call_back);
     ros::Duration(1,0).sleep();
     ASSERT_TRUE(message_received);
-    executor.stop();
+    
 }
 
 int main(int argc, char** argv)

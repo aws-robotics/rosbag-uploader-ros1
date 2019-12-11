@@ -25,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
     actionlib
     actionlib_msgs
     aws_common
+    aws_ros1_common
     file_uploader_msgs
     roscpp
     s3_common
@@ -41,7 +42,7 @@ set(S3_UPLOADER_LIB_TARGET ${PROJECT_NAME}_lib)
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${S3_UPLOADER_LIB_TARGET}
-    CATKIN_DEPENDS actionlib actionlib_msgs file_uploader_msgs roscpp
+    CATKIN_DEPENDS actionlib actionlib_msgs aws_ros1_common file_uploader_msgs roscpp
 )
 
 ###########
