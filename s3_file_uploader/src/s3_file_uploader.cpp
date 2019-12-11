@@ -16,7 +16,9 @@
 #include <vector>
 
 #include <aws/core/utils/logging/LogMacros.h>
+#include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
+#include <aws_common/sdk_utils/client_configuration_provider.h>
 #include <s3_common/s3_upload_manager.h>
 #include <s3_common/utils.h>
 
@@ -27,28 +29,32 @@
 #include <s3_file_uploader/s3_file_uploader.h>
 
 
-
 namespace Aws
 {
 namespace S3
 {
 
-// Configuration for manager will come next
+
 S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) :
     node_handle_("~"),
     action_server_(node_handle_, "UploadFiles", false),
     upload_manager_(std::move(upload_manager))
 {
+    parameter_reader_ = std::make_shared<Ros1NodeParameterReader>();
+
+    if (upload_manager) {
+        upload_manager_ = move(upload_manager);
+    } else {
+        ClientConfigurationProvider configuration_provider(parameter_reader_);
+        ClientConfiguration aws_sdk_config = configuration_provider.GetClientConfiguration();
+        upload_manager_ = std::make_unique<S3UploadManager>(aws_sdk_config);
+    }
+
     action_server_.registerGoalCallback(
         boost::bind(&S3FileUploader::GoalCallBack, this, _1));
     action_server_.registerCancelCallback(
         boost::bind(&S3FileUploader::CancelGoalCallBack, this, _1));
     action_server_.start();
-}
-
-void S3FileUploader::PublishFeedback(const std::vector<UploadDescription>& uploaded_files)
-{
-    (void) uploaded_files;
 }
 
 void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handle)
@@ -70,14 +76,20 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
 
     auto feedback_callback = [&](const std::vector<UploadDescription>& uploaded_files) {
         completed_uploads = uploaded_files;
-        PublishFeedback(uploaded_files);
+        file_uploader_msgs::UploadFilesFeedback feedback;
+        feedback.num_remaining = 0;
+        feedback.num_uploaded = 0;
+        goal_handle.publishFeedback(feedback);
     };
 
     // Bucket will be configurable in next PR
     auto result_code = upload_manager_->UploadFiles(
-        uploads, "bucket", feedback_callback);
-    (void) result_code;
+        uploads, bucket_, feedback_callback);
     file_uploader_msgs::UploadFilesResult result;
+    result.code = result_code;
+    for (auto const& upload : completed_uploads) {
+        result.files_uploaded.push_back(upload.object_key);
+    }
     goal_handle.setSucceeded(result, "");
 }
 
@@ -90,6 +102,28 @@ void S3FileUploader::CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal
         ros::Duration(1.0).sleep();
     }
     goal_handle.setCanceled();
+}
+
+void S3FileUploader::Spin() {
+    uint32_t spinner_thread_count = kDefaultNumberOfSpinnerThreads;
+    int spinner_thread_count_input;
+    if (Aws::AwsError::AWS_ERR_OK ==
+        parameter_reader_->ReadParam(ParameterPath(kSpinnerThreadCountOverrideParameter),
+                                     spinner_thread_count_input)) {
+        spinner_thread_count = static_cast<uint32_t>(spinner_thread_count_input);
+    }
+
+    if (Aws::AwsError::AWS_ERR_OK !=
+        parameter_reader_->ReadParam(ParameterPath(kBucketNameParameter), bucket_)) {
+        AWS_LOG_ERROR(__func__, "Failed to load s3 bucket name, aborting. Check the configuration file for parameter s3_bucket");
+        return;
+    }
+    AWS_LOG_INFO(__func__, "Starting S3FileUploader spinner with bucket %s and thread count %d\n", bucket_.c_str(), spinner_thread_count);
+
+    ros::AsyncSpinner executor(spinner_thread_count);
+    executor.start();
+    ros::waitForShutdown();
+    executor.stop();
 }
 
 }  // namespace S3

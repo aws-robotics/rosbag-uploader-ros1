@@ -17,9 +17,11 @@
 
 #include <actionlib/server/action_server.h>
 #include <ros/ros.h>
-
+#include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <s3_common/s3_upload_manager.h>
+
+using namespace Aws::Client;
 
 namespace Aws {
 namespace S3 {
@@ -27,21 +29,31 @@ namespace S3 {
 using UploadFilesActionServer = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>;
 
 /**
+ * By default we use one thread to handle upload goals. You may specify a different setting
+ * via the "spinner_thread_count" parameter.
+ */
+constexpr uint32_t kDefaultNumberOfSpinnerThreads = 2;
+const char * kSpinnerThreadCountOverrideParameter = "spinner_thread_count";
+const char * kBucketNameParameter = "s3_bucket";
+
+/**
  * S3FileUploader is a node that responds to actions to upload files to s3
  */
 class S3FileUploader
 {
 public:
-  explicit S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager);
+  explicit S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager = nullptr);
   ~S3FileUploader() = default;
+  void Spin();
 
 private:
   void GoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
-  void PublishFeedback(const std::vector<UploadDescription>& uploaded_files );
   ros::NodeHandle node_handle_;
   UploadFilesActionServer action_server_;
   std::unique_ptr<S3UploadManager> upload_manager_;
+  std::shared_ptr<Ros1NodeParameterReader> parameter_reader_;
+  std::string bucket_;
 };
 
 }  // namespace S3

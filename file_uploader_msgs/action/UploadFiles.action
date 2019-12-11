@@ -3,12 +3,29 @@
 string[] files
 # The destination for the file upload. No validity checks are done on the action
 string upload_location
-----
+---
+# Result
+
+# Result Codes
+uint8 SUCCESS=0
+# This includes uploader service errors, invalid credentials,
+# or any error where the service was unreachable
+uint8 UPLOAD_FAILED_SERVICE_ERROR=1
+# This includes invalid destination, invalid files
+uint8 UPLOAD_FAILED_INVALID_INPUT=2
+
+# A status code from the uploader service
+uint8 code
+
+# Message describing the status
+string message
+
+# The list of files that were uploaded
+string[] files_uploaded
+
+---
 # Feedback
 # Number of files that have been uploaded
-int16 num_uploaded
+uint16 num_uploaded
 # Number of files that are remaining to upload
-int16 num_remaining
-----
-# Result
-UploaderResult result
+uint16 num_remaining

@@ -1,0 +1,9 @@
+<launch>
+    <!-- If a node config file argument is provided by the caller we will load it instead of the example config -->
+    <arg name="node_config_file" default="$(find s3_file_uploader)/config/node_sample_configuration.yaml" />
+
+    <node name="s3_file_uploader" pkg="s3_file_uploader" type="s3_file_uploader">
+        <!-- If the caller specified a config file then load it here. -->
+        <rosparam if="$(eval node_config_file!='')" command="load" file="$(arg node_config_file)" />
+    </node>
+</launch>
