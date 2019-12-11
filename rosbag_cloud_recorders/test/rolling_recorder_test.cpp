@@ -45,6 +45,21 @@ protected:
   std::shared_ptr<Aws::Rosbag::RollingRecorder> rolling_recorder_;
 };
 
+TEST_F(RollingRecorderNodeFixture, TestGetRollingRecorderHealthStatusApi)
+{
+  ASSERT_FALSE(rolling_recorder_->IsRollingRecorderActive());
+}
+
+TEST_F(RollingRecorderNodeFixture, TestStartRollingRecorderApi)
+{
+  EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::SUCCESS, rolling_recorder_->StartRollingRecorder());
+}
+
+TEST_F(RollingRecorderNodeFixture, TestStopRollingRecorderApi)
+{
+  EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::SUCCESS, rolling_recorder_->StopRollingRecorder());
+}
+
 TEST_F(RollingRecorderNodeFixture, TestActionReceivedbyActionServer)
 {
   ros::AsyncSpinner executor(0);

@@ -42,7 +42,10 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-roslint_cpp()
+roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
+            src/rolling_recorder/main.cpp
+            test/rolling_recorder_test.cpp
+            include/rolling_recorder/rolling_recorder.h)
 
 include_directories(
     include

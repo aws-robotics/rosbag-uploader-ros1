@@ -13,6 +13,9 @@
  * permissions and limitations under the License.
  */
 
+#ifndef ROLLING_RECORDER_ROLLING_RECORDER_H
+#define ROLLING_RECORDER_ROLLING_RECORDER_H
+
 #pragma once
 
 #include <actionlib/server/action_server.h>
@@ -86,3 +89,5 @@ private:
 
 }  // namespace Rosbag
 }  // namespace Aws
+
+#endif  // ROLLING_RECORDER_ROLLING_RECORDER_H
