@@ -22,10 +22,8 @@
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <recorder_common_error_codes.h>
 #include <rolling_recorder/rolling_recorder.h>
-
-using namespace Aws::Rosbag;
-using namespace rosbag;
-
+#include <string>
+#include <vector>
 
 using RollingRecorderActionClient = actionlib::ActionClient<recorder_msgs::RollingRecorderAction>;
 
@@ -37,8 +35,10 @@ protected:
     ros::NodeHandle nh("~");
     std::vector<std::string> topics_to_record;
     topics_to_record.push_back("test");
-    action_client_ = std::make_shared<RollingRecorderActionClient>(nh, "RosbagRollingRecord");
-    rolling_recorder_ = std::make_shared<Aws::Rosbag::RollingRecorder>(ros::Duration(5), ros::Duration(10), topics_to_record);
+    action_client_ = std::make_shared<RollingRecorderActionClient>(nh,
+      "RosbagRollingRecord");
+    rolling_recorder_ = std::make_shared<Aws::Rosbag::RollingRecorder>(
+      ros::Duration(5), ros::Duration(10), topics_to_record);
   }
 
   std::shared_ptr<RollingRecorderActionClient> action_client_;
@@ -55,7 +55,8 @@ TEST_F(RollingRecorderNodeFixture, TestActionReceivedbyActionServer)
   bool message_received = false;
   // Wait 10 seconds for server to start
   ASSERT_TRUE(action_client_->waitForActionServerToStart(ros::Duration(10, 0)));
-  auto transition_call_back = [&message_received](RollingRecorderActionClient::GoalHandle goal_handle) {
+  auto transition_call_back = [&message_received](RollingRecorderActionClient::GoalHandle goal_handle)
+  {
     EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
     message_received = true;
   };

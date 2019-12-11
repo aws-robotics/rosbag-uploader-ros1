@@ -31,12 +31,14 @@
 #include <string>
 #include <vector>
 
-namespace Aws {
-namespace Rosbag {
+namespace Aws
+{
+namespace Rosbag
+{
 
 using RollingRecorderActionServer = actionlib::ActionServer<recorder_msgs::RollingRecorderAction>;
 using GoalHandle = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>::GoalHandle;
-using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploader_msgs::UploadFilesAction> ;
+using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploader_msgs::UploadFilesAction>;
 
 /**
  * Rolling recorder is a node that responds to actions to record rosbag files
@@ -44,7 +46,8 @@ using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploade
 class RollingRecorder
 {
 public:
-  RollingRecorder(ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record);
+  RollingRecorder(
+    ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record);
   ~RollingRecorder() = default;
 
   /**

@@ -28,6 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     rosbag
     file_uploader_msgs
+    roslint
 )
 
 set(ROSBAG_CLOUD_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
@@ -41,6 +42,7 @@ catkin_package(
 ###########
 ## Build ##
 ###########
+roslint_cpp()
 
 include_directories(
     include

@@ -23,12 +23,16 @@
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <recorder_common_error_codes.h>
 #include <rolling_recorder/rolling_recorder.h>
+#include <string>
+#include <vector>
 
+namespace Aws
+{
+namespace Rosbag
+{
 
-namespace Aws {
-namespace Rosbag {
-
-RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record) :
+RollingRecorder::RollingRecorder(
+  ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record) :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false)
 {
@@ -37,13 +41,10 @@ RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time, ros::Duration 
   rolling_recorder_options.topics = topics_to_record;
   bag_rollover_time_ = bag_rollover_time;
   rosbag_rolling_recorder_ = std::make_unique<rosbag::Recorder>(rolling_recorder_options);
-  action_server_.registerGoalCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
-    this->GoalCallBack(goal_handle);
-  });
-  action_server_.registerCancelCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
-    this->CancelGoalCallBack(goal_handle);
-  });
-
+  action_server_.registerGoalCallback(
+      boost::bind(&RollingRecorder::GoalCallBack, this, _1));
+  action_server_.registerCancelCallback(
+      boost::bind(&RollingRecorder::CancelGoalCallBack, this, _1));
 }
 
 void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
@@ -53,13 +54,14 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
 
 void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
-  (void) goal_handle; // unused argument
+  (void) goal_handle;
 }
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
   bool successful_start = true;
-  if (successful_start) {
+  if (successful_start)
+  {
     action_server_.start();
     return SUCCESS;
   }
