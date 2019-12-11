@@ -72,7 +72,7 @@ public:
 private:
   void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
-  void GetRosgBagListToDelete(std::vector<std::string> & rosbags_to_be_deleted);
+  std::vector<std::string> GetRosgBagListToDelete();
   void StartOldRosBagsPeriodicRemoval();
   void ConstructRosBagUploadGoal(file_uploader_msgs::UploadFilesGoal & goal);
   RecorderErrorCode SendRosBagUploadGoal(file_uploader_msgs::UploadFilesGoal & goal);
