@@ -54,9 +54,11 @@ TEST(S3UploaderTest, TestActionReceived)
     // Wait 10 seconds for server to start
     bool client_connected = action_client.waitForActionServerToStart(ros::Duration(10, 0));
     ASSERT_TRUE(client_connected);
-    auto transition_call_back = [&message_received](UploadFilesActionClient::GoalHandle goal){
-        EXPECT_EQ(goal.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
-        message_received = true;
+    auto transition_call_back = [&message_received](UploadFilesActionClient::GoalHandle gh){
+        if (gh.getCommState() == actionlib::CommState::StateEnum::DONE){
+            EXPECT_EQ(actionlib::TerminalState::StateEnum::SUCCEEDED, gh.getTerminalState().state_);
+            message_received = true;
+        }
     };
     file_uploader_msgs::UploadFilesGoal goal;
 
