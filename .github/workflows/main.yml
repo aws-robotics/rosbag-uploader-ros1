@@ -24,6 +24,16 @@ jobs:
         packages-to-test: "s3_common s3_file_uploader"
         ros-distro: ${{ matrix.distro }}
         workspace-dir: ./
+    - name: Build Failed
+      uses: ./.github/actions/cw-metric/
+      with:
+        status: 'failure'
+      if: failure()
+    - name: Build Succeeded
+      uses: ./.github/actions/cw-metric/
+      with:
+        status: 'success'
+      if: success()
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
       with:
