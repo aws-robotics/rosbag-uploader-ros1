@@ -6,7 +6,6 @@ const cloudwatch = new CloudWatch();
 const FAILED_BUILDS_METRIC_NAME = 'FailedBuilds'
 const NUM_BUILDS_METRIC_NAME = 'Builds'
 const SUCCESS_BUILDS_METRIC_NAME = 'SucceededBuilds'
-const METRIC_NAMESPACE = 'GithubCI'
 const PROJECT_DIMENSION = 'ProjectName'
 const IS_CRON_JOB_DIMENSION = 'IsCronJob'
 
@@ -23,9 +22,10 @@ function createMetricDatum(metricName, projectName, isCronJob, value) {
 
 async function publishMetricData(metricData) {
   try {
-    console.log(`Publishing metrics ${console.dir(metricData, {depth: false})} under namespace ${METRIC_NAMESPACE}`);
+    const metricNamespace = core.getInput('namespace');
+    console.log(`Publishing metrics ${console.dir(metricData, {depth: false})} under namespace ${metricNamespace}`);
     await cloudwatch.putMetricData({
-      Namespace: METRIC_NAMESPACE,
+      Namespace: metricNamespace,
       MetricData: metricData
     }).promise();
     console.log("Successfully published metrics");

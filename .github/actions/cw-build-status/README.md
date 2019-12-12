@@ -12,13 +12,8 @@ AWS credentials correctly.
 ```
 jobs:
   build:
-    strategy:
-      matrix:
-        distro: ['kinetic', 'melodic']
     runs-on: ubuntu-latest
     name: 'Build + Test'
-    container:
-      image: ros:${{ matrix.distro}}-ros-core
     steps:
     - name: Checkout
       uses: actions/checkout@v1
@@ -44,7 +39,8 @@ jobs:
 
 ## CloudWatch Metrics format
 
-The following metrics will be logged under the namespace `GithubCI`
+The following metrics will be logged under the namespace `GithubCI` by default, 
+this namespace can be changed via the `namespace` input parameter.
 
 - Builds - Always a value of 1
 - FailedBuilds  - Value of 1 when the build fails, 0 otherwise
@@ -69,26 +65,12 @@ the Github API for the overall build status, and sends that status to CloudWatch
 
 **Required** The build status `[failure|success]`
 
+### `namespace`
+
+The namespace that metrics are logged to. Defaults to `GithubCI`
+
 ### `project-name`
 
 The name of your project. Defaults to [${{ github.repository }}]
 
-### `packages-to-test`
-
-**Required** Space separated string of packages you want to run tests for
-
-### `ros-distro`
-
-**Required** Distribution of ROS you are using `[kinetic|melodic]`
-
-### `test`
-
-Boolean - Should tests be run. **Default: true** 
-
-### `workspace-dir`
-
-Path to the workspace folder of your package. **Default: ./**
-
-[setup-ros1]: https://github.com/ros-tooling/setup-ros1
-[ros-core docker container]: https://hub.docker.com/_/ros/
 [${{ github.repository }}]: https://help.github.com/en/actions/automating-your-workflow-with-github-actions/contexts-and-expression-syntax-for-github-actions#github-context
