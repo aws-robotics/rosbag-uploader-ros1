@@ -1,13 +1,59 @@
 import * as core from '@actions/core';
-import * as exec from '@actions/exec';
+import * as AWS from 'aws-sdk';
+
+const cloudwatch = new AWS.CloudWatch();
+
+const FAILED_BUILDS_METRIC_NAME = 'FailedBuilds'
+const NUM_BUILDS_METRIC_NAME = 'Builds'
+const SUCCESS_BUILDS_METRIC_NAME = 'SucceededBuilds'
+const METRIC_NAMESPACE = 'GithubCI'
+const PROJECT_DIMENSION = 'ProjectName'
+const IS_CRON_JOB_DIMENSION = 'IsCronJob'
+
+function createMetricDatum(metricName, projectName, isCronJob, value) {
+  const cronJobString = isCronJob ? 'True' : 'False'
+  const metric_datum = { 'MetricName': metricName, 'Value': value, 
+    'Dimensions': [ 
+      { 'Name': PROJECT_DIMENSION, 'Value': projectName },
+      { 'Name': IS_CRON_JOB_DIMENSION, 'Value': cronJobString }
+    ] 
+  } 
+  return metric_datum
+}
+
+async function publishMetricData(metricData) {
+  try {
+    console.log(`Publishing metrics ${metricData} under namespace ${METRIC_NAMESPACE}`);
+    await cloudwatch.putMetricData({
+      Namespace: METRIC_NAMESPACE,
+      MetricData: metricData
+    }).promise();
+    console.log("Successfully published metrics");
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
 
 async function postBuildStatus() {
   try {
     const buildStatus = core.getInput('status', { required: true });
+    const projectName = core.getInput('project-name');
     const validBuildStatusCheck = new RegExp('(success|failure)');
     if (!buildStatus.match(validBuildStatusCheck)) {
       throw new Error(`Invalid build status ${buildStatus} passed to cw-build-status`);
     }
+    const isFailedBuild: Boolean = buildStatus === 'failure';
+
+    const metricData = [createMetricDatum(NUM_BUILDS_METRIC_NAME, projectName, false, 1.0)]
+    if (isFailedBuild) {
+      metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, 1.0))
+      metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, 0.0))
+    } else {
+      metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, 0.0))
+      metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, 1.0))
+    }
+
+    await publishMetricData(metricData);
 
     console.log("Received build status: ", buildStatus);
   } catch (error) {
