@@ -30,7 +30,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/action_client.h>
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -72,19 +72,19 @@ public:
 private:
   void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
-  std::vector<std::string> GetRosgBagListToDelete();
+  std::vector<std::string> GetRosgBagListToDelete() const;
   void StartOldRosBagsPeriodicRemoval();
-  void ConstructRosBagUploadGoal(file_uploader_msgs::UploadFilesGoal & goal);
-  RecorderErrorCode SendRosBagUploadGoal(file_uploader_msgs::UploadFilesGoal & goal);
+  file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
+  RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
 
   enum LocalRosBagStatus { EXPIRED, ACTIVE, UPLOADED };
 
-  std::map<std::string, Aws::Rosbag::RollingRecorder::LocalRosBagStatus> local_rosbag_status_;
+  std::unordered_map<std::string, Aws::Rosbag::RollingRecorder::LocalRosBagStatus> local_rosbag_status_;
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
   std::unique_ptr<rosbag::Recorder> rosbag_rolling_recorder_;
   std::unique_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
-  ros::Duration bag_rollover_time_;
+  ros::Duration max_duration_;
 };
 
 }  // namespace Rosbag

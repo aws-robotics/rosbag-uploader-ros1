@@ -27,12 +27,10 @@ namespace Utils
 Aws::Rosbag::RecorderErrorCode RosbagFileManager::DeleteRosbag(const std::string & rosbag_file_path)
 {
   std::ifstream rosbag_file(rosbag_file_path);
-  if (!rosbag_file.good())
-  {
+  if (!rosbag_file.good()) {
     return Aws::Rosbag::RecorderErrorCode::ROSBAG_FILE_NOT_FOUND;
   }
-  if (std::remove(rosbag_file_path.c_str()) == 0)
-  {
+  if (std::remove(rosbag_file_path.c_str()) == 0) {
     return Aws::Rosbag::RecorderErrorCode::SUCCESS;
   }
   return Aws::Rosbag::RecorderErrorCode::ROSBAG_REMOVAL_FAILED;

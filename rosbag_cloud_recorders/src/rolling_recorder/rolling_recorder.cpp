@@ -34,17 +34,20 @@ namespace Rosbag
 RollingRecorder::RollingRecorder(
   ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record) :
   node_handle_("~"),
-  action_server_(node_handle_, "RosbagRollingRecord", false)
+  action_server_(node_handle_, "RosbagRollingRecord", false),
+  rosbag_uploader_action_client_(std::make_unique<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
+  max_duration_(max_record_time)
 {
   rosbag::RecorderOptions rolling_recorder_options;
-  rolling_recorder_options.max_duration = max_record_time;
+  rolling_recorder_options.max_duration = bag_rollover_time;
   rolling_recorder_options.topics = topics_to_record;
-  bag_rollover_time_ = bag_rollover_time;
   rosbag_rolling_recorder_ = std::make_unique<rosbag::Recorder>(rolling_recorder_options);
-  action_server_.registerGoalCallback(
-      boost::bind(&RollingRecorder::GoalCallBack, this, _1));
-  action_server_.registerCancelCallback(
-      boost::bind(&RollingRecorder::CancelGoalCallBack, this, _1));
+  action_server_.registerGoalCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
+    this->GoalCallBack(goal_handle);
+  });
+  action_server_.registerCancelCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
+    this->CancelGoalCallBack(goal_handle);
+  });
 }
 
 void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
@@ -60,8 +63,7 @@ void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
   bool successful_start = true;
-  if (successful_start)
-  {
+  if (successful_start) {
     action_server_.start();
     return SUCCESS;
   }
