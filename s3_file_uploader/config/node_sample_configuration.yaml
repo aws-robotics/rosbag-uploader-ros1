@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 # S3 Bucket to use for file upload; must be specified.
 # s3_bucket: "my-s3-bucket"
 
-=======
-# S3 Bucket to use for file upload
-s3_bucket: "avishaya-devdsk-backup"
->>>>>>> 4b67a33... Basic end to end functionality - fix action definition, read configuration and propagate it to upload manager.
 # Optionally specify the thread count. The default is 2. Specify 0 to use all cores.
 # spinner_thread_count: 4
 
