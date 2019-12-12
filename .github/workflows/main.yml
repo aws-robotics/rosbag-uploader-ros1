@@ -25,12 +25,12 @@ jobs:
         ros-distro: ${{ matrix.distro }}
         workspace-dir: ./
     - name: Build Failed
-      uses: ./.github/actions/cw-metric/
+      uses: ./.github/actions/cw-build-status/
       with:
         status: 'failure'
       if: failure()
     - name: Build Succeeded
-      uses: ./.github/actions/cw-metric/
+      uses: ./.github/actions/cw-build-status/
       with:
         status: 'success'
       if: success()
