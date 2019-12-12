@@ -23,7 +23,7 @@ function createMetricDatum(metricName, projectName, isCronJob, value) {
 
 async function publishMetricData(metricData) {
   try {
-    console.log(`Publishing metrics ${metricData} under namespace ${METRIC_NAMESPACE}`);
+    console.log(`Publishing metrics ${console.dir(metricData, {depth: false})} under namespace ${METRIC_NAMESPACE}`);
     await cloudwatch.putMetricData({
       Namespace: METRIC_NAMESPACE,
       MetricData: metricData
@@ -45,13 +45,8 @@ async function postBuildStatus() {
     const isFailedBuild: Boolean = buildStatus === 'failure';
 
     const metricData = [createMetricDatum(NUM_BUILDS_METRIC_NAME, projectName, false, 1.0)]
-    if (isFailedBuild) {
-      metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, 1.0))
-      metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, 0.0))
-    } else {
-      metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, 0.0))
-      metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, 1.0))
-    }
+    metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, isFailedBuild ? 1.0 : 0.0))
+    metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, isFailedBuild ? 0.0 : 1.0))
 
     await publishMetricData(metricData);
 

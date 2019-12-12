@@ -13560,7 +13560,7 @@ function createMetricDatum(metricName, projectName, isCronJob, value) {
 function publishMetricData(metricData) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log(`Publishing metrics ${metricData} under namespace ${METRIC_NAMESPACE}`);
+            console.log(`Publishing metrics ${console.dir(metricData, { depth: false })} under namespace ${METRIC_NAMESPACE}`);
             yield cloudwatch.putMetricData({
                 Namespace: METRIC_NAMESPACE,
                 MetricData: metricData
@@ -13583,14 +13583,8 @@ function postBuildStatus() {
             }
             const isFailedBuild = buildStatus === 'failure';
             const metricData = [createMetricDatum(NUM_BUILDS_METRIC_NAME, projectName, false, 1.0)];
-            if (isFailedBuild) {
-                metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, 1.0));
-                metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, 0.0));
-            }
-            else {
-                metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, 0.0));
-                metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, 1.0));
-            }
+            metricData.push(createMetricDatum(FAILED_BUILDS_METRIC_NAME, projectName, false, isFailedBuild ? 1.0 : 0.0));
+            metricData.push(createMetricDatum(SUCCESS_BUILDS_METRIC_NAME, projectName, false, isFailedBuild ? 0.0 : 1.0));
             yield publishMetricData(metricData);
             console.log("Received build status: ", buildStatus);
         }
