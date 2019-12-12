@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
-import * as AWS from 'aws-sdk';
+import CloudWatch from 'aws-sdk/clients/cloudwatch';
 
-const cloudwatch = new AWS.CloudWatch();
+const cloudwatch = new CloudWatch();
 
 const FAILED_BUILDS_METRIC_NAME = 'FailedBuilds'
 const NUM_BUILDS_METRIC_NAME = 'Builds'
