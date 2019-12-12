@@ -53,7 +53,7 @@ TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
   executor.start();
   bool message_received = false;
   // Wait 10 seconds for server to start
-  ASSERT_FALSE(action_client_->waitForActionServerToStart(ros::Duration(10, 0)));
+  ASSERT_TRUE(action_client_->waitForActionServerToStart(ros::Duration(10, 0)));
   auto transition_call_back = [&message_received](DurationRecorderActionClient::GoalHandle goal_handle){
       EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
       message_received = true;
