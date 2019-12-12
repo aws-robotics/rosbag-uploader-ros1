@@ -30,16 +30,16 @@ jobs:
         packages-to-test: "s3_common s3_file_uploader"
         ros-distro: ${{ matrix.distro }}
         workspace-dir: ./
-    - name: Build Failed
+    - name: Log Build Failure
       uses: ./.github/actions/cw-build-status/
       with:
         status: 'failure'
-      if: failure()
-    - name: Build Succeeded
+      if: failure() && github.ref == 'refs/heads/master'
+    - name: Log Build Success
       uses: ./.github/actions/cw-build-status/
       with:
         status: 'success'
-      if: success()
+      if: success() && github.ref == 'refs/heads/master'
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
       with:
