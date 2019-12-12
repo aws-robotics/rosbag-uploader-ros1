@@ -37,8 +37,7 @@ namespace S3
 
 S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) :
     node_handle_("~"),
-    action_server_(node_handle_, "UploadFiles", false),
-    upload_manager_(std::move(upload_manager))
+    action_server_(node_handle_, "UploadFiles", false)
 {
     parameter_reader_ = std::make_shared<Ros1NodeParameterReader>();
 

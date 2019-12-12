@@ -1,5 +1,6 @@
-# S3 Bucket to use for file upload
-s3_bucket: "avishaya-devdsk-backup"
+# S3 Bucket to use for file upload; must be specified.
+# s3_bucket: "my-s3-bucket"
+
 # Optionally specify the thread count. The default is 2. Specify 0 to use all cores.
 # spinner_thread_count: 4
 
