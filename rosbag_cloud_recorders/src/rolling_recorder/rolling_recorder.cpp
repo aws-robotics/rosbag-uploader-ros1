@@ -23,15 +23,25 @@
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <recorder_common_error_codes.h>
 #include <rolling_recorder/rolling_recorder.h>
+#include <string>
+#include <vector>
 
-
-namespace Aws {
-namespace Rosbag {
-
-RollingRecorder::RollingRecorder() :
-  node_handle_("~"),
-  action_server_(node_handle_, "RosbagRollingRecord", false)
+namespace Aws
 {
+namespace Rosbag
+{
+
+RollingRecorder::RollingRecorder(
+  ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record) :
+  node_handle_("~"),
+  action_server_(node_handle_, "RosbagRollingRecord", false),
+  rosbag_uploader_action_client_(std::make_unique<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
+  max_duration_(max_record_time)
+{
+  rosbag::RecorderOptions rolling_recorder_options;
+  rolling_recorder_options.max_duration = bag_rollover_time;
+  rolling_recorder_options.topics = topics_to_record;
+  rosbag_rolling_recorder_ = std::make_unique<rosbag::Recorder>(rolling_recorder_options);
   action_server_.registerGoalCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
     this->GoalCallBack(goal_handle);
   });
@@ -47,7 +57,7 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
 
 void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
-  (void) goal_handle; // unused argument
+  (void) goal_handle;
 }
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()

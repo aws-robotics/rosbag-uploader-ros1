@@ -16,7 +16,8 @@
   <depend>recorder_msgs</depend>
   <depend>roscpp</depend>
   <depend>rosbag</depend>
-
+  <depend>file_uploader_msgs</depend>
+  <build_depend>roslint</build_depend>
   <test_depend>rostest</test_depend>
   <test_depend>gtest</test_depend>
 </package>
