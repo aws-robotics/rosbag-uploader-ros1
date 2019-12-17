@@ -34,11 +34,13 @@ jobs:
       uses: ./.github/actions/cw-build-status/
       with:
         status: 'failure'
+        namespace: 'TravisCI'
       if: failure() && github.ref == 'refs/heads/master'
     - name: Log Build Success
       uses: ./.github/actions/cw-build-status/
       with:
         status: 'success'
+        namespace: 'TravisCI'
       if: success() && github.ref == 'refs/heads/master'
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
