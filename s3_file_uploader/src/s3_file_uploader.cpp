@@ -81,7 +81,6 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
         goal_handle.publishFeedback(feedback);
     };
 
-    // Bucket will be configurable in next PR
     auto result_code = upload_manager_->UploadFiles(
         uploads, bucket_, feedback_callback);
     file_uploader_msgs::UploadFilesResult result;
