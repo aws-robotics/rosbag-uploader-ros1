@@ -32,13 +32,15 @@ namespace Rosbag
 {
 
 RollingRecorder::RollingRecorder(
-  ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record) :
+  ros::Duration bag_rollover_time, ros::Duration max_record_time,
+  std::vector<std::string> topics_to_record, std::string write_directory) :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false),
   rosbag_uploader_action_client_(std::make_unique<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
   max_duration_(max_record_time),
   current_goal_handle_(nullptr),
-  is_rolling_recorder_running_(false)
+  is_rolling_recorder_running_(false),
+  write_directory_(write_directory)
 {
   rosbag::RecorderOptions rolling_recorder_options;
   rolling_recorder_options.max_duration = bag_rollover_time;
@@ -51,6 +53,12 @@ RollingRecorder::RollingRecorder(
     this->CancelGoalCallBack(goal_handle);
   });
   action_server_.start();
+}
+
+RollingRecorder::RollingRecorder(
+  ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record)
+  : RollingRecorder(bag_rollover_time, max_record_time, topics_to_record, "~/.ros/rosbag_uploader/")
+{
 }
 
 void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
@@ -97,16 +105,42 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
   goal_handle.setAccepted();
   SetCurrentGoalHandle(goal_handle);  //  Take in new Goal
 
-  AWS_LOG_INFO(__func__, "Publishing feedback...");
   recorder_msgs::RollingRecorderFeedback record_rosbag_action_feedback;
   GenerateFeedback(record_rosbag_action_feedback, recorder_msgs::RecorderStatus::RECORDING);
   goal_handle.publishFeedback(record_rosbag_action_feedback);
   AWS_LOG_INFO(__func__, "Trying to fiullfill current goal...")
   //  TODO: logic to check bag files between start time and end time
-  AWS_LOG_INFO(__func__, "Rolling recording finished with a status: Succeeded");
-  GenerateResult(recording_result, t_recording_result, recorder_msgs::RecorderResult::SUCCESS, "Rolling recording succeeded.");
-  goal_handle.setSucceeded(recording_result, "");
+  AWS_LOG_INFO(__func__, "Recoding goal completed with a status: Succeeded.");
+
+  GenerateFeedback(record_rosbag_action_feedback, recorder_msgs::RecorderStatus::UPLOADING);
+  goal_handle.publishFeedback(record_rosbag_action_feedback);
+  file_uploader_msgs::UploadFilesGoal file_uploader_goal = ConstructRosBagUploaderGoal(goal->destination);
+  RecorderErrorCode upload_status = SendRosBagUploaderGoal(file_uploader_goal);
+  if (SUCCESS == upload_status) {
+    GenerateResult(recording_result, t_recording_result, recorder_msgs::RecorderResult::SUCCESS, "Rolling recording and rosbags uploading were completed successfully.");
+    goal_handle.setSucceeded(recording_result, "");
+  } else {
+    GenerateResult(recording_result, t_recording_result, upload_status, "Rolling recording succeeded, however, rosbags uploading failed to complete.");
+    goal_handle.setAborted(recording_result, "");
+  }
   ReleaseCurrentGoalHandle();
+  //TODO(abbyxu): add delete logic or update the map
+}
+
+RecorderErrorCode RollingRecorder::SendRosBagUploaderGoal(const file_uploader_msgs::UploadFilesGoal & goal)
+{
+  AWS_LOG_INFO(__func__, "Sending rosbag uploader goal to uploader action server.");
+  rosbag_uploader_action_client_->sendGoal(goal);
+  return SUCCESS;
+}
+
+file_uploader_msgs::UploadFilesGoal RollingRecorder::ConstructRosBagUploaderGoal(std::string destination) const
+{
+  AWS_LOG_INFO(__func__, "Constructing Uploader Goal.");
+  file_uploader_msgs::UploadFilesGoal file_uploader_goal;
+  file_uploader_goal.files = GetRosgBagListToUplaod();
+  file_uploader_goal.upload_location = destination;
+  return file_uploader_goal;
 }
 
 bool RollingRecorder::ValidateGoal(boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal, double current_time_in_sec)
@@ -125,6 +159,11 @@ bool RollingRecorder::ValidateGoal(boost::shared_ptr<const recorder_msgs::Rollin
   return true;
 }
 
+std::vector<std::string> RollingRecorder::GetRosgBagListToUplaod() const
+{
+  std::vector<std::string> rosbag_to_upload;
+  return rosbag_to_upload;
+}
 void RollingRecorder::SetCurrentGoalHandle(RollingRecorderActionServer::GoalHandle & new_goal_handle)
 {
   current_goal_handle_ = &new_goal_handle;
