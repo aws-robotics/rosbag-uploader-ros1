@@ -57,7 +57,7 @@ protected:
     std::unique_ptr<MockS3Facade> facade;
     std::vector<UploadDescription> uploads;
     std::vector<UploadDescription> completed_uploads;
-    int num_feedback_calls;
+    std::size_t num_feedback_calls;
     void SetUp() override
     {
         num_feedback_calls = 0;
@@ -137,8 +137,8 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
                     [this](const std::vector<UploadDescription>& callback_uploads)
                     {this->FeedbackCallback(callback_uploads);});
     EXPECT_EQ(S3ErrorCode::FAILED, result);
-    EXPECT_EQ(1, num_feedback_calls);
-    EXPECT_EQ(1, completed_uploads.size());
+    EXPECT_EQ(1u, num_feedback_calls);
+    EXPECT_EQ(1u, completed_uploads.size());
     EXPECT_EQ(uploads.at(0), completed_uploads.at(0));
     EXPECT_TRUE(manager.IsAvailable());
 }
@@ -221,8 +221,8 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
     pause_mutex.unlock();
 
     EXPECT_EQ(S3ErrorCode::CANCELLED, result.get());
-    EXPECT_EQ(1, num_feedback_calls);
-    EXPECT_EQ(1, completed_uploads.size());
+    EXPECT_EQ(1u, num_feedback_calls);
+    EXPECT_EQ(1u, completed_uploads.size());
     EXPECT_EQ(uploads.at(0), completed_uploads.at(0));
 
     EXPECT_TRUE(manager->IsAvailable());
