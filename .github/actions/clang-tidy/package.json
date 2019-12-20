@@ -1,22 +1,21 @@
 {
-  "name": "ros1-ci",
+  "name": "clang-tidy",
   "version": "0.1.0",
-  "description": "Github Action to build and test a ROS1 package",
+  "description": "Github Action to run clang-tidy on a repository",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build src/ros1-ci.ts -o dist",
+    "build": "ncc build src/clang-tidy.ts -o dist",
     "lint": "eslint src/**.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aws-robotics/action-ros1-ci.git"
+    "url": "git+https://github.com/aws-robotics/action-clang-tidy.git"
   },
   "keywords": [
-    "ros1",
-    "kinetic",
-    "melodic",
-    "setup"
+    "clang",
+    "clang-tidy",
+    "cpp"
   ],
   "author": "AWS RoboMaker",
   "license": "Apache-2.0",
@@ -27,9 +26,9 @@
     }
   ],
   "bugs": {
-    "url": "https://github.com/aws-robotics/action-ros1-ci/issues"
+    "url": "https://github.com/aws-robotics/action-clang-tidy/issues"
   },
-  "homepage": "https://github.com/aws-robotics/action-ros1-ci.git#readme",
+  "homepage": "https://github.com/aws-robotics/action-clang-tidy.git#issues",
   "dependencies": {
     "@actions/core": "^1.2.0",
     "@actions/exec": "^1.0.1"

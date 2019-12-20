@@ -50,7 +50,7 @@ class RollingRecorder
 {
 public:
   RollingRecorder(
-    ros::Duration bag_rollover_time, ros::Duration max_record_time, std::vector<std::string> topics_to_record);
+    const ros::Duration & bag_rollover_time, const ros::Duration & max_record_time, std::vector<std::string> topics_to_record);
   ~RollingRecorder() = default;
 
   /**
