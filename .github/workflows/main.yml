@@ -45,6 +45,12 @@ jobs:
         status: 'success'
         namespace: 'TravisCI' # To be consistent with metrics for existing aws-robotics packages built with TravisCI
       if: success() && github.ref == 'refs/heads/master'
+    - name: Post Coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: '${{ matrix.distro }},ROS_1'
+        fail_ci_if_error: true
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
       with:
