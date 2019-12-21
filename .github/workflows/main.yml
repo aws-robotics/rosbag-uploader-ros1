@@ -51,6 +51,7 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        file: 'coverage/*'
         flags: '${{ matrix.distro }},ROS_1'
         fail_ci_if_error: true
     - name: Upload Coverage
