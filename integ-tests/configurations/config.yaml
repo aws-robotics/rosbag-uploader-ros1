@@ -1,0 +1,7 @@
+s3_bucket: '853615951893-base-image'
+aws_client_configuration:
+    region: 'us-west-2'
+    connect_timeout_ms: 9000
+    request_timeout_ms: 9000
+    max_retries: 10
+
