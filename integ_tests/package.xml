@@ -14,6 +14,7 @@
     <build_depend>python-boto3</build_depend>
     <build_depend>actionlib</build_depend>
 
+    <exec_depend>python-backoff-pip</exec_depend>
     <exec_depend>python-boto3</exec_depend>
     <exec_depend>s3_file_uploader</exec_depend>
 </package>
