@@ -53,6 +53,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: '${{ matrix.distro }},ROS_1'
         fail_ci_if_error: true
+        yml: ./.codecov.yml
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
       with:
