@@ -21,9 +21,8 @@
 #include <ros/console.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
-#include <recorder_common_error_codes.h>
-#include <duration_recorder/duration_recorder.h>
-#include <utils/rosbag_file_manager.h>
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 using namespace Aws::Rosbag;
 using namespace rosbag;
@@ -39,12 +38,10 @@ protected:
     ros::NodeHandle nh("~");
     action_client_ = std::make_shared<DurationRecorderActionClient>(nh, "RosbagDurationRecord");
     duration_recorder_ = std::make_shared<Aws::Rosbag::DurationRecorder>();
-    rosbag_file_manager_ = std::make_shared<Aws::Rosbag::Utils::RosbagFileManager>();
   }
 
   std::shared_ptr<DurationRecorderActionClient> action_client_;
   std::shared_ptr<Aws::Rosbag::DurationRecorder> duration_recorder_;
-  std::shared_ptr<Aws::Rosbag::Utils::RosbagFileManager> rosbag_file_manager_;
 };
 
 TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
@@ -63,18 +60,6 @@ TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
   ros::Duration(1,0).sleep();
   ASSERT_TRUE(message_received);
   executor.stop();
-}
-
-TEST_F(DurationRecorderNodeFixture, TestRosbagRemovalSuccessfulCase)
-{
-  std::ofstream file("./TestRosbagRemovalSuccessfulCase.bag");
-  file.close();
-  EXPECT_EQ(rosbag_file_manager_->DeleteRosbag("./TestRosbagRemovalSuccessfulCase.bag"), Aws::Rosbag::RecorderErrorCode::SUCCESS);
-}
-
-TEST_F(DurationRecorderNodeFixture, TestRosbagRemovalFailureCases)
-{
-  EXPECT_EQ(rosbag_file_manager_->DeleteRosbag("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::ROSBAG_FILE_NOT_FOUND);
 }
 
 int main(int argc, char** argv)

@@ -19,8 +19,8 @@
 #include <rosbag/recorder.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
-#include <recorder_common_error_codes.h>
-#include <duration_recorder/duration_recorder.h>
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 namespace Aws
 {

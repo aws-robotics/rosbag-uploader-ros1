@@ -30,9 +30,9 @@ enum RecorderErrorCode
   // Generic failure
   FAILED,
   // The local rosgbag file was not found
-  ROSBAG_FILE_NOT_FOUND,
+  FILE_NOT_FOUND,
   // Fail to remove local rosgbag file
-  ROSBAG_REMOVAL_FAILED
+  FILE_REMOVAL_FAILED
 };
 
 }  // namespace Rosbag

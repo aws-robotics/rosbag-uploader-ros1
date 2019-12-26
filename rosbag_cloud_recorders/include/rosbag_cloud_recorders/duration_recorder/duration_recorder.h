@@ -21,7 +21,7 @@
 #include <rosbag/recorder.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
-#include <recorder_common_error_codes.h>
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
 namespace Aws {
 namespace Rosbag {
