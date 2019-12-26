@@ -14,6 +14,7 @@
  */
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 #include <gtest/gtest.h>
 
@@ -21,12 +22,13 @@
 
 TEST(DeleteFileTest, TestRosbagRemovalSuccessfulCase)
 {
-  std::ofstream file("./TestRosbagRemovalSuccessfulCase.bag");
-  file.close();
-  EXPECT_EQ(Aws::Rosbag::Utils::DeleteFile("./TestRosbagRemovalSuccessfulCase.bag"), Aws::Rosbag::RecorderErrorCode::SUCCESS);
+    std::string path = "./TestRosbagRemovalSuccessfulCase.bag";
+    std::ofstream file(path);
+    file.close();
+    EXPECT_EQ(Aws::Rosbag::Utils::DeleteFile(path), Aws::Rosbag::RecorderErrorCode::SUCCESS);
 }
 
-TEST(DeleteFileTest, TestRosbagRemovalFailureCases)
+TEST(DeleteFileTest, TestRosbagRemovalFailsFileDoesntExist)
 {
   EXPECT_EQ(Aws::Rosbag::Utils::DeleteFile("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND);
 }
