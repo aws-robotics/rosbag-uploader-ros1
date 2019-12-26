@@ -14,14 +14,12 @@
  */
 
 #include <ros/ros.h>
-#include <duration_recorder/duration_recorder.h>
-#include <utils/rosbag_file_manager.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "rosbag_duration_recorder");
   Aws::Rosbag::DurationRecorder duration_recorder;
-  // Aws::Rosbag::Utils::RosbagFileManager rosbag_file_manager; // unused variable
   ros::spin();
   return 0;
 }

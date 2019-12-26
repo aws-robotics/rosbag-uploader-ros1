@@ -13,9 +13,11 @@
  * permissions and limitations under the License.
  */
 
-#include <recorder_common_error_codes.h>
-#include <utils/rosbag_file_manager.h>
+#pragma once
+
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 #include <string>
+#include <fstream>
 
 namespace Aws
 {
@@ -24,17 +26,26 @@ namespace Rosbag
 namespace Utils
 {
 
-Aws::Rosbag::RecorderErrorCode RosbagFileManager::DeleteRosbag(const std::string & rosbag_file_path)
+  /**
+  * @brief delete a file
+  *
+  * Delete file at file_path.
+  *
+  * @param file_path path to the file to be deleted
+  * @return error code, SUCCESS if the file is sucessfully deleted
+  */
+Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
 {
-  std::ifstream rosbag_file(rosbag_file_path);
-  if (!rosbag_file.good()) {
-    return Aws::Rosbag::RecorderErrorCode::ROSBAG_FILE_NOT_FOUND;
+  std::ifstream file(file_path);
+  if (!file.good()) {
+    return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
   }
-  if (std::remove(rosbag_file_path.c_str()) == 0) {
+  if (std::remove(file_path.c_str()) == 0) {
     return Aws::Rosbag::RecorderErrorCode::SUCCESS;
   }
-  return Aws::Rosbag::RecorderErrorCode::ROSBAG_REMOVAL_FAILED;
+  return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
 }
+
 
 }  // namespace Utils
 }  // namespace Rosbag

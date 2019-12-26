@@ -12,6 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+#include <string>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <actionlib/client/action_client.h>
@@ -20,10 +22,9 @@
 #include <ros/console.h>
 
 #include <recorder_msgs/RollingRecorderAction.h>
-#include <recorder_common_error_codes.h>
-#include <rolling_recorder/rolling_recorder.h>
-#include <string>
-#include <vector>
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+#include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
+
 
 using RollingRecorderActionClient = actionlib::ActionClient<recorder_msgs::RollingRecorderAction>;
 

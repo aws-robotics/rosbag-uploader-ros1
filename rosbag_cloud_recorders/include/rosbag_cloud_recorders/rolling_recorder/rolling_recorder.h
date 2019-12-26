@@ -26,7 +26,7 @@
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <file_uploader_msgs/UploadFilesGoal.h>
-#include <recorder_common_error_codes.h>
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/action_client.h>
 

@@ -13,13 +13,20 @@
  * permissions and limitations under the License.
  */
 
+#include <string>
+#include <vector>
+
 #include <ros/ros.h>
-#include <rolling_recorder/rolling_recorder.h>
+#include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
 
 
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "rosbag_rolling_recorder");
+  Aws::Rosbag::RollingRecorder rolling_recorder(
+    ros::Duration(1.0),
+    ros::Duration(1.0),
+    std::vector<std::string>());
   ros::spin();
   return 0;
 }
