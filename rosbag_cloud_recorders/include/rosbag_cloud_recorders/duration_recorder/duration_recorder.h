@@ -26,7 +26,7 @@
 namespace Aws {
 namespace Rosbag {
 
-typedef actionlib::ActionServer<recorder_msgs::DurationRecorderAction> DurationRecorderActionServer;
+using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
 
 /**
  *  Duration recorder is a node that responds to actions to record rosbag files
