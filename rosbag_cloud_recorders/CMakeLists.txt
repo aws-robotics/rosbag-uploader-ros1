@@ -57,6 +57,8 @@ include_directories(
 add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     src/duration_recorder/duration_recorder.cpp
     src/rolling_recorder/rolling_recorder.cpp
+    src/utils/file_utils.cpp
+    src/utils/periodic_file_deleter.cpp
 )
 
 target_link_libraries(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
@@ -137,7 +139,9 @@ if(CATKIN_ENABLE_TESTING)
 
   find_common_test_packages()
   add_common_gtest(test_utils
-    test/utils_test.cpp
+    test/utils/utils_test.cpp
+    test/utils/file_utils_test.cpp
+    test/utils/periodic_file_deleter_test.cpp
   )
   target_include_directories(test_utils
     PRIVATE include

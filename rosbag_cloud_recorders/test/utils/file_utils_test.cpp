@@ -21,22 +21,17 @@
 
 #include <rosbag_cloud_recorders/utils/file_utils.h>
 
+using namespace Aws::Rosbag::Utils;
+
 TEST(DeleteFileTest, TestRosbagRemovalSuccessfulCase)
 {
     std::string path = "./TestRosbagRemovalSuccessfulCase.bag";
     std::ofstream file(path);
     file.close();
-    EXPECT_EQ(Aws::Rosbag::Utils::DeleteFile(path), Aws::Rosbag::RecorderErrorCode::SUCCESS);
+    EXPECT_EQ(DeleteFile(path), Aws::Rosbag::RecorderErrorCode::SUCCESS);
 }
 
 TEST(DeleteFileTest, TestRosbagRemovalFailsFileDoesntExist)
 {
-  EXPECT_EQ(Aws::Rosbag::Utils::DeleteFile("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND);
-}
-
-int main(int argc, char ** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  auto result = RUN_ALL_TESTS();
-  return result;
+  EXPECT_EQ(DeleteFile("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND);
 }
