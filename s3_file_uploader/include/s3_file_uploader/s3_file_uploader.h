@@ -17,7 +17,7 @@
 
 #include <actionlib/server/action_server.h>
 #include <ros/ros.h>
-
+#include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <s3_common/s3_upload_manager.h>
 
@@ -32,16 +32,18 @@ using UploadFilesActionServer = actionlib::ActionServer<file_uploader_msgs::Uplo
 class S3FileUploader
 {
 public:
-  explicit S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager);
+  explicit S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager = nullptr);
   ~S3FileUploader() = default;
+  void Spin();
 
 private:
   void GoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
-  void PublishFeedback(const std::vector<UploadDescription>& uploaded_files );
   ros::NodeHandle node_handle_;
   UploadFilesActionServer action_server_;
   std::unique_ptr<S3UploadManager> upload_manager_;
+  std::shared_ptr<Aws::Client::Ros1NodeParameterReader> parameter_reader_;
+  std::string bucket_;
 };
 
 }  // namespace S3

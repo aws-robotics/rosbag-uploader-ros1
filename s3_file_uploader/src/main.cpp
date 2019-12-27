@@ -22,30 +22,24 @@
 #include <s3_file_uploader/s3_file_uploader.h>
 
 using Aws::S3::S3FileUploader;
-using Aws::S3::S3UploadManager;
+
+constexpr char kNodeName[] = "s3_file_uploader";
 
 int main(int argc, char* argv[])
 {
+    Aws::Utils::Logging::InitializeAWSLogging(
+        Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
     Aws::SDKOptions options;
     Aws::InitAPI(options);
 
-    char node_name[] = "s3_file_uploader";
-    ros::init(argc, argv, node_name);    
-    Aws::Utils::Logging::InitializeAWSLogging(
-        Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(node_name));
+    ros::init(argc, argv, kNodeName);
 
     AWS_LOGSTREAM_INFO(__func__, "Starting S3FileUploader node");
 
-    ros::AsyncSpinner executor(0);
-    executor.start();
+    S3FileUploader file_uploader;
+    file_uploader.Spin();
 
-    auto upload_manager = std::make_unique<S3UploadManager>();
-    S3FileUploader file_uploader(std::move(upload_manager));
-
-    ros::waitForShutdown();
-    executor.stop();
     Aws::ShutdownAPI(options);
     Aws::Utils::Logging::ShutdownAWSLogging();
-
     return 0;
 }
