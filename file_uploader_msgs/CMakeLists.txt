@@ -7,12 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
     message_runtime
 )
 
-## Generate messages in the 'msg' folder
-add_message_files(
-    FILES
-    UploaderResult.msg
-)
-
 ## Generate actions in the action folder
 add_action_files(
     DIRECTORY action
