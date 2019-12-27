@@ -59,6 +59,15 @@ protected:
     }
 };
 
+TEST_F(S3FacadeTest, TestClientConfigConstructor)
+{
+    Aws::Client::ClientConfiguration config;
+    S3Facade s3_facade(config);
+    // No credentials configured, exepect to get access denied
+    auto facade_result = s3_facade.PutObject(upload_file, "bucket", "key");
+    EXPECT_EQ(S3ErrorCode::S3_ACCESS_DENIED, facade_result);
+}
+
 TEST_F(S3FacadeTest, TestPutObjectSuccess)
 {
     Model::PutObjectResult result;
@@ -105,4 +114,16 @@ TEST_F(S3FacadeTest, TestPutObjectS3BucketDoesntExist)
 
     auto facade_result = s3_facade->PutObject(upload_file, "bucket", "key");
     EXPECT_EQ(S3ErrorCode::S3_NO_SUCH_BUCKET, facade_result);
+}
+
+TEST_F(S3FacadeTest, TestPutObjectGenericFailure)
+{
+    Aws::Client::AWSError<S3Errors> error(S3Errors::INTERNAL_FAILURE, false);
+    Model::PutObjectOutcome outcome(error);
+    EXPECT_CALL(*client, PutObject(_))
+        .WillOnce(Return(outcome));
+    auto s3_facade = std::make_shared<S3Facade>(std::move(client));
+
+    auto facade_result = s3_facade->PutObject(upload_file, "bucket", "key");
+    EXPECT_EQ(S3ErrorCode::FAILED, facade_result);
 }

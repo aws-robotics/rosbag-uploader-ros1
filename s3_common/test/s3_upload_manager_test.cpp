@@ -107,6 +107,19 @@ public:
     } 
 };
 
+TEST_F(S3UploadManagerTest, TestClientConfigConstructor)
+{
+    Aws::Client::ClientConfiguration config;
+    S3UploadManager manager(config);
+    EXPECT_TRUE(manager.IsAvailable());
+    auto result = manager.UploadFiles(uploads, "bucket",
+                    [this](const std::vector<UploadDescription>& callback_uploads)
+                    {this->FeedbackCallback(callback_uploads);});
+    // This test isn't using mocks so it could fail because of invalid credentials,
+    // not being able to connect to s3 or because the files that are being uploaded don't
+    // exist. The purpose of this test isn't to check the error modes.
+    EXPECT_NE(S3ErrorCode::SUCCESS, result);
+}
 
 TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
 {
