@@ -26,8 +26,6 @@ using Aws::S3::S3UploadManager;
 
 constexpr char kNodeName[] = "s3_file_uploader";
 
-constexpr char kNodeName[] = "s3_file_uploader";
-
 int main(int argc, char* argv[])
 {
     Aws::Utils::Logging::InitializeAWSLogging(

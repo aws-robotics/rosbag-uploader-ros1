@@ -28,7 +28,6 @@
 
 #include <s3_file_uploader/s3_file_uploader.h>
 
-
 namespace Aws
 {
 namespace S3
@@ -39,13 +38,13 @@ S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) 
     node_handle_("~"),
     action_server_(node_handle_, "UploadFiles", false)
 {
-    parameter_reader_ = std::make_shared<Ros1NodeParameterReader>();
+    parameter_reader_ = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
 
     if (upload_manager) {
         upload_manager_ = move(upload_manager);
     } else {
-        ClientConfigurationProvider configuration_provider(parameter_reader_);
-        ClientConfiguration aws_sdk_config = configuration_provider.GetClientConfiguration();
+        Aws::Client::ClientConfigurationProvider configuration_provider(parameter_reader_);
+        Aws::Client::ClientConfiguration aws_sdk_config = configuration_provider.GetClientConfiguration();
         upload_manager_ = std::make_unique<S3UploadManager>(aws_sdk_config);
     }
 
@@ -106,13 +105,13 @@ void S3FileUploader::Spin() {
     uint32_t spinner_thread_count = kDefaultNumberOfSpinnerThreads;
     int spinner_thread_count_input;
     if (Aws::AwsError::AWS_ERR_OK ==
-        parameter_reader_->ReadParam(ParameterPath(kSpinnerThreadCountOverrideParameter),
+        parameter_reader_->ReadParam(Aws::Client::ParameterPath(kSpinnerThreadCountOverrideParameter),
                                      spinner_thread_count_input)) {
         spinner_thread_count = static_cast<uint32_t>(spinner_thread_count_input);
     }
 
     if (Aws::AwsError::AWS_ERR_OK !=
-        parameter_reader_->ReadParam(ParameterPath(kBucketNameParameter), bucket_)) {
+        parameter_reader_->ReadParam(Aws::Client::ParameterPath(kBucketNameParameter), bucket_)) {
         AWS_LOG_ERROR(__func__, "Failed to load s3 bucket name, aborting. Check the configuration file for parameter s3_bucket");
         return;
     }

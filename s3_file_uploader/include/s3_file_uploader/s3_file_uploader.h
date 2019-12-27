@@ -21,8 +21,6 @@
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <s3_common/s3_upload_manager.h>
 
-using namespace Aws::Client;
-
 namespace Aws {
 namespace S3 {
 
@@ -52,7 +50,7 @@ private:
   ros::NodeHandle node_handle_;
   UploadFilesActionServer action_server_;
   std::unique_ptr<S3UploadManager> upload_manager_;
-  std::shared_ptr<Ros1NodeParameterReader> parameter_reader_;
+  std::shared_ptr<Aws::Client::Ros1NodeParameterReader> parameter_reader_;
   std::string bucket_;
 };
 
