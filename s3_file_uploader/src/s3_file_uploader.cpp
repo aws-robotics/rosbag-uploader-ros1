@@ -32,9 +32,9 @@
  * By default we use one thread to handle upload goals. You may specify a different setting
  * via the "spinner_thread_count" parameter.
  */
-constexpr uint32_t kDefaultNumberOfSpinnerThreads = 2; // NOLINT(readability-identifier-naming)
-const char * kSpinnerThreadCountOverrideParameter = "spinner_thread_count"; // NOLINT(readability-identifier-naming)
-const char * kBucketNameParameter = "s3_bucket"; // NOLINT(readability-identifier-naming)
+constexpr uint32_t kDefaultNumberOfSpinnerThreads = 2;
+constexpr char kSpinnerThreadCountOverrideParameter[] = "spinner_thread_count";
+constexpr char kBucketNameParameter[] = "s3_bucket";
 
 namespace Aws
 {
