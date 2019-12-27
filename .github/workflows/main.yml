@@ -1,8 +1,11 @@
+name: build-test
 on: 
   pull_request:
   push:
     branches:
       - master
+  schedule:
+    - cron: '0 */6 * * *'
 
 jobs:
   build:
@@ -16,6 +19,12 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v1
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
     - name: Build
       uses: ./.github/actions/ros1-ci/
       with:
@@ -24,6 +33,26 @@ jobs:
         packages-to-test: "s3_common s3_file_uploader"
         ros-distro: ${{ matrix.distro }}
         workspace-dir: ./
+    - name: Log Build Failure
+      uses: ./.github/actions/cw-build-status/
+      with:
+        status: 'failure'
+        namespace: 'TravisCI' # To be consistent with metrics for existing aws-robotics packages built with TravisCI
+      if: failure() && github.ref == 'refs/heads/master'
+    - name: Log Build Success
+      uses: ./.github/actions/cw-build-status/
+      with:
+        status: 'success'
+        namespace: 'TravisCI' # To be consistent with metrics for existing aws-robotics packages built with TravisCI
+      if: success() && github.ref == 'refs/heads/master'
+    - name: Clang Tidy
+      uses: ./.github/actions/clang-tidy/
+    - name: Post Coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: '${{ matrix.distro }},ROS_1'
+        fail_ci_if_error: true
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
       with:

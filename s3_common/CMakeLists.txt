@@ -37,6 +37,7 @@ endif()
 add_library(${PROJECT_NAME} SHARED
     src/s3_facade.cpp
     src/s3_upload_manager.cpp
+    src/utils.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} 

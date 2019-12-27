@@ -2,6 +2,10 @@
 
 ROS packages for uploading rosbags to AWS cloud services.
 
+### Build status
+
+[![Actions Status](https://github.com/aws-robotics/rosbag-uploader-ros1/workflows/build-test/badge.svg)](https://github.com/aws-robotics/rosbag-uploader-ros1/actions)
+
 ## License
 
 This library is licensed under the Apache 2.0 License. 

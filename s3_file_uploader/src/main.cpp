@@ -21,7 +21,10 @@
 #include <s3_common/s3_upload_manager.h>
 #include <s3_file_uploader/s3_file_uploader.h>
 
-using namespace Aws::S3;
+using Aws::S3::S3FileUploader;
+using Aws::S3::S3UploadManager;
+
+constexpr char kNodeName[] = "s3_file_uploader";
 
 constexpr char kNodeName[] = "s3_file_uploader";
 

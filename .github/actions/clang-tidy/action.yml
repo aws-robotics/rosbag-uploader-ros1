@@ -1,0 +1,9 @@
+name: 'clang-tidy'
+description: 'Run clang-tidy on a repository'
+inputs:
+  workspace-dir:
+    description: 'Path to the workspace folder that contains your package/s'
+    default: './'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
