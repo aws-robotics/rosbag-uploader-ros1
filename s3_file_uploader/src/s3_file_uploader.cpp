@@ -125,10 +125,8 @@ void S3FileUploader::Spin() {
     }
     AWS_LOG_INFO(__func__, "Starting S3FileUploader spinner with bucket %s and thread count %d\n", bucket_.c_str(), spinner_thread_count);
 
-    ros::AsyncSpinner executor(spinner_thread_count);
-    executor.start();
-    ros::waitForShutdown();
-    executor.stop();
+    ros::MultiThreadedSpinner executor(spinner_thread_count);
+    executor.spin();
 }
 
 }  // namespace S3
