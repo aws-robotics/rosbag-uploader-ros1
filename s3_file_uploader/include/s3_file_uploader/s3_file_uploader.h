@@ -27,14 +27,6 @@ namespace S3 {
 using UploadFilesActionServer = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>;
 
 /**
- * By default we use one thread to handle upload goals. You may specify a different setting
- * via the "spinner_thread_count" parameter.
- */
-constexpr uint32_t kDefaultNumberOfSpinnerThreads = 2;
-const char * kSpinnerThreadCountOverrideParameter = "spinner_thread_count";
-const char * kBucketNameParameter = "s3_bucket";
-
-/**
  * S3FileUploader is a node that responds to actions to upload files to s3
  */
 class S3FileUploader
