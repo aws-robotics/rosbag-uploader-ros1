@@ -1,5 +1,5 @@
-# Google C++ Coding Style
-BasedOnStyle:  Google
+# ROS2 Coding Style
+# BasedOnStyle:  Google
 
 Language:        Cpp
 AccessModifierOffset: -2
