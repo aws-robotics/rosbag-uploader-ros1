@@ -22,7 +22,6 @@
 #include <s3_file_uploader/s3_file_uploader.h>
 
 using Aws::S3::S3FileUploader;
-using Aws::S3::S3UploadManager;
 
 constexpr char kNodeName[] = "s3_file_uploader";
 
