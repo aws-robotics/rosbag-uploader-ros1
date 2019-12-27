@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
+        <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/config.yaml"/>
+    </include>
+    <test test-name="TestBareBones" pkg="rosbag_uploader_ros1_integration_tests" type="test_rosbag_uploader_ros1.py" />
+</launch>
