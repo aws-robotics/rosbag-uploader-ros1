@@ -21,6 +21,7 @@
 #include <aws/core/Aws.h>
 #include <ros/ros.h>
 #include <ros/console.h>
+#include <ros/callback_queue.h>
 
 #include <s3_file_uploader/s3_file_uploader.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
@@ -125,13 +126,20 @@ TEST_F(S3UploaderTest, TestActionSucceedsNoUploadManagerProvided)
 TEST_F(S3UploaderTest, TestGoalCancellation) {
     EXPECT_CALL(*upload_manager, IsAvailable())
         .WillOnce(Return(true)).WillOnce(Return(false)).WillRepeatedly(Return(true));
-    EXPECT_CALL(*upload_manager, UploadFiles(_,_,_))
-        .WillRepeatedly(Return(S3ErrorCode::SUCCESS));
-    EXPECT_CALL(*upload_manager, CancelUpload())
-        .Times(1);
+    // Delay the server's processing by a few seconds so that we'll be able to send a cancellation request.
+    auto upload_files_action = [](
+        const std::vector<UploadDescription> & upload_desc,
+        const std::string & text,
+        const boost::function<void (const std::vector<UploadDescription>&)>& feedback_fn) {
+        (void) text;
+        feedback_fn(upload_desc);
+        ros::Duration(2, 0).sleep();
+        return S3ErrorCode::SUCCESS;
+    };
+    EXPECT_CALL(*upload_manager, UploadFiles(_, _, _)).WillRepeatedly(Invoke(upload_files_action));
+    EXPECT_CALL(*upload_manager, CancelUpload()).Times(1);
 
     S3FileUploader file_uploader(std::move(upload_manager));
-
     goal.files.push_back("test_file_name");
     goal.upload_location = "/my/upload/dir";
 
@@ -140,7 +148,8 @@ TEST_F(S3UploaderTest, TestGoalCancellation) {
 
     auto transition_call_back = [&](UploadFilesActionClient::GoalHandle gh) {
         (void) gh;
-        ros::Duration(2, 0).sleep();
+        ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(1));
+        ros::Duration(1, 0).sleep();
     };
     auto gh = action_client.sendGoal(goal, transition_call_back);
     gh.cancel();
