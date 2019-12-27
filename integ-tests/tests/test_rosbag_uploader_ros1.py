@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import rostest
-import unittest
 import sys
+import unittest
+
+import rostest
 
 
 PKG = 'rosbag_uploader_ros1_integration_tests'
