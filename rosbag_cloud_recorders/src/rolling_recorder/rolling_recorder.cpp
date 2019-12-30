@@ -114,14 +114,23 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
 
   GenerateFeedback(record_rosbag_action_feedback, recorder_msgs::RecorderStatus::UPLOADING);
   goal_handle.publishFeedback(record_rosbag_action_feedback);
-  file_uploader_msgs::UploadFilesGoal file_uploader_goal = ConstructRosBagUploaderGoal(goal->destination);
-  RecorderErrorCode upload_status = SendRosBagUploaderGoal(file_uploader_goal);
-  if (SUCCESS == upload_status) {
-    GenerateResult(recording_result, t_recording_result, recorder_msgs::RecorderResult::SUCCESS, "Rolling recording and rosbags uploading were completed successfully.");
-    goal_handle.setSucceeded(recording_result, "");
-  } else {
-    GenerateResult(recording_result, t_recording_result, upload_status, "Rolling recording succeeded, however, rosbags uploading failed to complete.");
+
+  //TODO(abbyxu): set timeout as const and set retry
+  rosbag_uploader_action_client_->waitForServer(ros::Duration(10, 0));
+  if (!rosbag_uploader_action_client_->isServerConnected()) {
+    AWS_LOG_WARN(__func__, "Not able to connect to file uploader action server, rosbags uploading failed to complete.");
+    GenerateResult(recording_result, t_recording_result, recorder_msgs::RecorderResult::INTERNAL_ERROR, "Not able to connect to file uploader action server, rosbags uploading failed to complete.");
     goal_handle.setAborted(recording_result, "");
+  } else {
+    file_uploader_msgs::UploadFilesGoal file_uploader_goal = ConstructRosBagUploaderGoal(goal->destination);
+    RecorderErrorCode upload_status = SendRosBagUploaderGoal(file_uploader_goal);
+    if (SUCCESS == upload_status) {
+      GenerateResult(recording_result, t_recording_result, recorder_msgs::RecorderResult::SUCCESS, "Rolling recording and rosbags uploading were completed successfully.");
+      goal_handle.setSucceeded(recording_result, "");
+    } else {
+      GenerateResult(recording_result, t_recording_result, upload_status, "Rolling recording succeeded, however, rosbags uploading failed to complete.");
+      goal_handle.setAborted(recording_result, "");
+    }
   }
   ReleaseCurrentGoalHandle();
   //TODO(abbyxu): add delete logic or update the map
