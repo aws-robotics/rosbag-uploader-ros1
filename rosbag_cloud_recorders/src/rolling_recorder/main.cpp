@@ -23,10 +23,12 @@
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "rosbag_rolling_recorder");
+  // Will be made configurable in later PRs
+  std::vector<std::string> topics_to_record{"/rosout"};
   Aws::Rosbag::RollingRecorder rolling_recorder(
     ros::Duration(1.0),
     ros::Duration(1.0),
-    std::vector<std::string>());
+    topics_to_record);
   ros::spin();
   return 0;
 }
