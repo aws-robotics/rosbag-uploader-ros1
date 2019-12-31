@@ -83,8 +83,8 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
     auto feedback_callback = [&](const std::vector<UploadDescription>& uploaded_files) {
         completed_uploads = uploaded_files;
         file_uploader_msgs::UploadFilesFeedback feedback;
-        feedback.num_remaining = 0;
-        feedback.num_uploaded = 0;
+        feedback.num_remaining = uploads.size() - uploaded_files.size();
+        feedback.num_uploaded = uploaded_files.size();
         goal_handle.publishFeedback(feedback);
     };
 
@@ -95,7 +95,11 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
     for (auto const& upload : completed_uploads) {
         result.files_uploaded.push_back(upload.object_key);
     }
-    goal_handle.setSucceeded(result, "");
+    if (S3ErrorCode::SUCCESS != result_code) {
+        goal_handle.setAborted(result, "Goal was aborted due to error uploading files. S3ErrorCode: " + result_code);
+    } else {
+        goal_handle.setSucceeded(result, "");
+    }
 }
 
 void S3FileUploader::CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal_handle)
