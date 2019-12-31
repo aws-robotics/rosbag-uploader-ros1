@@ -77,6 +77,9 @@ TEST_F(PeriodicFileDeleterTest, TestIsActive)
     ASSERT_FALSE(deleter->IsActive());
     deleter->Start();
     ASSERT_TRUE(deleter->IsActive());
+    // Shouldn't do anything
+    deleter->Start();
+    ASSERT_TRUE(deleter->IsActive());
     deleter->Stop();
     ASSERT_FALSE(deleter->IsActive());
 }

@@ -47,13 +47,15 @@ PeriodicFileDeleter::~PeriodicFileDeleter()
 {
   Stop();
 }
+
 void PeriodicFileDeleter::Start()
 {
-  if (is_active_) {
-    AWS_LOG_INFO(__func__, "Failed to start PeriodicFileDeleter, deleter already active");
-    return;
-  } else {
+  {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (is_active_) {
+      AWS_LOG_INFO(__func__, "Failed to start PeriodicFileDeleter, deleter already active");
+      return;
+    }
     is_active_ = true;
   }
   thread_ = std::thread{&PeriodicFileDeleter::DeleteFiles, this};
@@ -77,13 +79,13 @@ bool PeriodicFileDeleter::IsActive() const
 
 void PeriodicFileDeleter::DeleteFiles()
 {
-  while(is_active_) {
+  while (is_active_) {
     auto files_to_delete = deletion_list_callback_();
-    for(const auto& file: files_to_delete) {
+    for (const auto& file: files_to_delete) {
       AWS_LOGSTREAM_INFO(__func__, "Deleting file " << file);
       auto result = DeleteFile(file);
       if (result != RecorderErrorCode::SUCCESS) {
-        AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file "<<file<<", skipping.");
+        AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file " << file << ", skipping.");
       }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_period_ms_));

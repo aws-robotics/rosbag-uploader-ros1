@@ -15,7 +15,13 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <stdlib.h>
 #include <sys/stat.h>
+
+#include <cstring>
+#include <cerrno>
+#include <string>
+#include <unistd.h>
 
 #include <gtest/gtest.h>
 
@@ -23,7 +29,7 @@
 
 using namespace Aws::Rosbag::Utils;
 
-TEST(DeleteFileTest, TestRosbagRemovalSuccessfulCase)
+TEST(DeleteFileTest, TestFileRemovalSucceeds)
 {
     std::string path = "./TestRosbagRemovalSuccessfulCase.bag";
     std::ofstream file(path);
@@ -31,7 +37,15 @@ TEST(DeleteFileTest, TestRosbagRemovalSuccessfulCase)
     EXPECT_EQ(DeleteFile(path), Aws::Rosbag::RecorderErrorCode::SUCCESS);
 }
 
-TEST(DeleteFileTest, TestRosbagRemovalFailsFileDoesntExist)
+TEST(DeleteFileTest, TestFileRemovalFailsFileDoesntExist)
 {
   EXPECT_EQ(DeleteFile("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND);
+}
+
+TEST(DeleteFileTest, TestRemoveDirectoryFails)
+{
+    char dir_template[] = "/tmp/DeleteFileTestXXXXXX";
+    mkdtemp(dir_template);
+    EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED, DeleteFile(dir_template));
+    rmdir(dir_template);
 }
