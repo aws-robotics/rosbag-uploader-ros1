@@ -123,38 +123,6 @@ TEST_F(S3UploaderTest, TestActionSucceedsNoUploadManagerProvided)
     SanityGoalCheck(actionlib::TerminalState::StateEnum::SUCCEEDED);
 }
 
-TEST_F(S3UploaderTest, TestGoalCancellation) {
-    EXPECT_CALL(*upload_manager, IsAvailable())
-        .WillOnce(Return(true)).WillOnce(Return(false)).WillRepeatedly(Return(true));
-    // Delay the server's processing by a few seconds so that we'll be able to send a cancellation request.
-    auto upload_files_action = [](
-        const std::vector<UploadDescription> & upload_desc,
-        const std::string & text,
-        const boost::function<void (const std::vector<UploadDescription>&)>& feedback_fn) {
-        (void) text;
-        feedback_fn(upload_desc);
-        ros::Duration(2, 0).sleep();
-        return S3ErrorCode::SUCCESS;
-    };
-    EXPECT_CALL(*upload_manager, UploadFiles(_, _, _)).WillRepeatedly(Invoke(upload_files_action));
-    EXPECT_CALL(*upload_manager, CancelUpload()).Times(1);
-
-    S3FileUploader file_uploader(std::move(upload_manager));
-    goal.files.push_back("test_file_name");
-    goal.upload_location = "/my/upload/dir";
-
-    bool client_connected = action_client.waitForActionServerToStart(ros::Duration(10, 0));
-    ASSERT_TRUE(client_connected);
-
-    auto transition_call_back = [&](UploadFilesActionClient::GoalHandle gh) {
-        (void) gh;
-        ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(1));
-        ros::Duration(1, 0).sleep();
-    };
-    auto gh = action_client.sendGoal(goal, transition_call_back);
-    gh.cancel();
-}
-
 TEST_F(S3UploaderTest, TestUploadManagerUnavailableGoalRejection)
 {
     EXPECT_CALL(*upload_manager, IsAvailable())
