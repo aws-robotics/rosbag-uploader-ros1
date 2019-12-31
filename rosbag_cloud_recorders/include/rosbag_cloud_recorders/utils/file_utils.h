@@ -15,9 +15,13 @@
 
 #pragma once
 
-#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+#include <cstdio>
 #include <string>
-#include <fstream>
+#include <errno.h>
+
+#include <aws/core/utils/logging/LogMacros.h>
+
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
 namespace Aws
 {
@@ -36,14 +40,18 @@ namespace Utils
   */
 Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
 {
-  std::ifstream file(file_path);
-  if (!file.good()) {
-    return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
-  }
-  if (std::remove(file_path.c_str()) == 0) {
+  const int result = unlink(file_path.c_str());
+  if (result == 0) {
+    AWS_LOGSTREAM_INFO(__func__, "Deleted file "<<file_path);
     return Aws::Rosbag::RecorderErrorCode::SUCCESS;
+  } else {
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: "<<file_path<<" "<<strerror(errno));
+    if (errno == ENOENT) {
+        return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
+    }
+    return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
   }
-  return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
+  
 }
 
 
