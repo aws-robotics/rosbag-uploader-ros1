@@ -14,6 +14,8 @@
  */
 
 #include <fstream>
+#include <string>
+#include <vector>
 
 #include <ros/ros.h>
 #include <actionlib/server/action_server.h>
@@ -21,10 +23,9 @@
 #include <rosbag/recorder.h>
 
 #include <recorder_msgs/RollingRecorderAction.h>
-#include <recorder_common_error_codes.h>
-#include <rolling_recorder/rolling_recorder.h>
-#include <string>
-#include <vector>
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+#include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
+
 
 namespace Aws
 {
@@ -57,17 +58,13 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
 
 void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
-  (void) goal_handle;
+  goal_handle.setCanceled();
 }
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
-  bool successful_start = true;
-  if (successful_start) {
-    action_server_.start();
-    return SUCCESS;
-  }
-  return FAILED;
+  action_server_.start();
+  return SUCCESS;
 }
 
 RecorderErrorCode RollingRecorder::StopRollingRecorder()

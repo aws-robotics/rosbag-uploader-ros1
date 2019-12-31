@@ -24,10 +24,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_CXX_FLAGS}")
 find_package(catkin REQUIRED COMPONENTS
     actionlib
     actionlib_msgs
+    aws_common
+    file_uploader_msgs
     recorder_msgs
     roscpp
     rosbag
-    file_uploader_msgs
     roslint
 )
 
@@ -56,7 +57,6 @@ include_directories(
 add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     src/duration_recorder/duration_recorder.cpp
     src/rolling_recorder/rolling_recorder.cpp
-    src/utils/rosbag_file_manager.cpp
 )
 
 target_link_libraries(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
@@ -134,4 +134,17 @@ if(CATKIN_ENABLE_TESTING)
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
   )
+
+  find_common_test_packages()
+  add_common_gtest(test_utils
+    test/utils_test.cpp
+  )
+  target_include_directories(test_utils
+    PRIVATE include
+  )
+  target_link_libraries(test_utils
+    ${GTEST_LIBRARIES}
+    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+  )
+
 endif()

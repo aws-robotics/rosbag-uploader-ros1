@@ -13,29 +13,27 @@
  * permissions and limitations under the License.
  */
 
-#include <recorder_common_error_codes.h>
-#include <utils/rosbag_file_manager.h>
-#include <string>
+#pragma once
 
 namespace Aws
 {
 namespace Rosbag
 {
-namespace Utils
-{
 
-Aws::Rosbag::RecorderErrorCode RosbagFileManager::DeleteRosbag(const std::string & rosbag_file_path)
+/**
+ * Error codes for S3.
+ */
+enum RecorderErrorCode
 {
-  std::ifstream rosbag_file(rosbag_file_path);
-  if (!rosbag_file.good()) {
-    return Aws::Rosbag::RecorderErrorCode::ROSBAG_FILE_NOT_FOUND;
-  }
-  if (std::remove(rosbag_file_path.c_str()) == 0) {
-    return Aws::Rosbag::RecorderErrorCode::SUCCESS;
-  }
-  return Aws::Rosbag::RecorderErrorCode::ROSBAG_REMOVAL_FAILED;
-}
+  // Operation was successfuly
+  SUCCESS = 0,
+  // Generic failure
+  FAILED,
+  // The local rosgbag file was not found
+  FILE_NOT_FOUND,
+  // Fail to remove local rosgbag file
+  FILE_REMOVAL_FAILED
+};
 
-}  // namespace Utils
 }  // namespace Rosbag
 }  // namespace Aws
