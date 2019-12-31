@@ -96,7 +96,7 @@ void S3FileUploader::GoalCallBack(UploadFilesActionServer::GoalHandle goal_handl
         result.files_uploaded.push_back(upload.object_key);
     }
     if (S3ErrorCode::SUCCESS != result_code) {
-        goal_handle.setAborted(result, "Goal was aborted due to error uploading files. S3ErrorCode: " + result_code);
+        goal_handle.setAborted(result, "Goal was aborted due to error uploading files. S3ErrorCode: " + std::to_string(result_code));
     } else {
         goal_handle.setSucceeded(result, "");
     }
