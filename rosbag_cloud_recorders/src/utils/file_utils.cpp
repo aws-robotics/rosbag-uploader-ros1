@@ -12,9 +12,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-#include <fstream>
+#include <cstring>
+#include <cerrno>
 #include <string>
+#include <unistd.h>
 
 #include <aws/core/utils/logging/LogMacros.h>
 
@@ -27,27 +28,20 @@ namespace Rosbag
 namespace Utils
 {
 
-  /**
-  * @brief delete a file
-  *
-  * Delete file at file_path.
-  *
-  * @param file_path path to the file to be deleted
-  * @return error code, SUCCESS if the file is sucessfully deleted
-  */
 Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
 {
-  std::ifstream file(file_path);
-  if (!file.good()) {
-    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: " << file_path << ", file not found.");
-    return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
-  }
-  if (std::remove(file_path.c_str()) == 0) {
-    AWS_LOGSTREAM_DEBUG(__func__, "Deleted file " << file_path);
+  const int result = unlink(file_path.c_str());
+  if (result == 0) {
+    AWS_LOGSTREAM_INFO(__func__, "Deleted file "<<file_path);
     return Aws::Rosbag::RecorderErrorCode::SUCCESS;
+  } else {
+    if (errno == ENOENT) {
+      AWS_LOGSTREAM_WARN(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+      return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
+    }
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+    return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
   }
-  AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: " << file_path);
-  return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
 }
 
 }  // namespace Utils
