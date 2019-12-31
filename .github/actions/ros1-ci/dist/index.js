@@ -1084,7 +1084,7 @@ function coverage() {
             const execOptions = getExecOptions();
             if (packageLanguage == "cpp") {
                 yield exec.exec("lcov", ["--capture", "--directory", ".", "--output-file", "coverage.info"], execOptions);
-                yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '/opt/ros/*', '--output-file', 'coverage.info'], execOptions);
+                yield exec.exec("lcov", ["--remove", "coverage.info", '/usr/*', '/opt/ros/*', '*/test/*', '--output-file', 'coverage.info'], execOptions);
                 yield exec.exec("lcov", ["--list", "coverage.info"], execOptions);
                 yield exec.exec("mkdir", ["-p", COVERAGE_FOLDER_NAME]);
                 yield exec.exec("cp", ["coverage.info", COVERAGE_FOLDER_NAME], execOptions);
