@@ -149,12 +149,26 @@ if(CATKIN_ENABLE_TESTING)
           ${PROJECT_NAME}_libgmock
         )
     endif()
-
+    
+    find_common_test_packages()
+    add_common_gtest(test_action_server_handler
+      test/s3_file_uploader_action_server_handler_test.cpp
+    )
+    
+    target_include_directories(test_action_server_handler PRIVATE
+      ${TEST_INCLUDE_DIRS}
+    )
+    
+    target_link_libraries(test_action_server_handler
+      ${TEST_LINK_LIBS}
+    )
+    
     target_include_directories(${TEST_TARGET} PRIVATE
       ${TEST_INCLUDE_DIRS}
     )
     target_link_libraries(${TEST_TARGET}
       ${TEST_LINK_LIBS}
     )
+    
 endif()
 

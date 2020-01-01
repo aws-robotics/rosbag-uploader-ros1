@@ -92,46 +92,10 @@ public:
     }
 };
 
-TEST_F(S3UploaderTest, TestActionSucceeds)
-{
-    EXPECT_CALL(*upload_manager, IsAvailable())
-        .WillRepeatedly(Return(true));
-    // Dummy action that invokes the feedback callback.
-    auto upload_files_action = [](
-        const std::vector<UploadDescription> & upload_desc,
-        const std::string & text,
-        const boost::function<void (const std::vector<UploadDescription>&)>& feedback_fn) {
-        (void) text;
-        feedback_fn(upload_desc);
-        return S3ErrorCode::SUCCESS;
-    };
-    EXPECT_CALL(*upload_manager, UploadFiles(_, _, _)).WillOnce(Invoke(upload_files_action));
-
-    S3FileUploader file_uploader(std::move(upload_manager));
-    goal.files.push_back("test_file_name");
-    goal.upload_location = "/my/upload/dir";
-    SanityGoalCheck(actionlib::TerminalState::StateEnum::SUCCEEDED);
-
-    auto result = goal_handle.getResult();
-    ASSERT_EQ("/my/upload/dir/test_file_name", result->files_uploaded.at(0));
-    ASSERT_EQ(1, result->files_uploaded.size());
-}
-
 TEST_F(S3UploaderTest, TestActionSucceedsNoUploadManagerProvided)
 {
     S3FileUploader file_uploader;
     SanityGoalCheck(actionlib::TerminalState::StateEnum::SUCCEEDED);
-}
-
-TEST_F(S3UploaderTest, TestUploadManagerUnavailableGoalRejection)
-{
-    EXPECT_CALL(*upload_manager, IsAvailable())
-        .WillRepeatedly(Return(false));
-    EXPECT_CALL(*upload_manager, UploadFiles(_,_,_))
-        .Times(0);
-    S3FileUploader file_uploader(std::move(upload_manager));
-    // Since the upload manager is unavailable, we expect the goal to be rejected
-    SanityGoalCheck(actionlib::TerminalState::StateEnum::REJECTED);
 }
 
 TEST_F(S3UploaderTest, TestMultipleFilesActionSucceeds)

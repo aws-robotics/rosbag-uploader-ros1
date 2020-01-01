@@ -37,8 +37,6 @@ public:
   void Spin();
 
 private:
-  void GoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
-  void CancelGoalCallBack(UploadFilesActionServer::GoalHandle goal_handle);
   ros::NodeHandle node_handle_;
   UploadFilesActionServer action_server_;
   std::unique_ptr<S3UploadManager> upload_manager_;
