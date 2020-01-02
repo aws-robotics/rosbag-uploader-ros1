@@ -12,9 +12,12 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#pragma once
-
+#include <cstring>
+#include <cerrno>
 #include <string>
+#include <unistd.h>
+
+#include <aws/core/utils/logging/LogMacros.h>
 
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
@@ -25,15 +28,21 @@ namespace Rosbag
 namespace Utils
 {
 
-  /**
-  * @brief delete a file
-  *
-  * Delete file at file_path.
-  *
-  * @param file_path path to the file to be deleted
-  * @return error code, SUCCESS if the file is sucessfully deleted
-  */
-Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path);
+Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
+{
+  const int result = unlink(file_path.c_str());
+  if (result == 0) {
+    AWS_LOGSTREAM_INFO(__func__, "Deleted file "<<file_path);
+    return Aws::Rosbag::RecorderErrorCode::SUCCESS;
+  } else {
+    if (errno == ENOENT) {
+      AWS_LOGSTREAM_WARN(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+      return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
+    }
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+    return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
+  }
+}
 
 }  // namespace Utils
 }  // namespace Rosbag

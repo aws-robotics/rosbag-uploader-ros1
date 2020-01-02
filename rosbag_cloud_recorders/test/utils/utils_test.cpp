@@ -12,29 +12,12 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#pragma once
 
-#include <string>
+#include <gtest/gtest.h>
 
-#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
-
-namespace Aws
+int main(int argc, char ** argv)
 {
-namespace Rosbag
-{
-namespace Utils
-{
-
-  /**
-  * @brief delete a file
-  *
-  * Delete file at file_path.
-  *
-  * @param file_path path to the file to be deleted
-  * @return error code, SUCCESS if the file is sucessfully deleted
-  */
-Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path);
-
-}  // namespace Utils
-}  // namespace Rosbag
-}  // namespace Aws
+  ::testing::InitGoogleTest(&argc, argv);
+  auto result = RUN_ALL_TESTS();
+  return result;
+}

@@ -15,28 +15,37 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <stdlib.h>
 #include <sys/stat.h>
+
+#include <cstring>
+#include <cerrno>
+#include <string>
+#include <unistd.h>
 
 #include <gtest/gtest.h>
 
 #include <rosbag_cloud_recorders/utils/file_utils.h>
 
-TEST(DeleteFileTest, TestRosbagRemovalSuccessfulCase)
+using namespace Aws::Rosbag::Utils;
+
+TEST(DeleteFileTest, TestFileRemovalSucceeds)
 {
     std::string path = "./TestRosbagRemovalSuccessfulCase.bag";
     std::ofstream file(path);
     file.close();
-    EXPECT_EQ(Aws::Rosbag::Utils::DeleteFile(path), Aws::Rosbag::RecorderErrorCode::SUCCESS);
+    EXPECT_EQ(DeleteFile(path), Aws::Rosbag::RecorderErrorCode::SUCCESS);
 }
 
-TEST(DeleteFileTest, TestRosbagRemovalFailsFileDoesntExist)
+TEST(DeleteFileTest, TestFileRemovalFailsFileDoesntExist)
 {
-  EXPECT_EQ(Aws::Rosbag::Utils::DeleteFile("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND);
+  EXPECT_EQ(DeleteFile("/I/Am/Nowhere/To/Be/Found.bag"), Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND);
 }
 
-int main(int argc, char ** argv)
+TEST(DeleteFileTest, TestRemoveDirectoryFails)
 {
-  ::testing::InitGoogleTest(&argc, argv);
-  auto result = RUN_ALL_TESTS();
-  return result;
+    char dir_template[] = "/tmp/DeleteFileTestXXXXXX";
+    mkdtemp(dir_template);
+    EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED, DeleteFile(dir_template));
+    rmdir(dir_template);
 }
