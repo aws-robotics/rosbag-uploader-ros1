@@ -12,7 +12,7 @@ std::string GetFileName(const std::string& file_path)
 
 std::string GenerateObjectKey(const std::string& file_path, const std::string& prefix)
 {
-    std::string sep = "";
+    std::string sep;
     if (!prefix.empty() && prefix.back() != '/') {
         sep = "/";
     }

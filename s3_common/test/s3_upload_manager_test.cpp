@@ -39,18 +39,6 @@ public:
     MOCK_METHOD3(PutObject, S3ErrorCode(const std::string &, const std::string &, const std::string &));
 };
 
-
-// This function simulates a busy process that will block until mutex is unlocked
-void WaitUntilUnlocked(
-    std::mutex& mutex,
-    std::condition_variable& cv)
-{
-    // Notify that the function is entered and blocking
-    cv.notify_all();
-    // Block until the mutex has been unlocked
-    std::unique_lock<std::mutex> lock(mutex);
-}
-
 class S3UploadManagerTest : public ::testing::Test
 {
 protected:
