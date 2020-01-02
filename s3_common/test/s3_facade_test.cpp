@@ -14,6 +14,7 @@
  */
 #include <cstdio>
 #include <iostream>
+#include <fstream>
 #include <stdlib.h>
 #include <string>
 
@@ -31,6 +32,11 @@ using namespace Aws::S3;
 using ::testing::Return;
 using ::testing::_;
 
+bool FileExists(const std::string& name)
+{
+    std::ifstream ifile(name);
+    return ifile.good();
+}
 
 class MockS3Client : public S3Client
 {
