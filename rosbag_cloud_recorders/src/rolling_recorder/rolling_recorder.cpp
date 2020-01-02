@@ -40,12 +40,13 @@ RollingRecorder::RollingRecorder(
   max_duration_(max_record_time),
   current_goal_handle_(nullptr),
   is_rolling_recorder_running_(false),
+  is_stop_rolling_recorder_called_(false),
   write_directory_(write_directory)
 {
-  rosbag::RecorderOptions rolling_recorder_options;
-  rolling_recorder_options.max_duration = bag_rollover_time;
-  rolling_recorder_options.topics = topics_to_record;
-  rosbag_rolling_recorder_ = std::make_unique<rosbag::Recorder>(rolling_recorder_options);
+  rolling_recorder_options_.max_duration = bag_rollover_time;
+  rolling_recorder_options_.topics = topics_to_record;
+  rolling_recorder_options_.prefix = write_directory_;
+  rosbag_rolling_recorder_ = std::make_unique<rosbag::Recorder>(rolling_recorder_options_);
   action_server_.registerGoalCallback([this](RollingRecorderActionServer::GoalHandle goal_handle) {
     this->GoalCallBack(goal_handle);
   });
@@ -110,6 +111,7 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
   goal_handle.publishFeedback(record_rosbag_action_feedback);
   AWS_LOG_INFO(__func__, "Trying to fiullfill current goal...")
   //  TODO: logic to check bag files between start time and end time
+
   AWS_LOG_INFO(__func__, "Recoding goal completed with a status: Succeeded.");
 
   GenerateFeedback(record_rosbag_action_feedback, recorder_msgs::RecorderStatus::UPLOADING);
@@ -205,11 +207,28 @@ void RollingRecorder::GenerateFeedback(recorder_msgs::RollingRecorderFeedback & 
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
+  is_rolling_recorder_running_ = true;
+  while (!is_stop_rolling_recorder_called_) {
+    std::string current_time = std::to_string(ros::Time::now().toSec());
+    rolling_recorder_options_.name = current_time;
+    int recording_exit_code = rosbag_rolling_recorder_->run();
+    if (!recording_exit_code) {
+      AWS_LOG_ERROR(__func__, "Ros bag starting at %s failed.", current_time);
+      is_rolling_recorder_running_ = false;
+      return FAILED;
+    }
+  }
+  is_rolling_recorder_running_ = false;
+  is_stop_rolling_recorder_called_ = false;
   return SUCCESS;
 }
 
 RecorderErrorCode RollingRecorder::StopRollingRecorder()
 {
+  if (!is_rolling_recorder_running_) {
+    return RECORDER_NOT_RUNNING;
+  }
+  is_stop_rolling_recorder_called_ = true;
   return SUCCESS;
 }
 

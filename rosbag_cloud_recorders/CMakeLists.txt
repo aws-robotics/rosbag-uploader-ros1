@@ -96,7 +96,7 @@ target_link_libraries(rolling_recorder
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS duration_recorder ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+install(TARGETS duration_recorder rolling_recorder ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

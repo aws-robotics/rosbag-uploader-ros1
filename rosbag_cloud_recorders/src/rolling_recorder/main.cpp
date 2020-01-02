@@ -20,13 +20,15 @@
 
 int main(int argc, char* argv[])
 {
+  ros::init(argc, argv, "rosbag_rolling_recorder");
   Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>("RosbagRollingRecord"));
   ros::Duration bag_rollover_time(10);
   ros::Duration max_record_time(30);
   std::vector<std::string> topics_to_record;
   topics_to_record.push_back("rosout_agg");
+  AWS_LOG_INFO(__func__, "Starting rolling recorder.");
   Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, topics_to_record);
-  ros::init(argc, argv, "rosbag_rolling_recorder");
+  rolling_recorder.StartRollingRecorder();
   ros::spin();
   return 0;
 }

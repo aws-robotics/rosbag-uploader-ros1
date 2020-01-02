@@ -35,7 +35,9 @@ enum RecorderErrorCode
   ROSBAG_REMOVAL_FAILED,
   // Recorder server is currently processing a goal
   // and is not able to receive another goal
-  RECORDER_SERVER_BUSY
+  RECORDER_SERVER_BUSY,
+  // Recorder is not running
+  RECORDER_NOT_RUNNING
 };
 
 }  // namespace Rosbag

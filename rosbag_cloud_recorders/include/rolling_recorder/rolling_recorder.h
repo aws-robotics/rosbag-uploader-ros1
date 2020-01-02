@@ -98,8 +98,9 @@ private:
   ros::Duration max_duration_;
   RollingRecorderActionServer::GoalHandle * current_goal_handle_;
   bool is_rolling_recorder_running_;
+  bool is_stop_rolling_recorder_called_;
   std::string write_directory_;
-
+  rosbag::RecorderOptions rolling_recorder_options_;
 };
 
 }  // namespace Rosbag
