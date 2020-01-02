@@ -10,10 +10,11 @@ std::string GetFileName(const std::string& file_path)
     return file_path.substr(index+1);
 }
 
-std::string GenerateObjectKey(const std::string& file_path, std::string prefix)
+std::string GenerateObjectKey(const std::string& file_path, const std::string& prefix)
 {
+    std::string sep = "";
     if (!prefix.empty() && prefix.back() != '/') {
-        prefix += "/";
+        sep = "/";
     }
-    return prefix + GetFileName(file_path);
+    return prefix + sep + GetFileName(file_path);
 }

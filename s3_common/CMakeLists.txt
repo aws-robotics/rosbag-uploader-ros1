@@ -96,6 +96,7 @@ add_common_gtest(test_s3_common
   test/main_test.cpp
   test/s3_facade_test.cpp
   test/s3_upload_manager_test.cpp
+  test/utils_test.cpp
 )
 
 if(TARGET test_s3_common)
