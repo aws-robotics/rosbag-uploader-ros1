@@ -14,15 +14,8 @@
  */
 #pragma once
 
-#include <fstream>
 #include <string>
 #include <cstddef>
-
-inline bool FileExists(const std::string& name)
-{
-    std::ifstream ifile(name);
-    return ifile.good();
-}
 
 std::string GetFileName(const std::string& file_path);
 std::string GenerateObjectKey(const std::string& file_path, std::string prefix);

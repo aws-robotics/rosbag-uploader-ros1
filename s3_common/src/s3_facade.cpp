@@ -50,13 +50,13 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
     const std::string & key)
 {
     AWS_LOGSTREAM_INFO(__func__, "Upload: "<<file_path<<" to s3://"<<bucket<<"/"<<key);
-    if (!FileExists(file_path)) {
-        AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file "<<file_path<<" couldn't be opened for reading");
-        return Aws::S3::S3ErrorCode::FILE_COULDNT_BE_READ;
-    }
     const std::shared_ptr<Aws::IOStream> file_data = 
             std::make_shared<Aws::FStream>(file_path.c_str(),
                                            std::ios_base::in | std::ios_base::binary);
+    if (!file_data->good()) {
+        AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file "<<file_path<<" couldn't be opened for reading");
+        return Aws::S3::S3ErrorCode::FILE_COULDNT_BE_READ;
+    }
     Aws::S3::Model::PutObjectRequest put_object_request;
     put_object_request.SetBucket(bucket.c_str());
     put_object_request.SetKey(key.c_str());
