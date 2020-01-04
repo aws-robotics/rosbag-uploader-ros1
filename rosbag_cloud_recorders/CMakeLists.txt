@@ -25,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
     actionlib
     actionlib_msgs
     aws_common
+    aws_ros1_common
     file_uploader_msgs
     recorder_msgs
     roscpp
@@ -51,7 +52,8 @@ roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
-    ${AWSSDK_INCLUDE_DIR}
+    ${aws_common_INCLUDE_DIR}
+    ${aws_ros1_common_INCLUDE_DIR}
 )
 
 add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
@@ -83,6 +85,8 @@ add_executable(
 
 target_link_libraries(rolling_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+    ${aws_common_INCLUDE_DIR}
+    ${aws_ros1_common_INCLUDE_DIR}
 )
 
 #############
@@ -90,7 +94,7 @@ target_link_libraries(rolling_recorder
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS duration_recorder ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+install(TARGETS duration_recorder rolling_recorder ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -108,25 +112,32 @@ install(
 ##########
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+  find_package(GMock QUIET)
 
-  add_rostest_gtest(test_duration_recorder
-    test/test_duration_recorder.test
-    test/duration_recorder_test.cpp
-  )
-  target_include_directories(test_duration_recorder PRIVATE
-    include
-    ${catkin_INCLUDE_DIRS}
-  )
-  target_link_libraries(test_duration_recorder
-    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
-    ${catkin_LIBRARIES}
-    ${GTEST_LIBRARIES}
-  )
+  if(GMOCK_FOUND)
+    add_rostest_gmock(
+      test_rolling_recorder
+      test/test_rolling_recorder.test
+      test/rolling_recorder_test.cpp
+    )
+    target_include_directories(test_rolling_recorder PRIVATE
+      ${GMOCK_INCLUDE_DIRS}
+    )
+    target_link_libraries(test_rolling_recorder
+      ${GMOCK_BOTH_LIBRARIES}
+    )
+  else()
+      include_directories(/usr/include/gmock /usr/src/gmock)
+      add_library(test_rolling_recorder_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
+      add_rostest_gtest(test_rolling_recorder
+        test/test_rolling_recorder.test
+        test/rolling_recorder_test.cpp
+      )
+      target_link_libraries(test_rolling_recorder
+        test_rolling_recorder_libgmock
+      )
+  endif()
 
-  add_rostest_gtest(test_rolling_recorder
-    test/test_rolling_recorder.test
-    test/rolling_recorder_test.cpp
-  )
   target_include_directories(test_rolling_recorder PRIVATE
     include
     ${catkin_INCLUDE_DIRS}
