@@ -22,6 +22,7 @@
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <rosbag/recorder.h>
+#include <mutex>
 
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
@@ -49,25 +50,30 @@ using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploade
 class RollingRecorder
 {
 public:
-  RollingRecorder(
+  explicit RollingRecorder(
     const ros::Duration & bag_rollover_time, const ros::Duration & max_record_time, std::vector<std::string> topics_to_record);
-  ~RollingRecorder() = default;
+
+  explicit RollingRecorder(
+    const ros::Duration & bag_rollover_time, const ros::Duration & max_record_time,
+    std::vector<std::string> topics_to_record, std::string write_directory);
+
+  virtual ~RollingRecorder() = default;
 
   /**
    * Activate the rolling recorder so that it is recording rosbags in the background
    */
-  RecorderErrorCode StartRollingRecorder();
+  virtual RecorderErrorCode StartRollingRecorder();
 
   /**
    * Deactivate the rolling recorder so that it stops recording rosbags in the background
    */
-  RecorderErrorCode StopRollingRecorder();
+  virtual RecorderErrorCode StopRollingRecorder();
 
   /**
    * Returns boolean indicating whether or not the rolling recorder is currently recording in the
    * background
    */
-  bool IsRollingRecorderActive();
+  virtual bool IsRollingRecorderActive() const;
 
 private:
   void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
@@ -85,6 +91,8 @@ private:
   std::unique_ptr<rosbag::Recorder> rosbag_rolling_recorder_;
   std::unique_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
   ros::Duration max_duration_;
+  bool is_rolling_recorder_running_;
+  std::string write_directory_;
 };
 
 }  // namespace Rosbag
