@@ -11,6 +11,8 @@ catkin_package(
 #############
 install(PROGRAMS
         tests/test_rosbag_uploader_ros1.py
+        tests/s3_client.py
+        scripts/setup_test_bucket.sh
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY configurations launch
