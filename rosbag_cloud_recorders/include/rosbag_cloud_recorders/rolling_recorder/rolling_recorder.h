@@ -77,9 +77,8 @@ private:
   file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
   RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
 
-  enum LocalRosBagStatus { EXPIRED, ACTIVE, UPLOADED };
-
-  std::unordered_map<std::string, Aws::Rosbag::RollingRecorder::LocalRosBagStatus> local_rosbag_status_;
+  // A list of files that will be uploaded
+  std::vector<std::string> uploading_bags_;
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
   std::unique_ptr<rosbag::Recorder> rosbag_rolling_recorder_;
