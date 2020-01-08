@@ -14,6 +14,8 @@
 
 import filecmp
 import os
+import random
+import string
 import sys
 import tempfile
 import unittest
@@ -56,8 +58,12 @@ class TestS3FileUploader(unittest.TestCase):
         self.s3_client = S3Client(self.s3_region)
         self.s3_key_prefix = 'foo/bar'
         self.objects_to_delete = []
+        self.files_to_delete = []
 
     def tearDown(self):
+        # delete any temp files created on disk
+        for file_name in self.files_to_delete:
+            os.remove(file_name)
         # delete any temp files created in the bucket as a part of tests
         contents = self.s3_client.list_objects(self.s3_bucket)
         objects_to_delete = map(
@@ -71,14 +77,17 @@ class TestS3FileUploader(unittest.TestCase):
 
     def test_upload_file(self):
         client = self._create_upload_files_action_client()
-        content_to_upload = 's3 file uploader integration test content'
-        with tempfile.NamedTemporaryFile(suffix=".txt") as temp_file:
-            result = self._upload_temp_file(
-                client,
-                content_to_upload,
-                temp_file
-            )
-            self._assert_successful_upload(result, temp_file.name)
+        temp_file = self._create_temp_file()
+        temp_file_names = [temp_file.name]
+        result = self._upload_temp_files(client, temp_file_names)
+        self._assert_successful_upload(result, temp_file_names)
+
+    def test_upload_multiple_files(self):
+        client = self._create_upload_files_action_client()
+        temp_files = self._create_temp_files(10)
+        temp_file_names = map(lambda tf: tf.name, temp_files)
+        result = self._upload_temp_files(client, temp_file_names)
+        self._assert_successful_upload(result, temp_file_names)
 
     def _create_upload_files_action_client(self):
         client = actionlib.SimpleActionClient(ACTION, UploadFilesAction)
@@ -86,25 +95,44 @@ class TestS3FileUploader(unittest.TestCase):
         self.assertTrue(res, 'Failed to connect to action server')
         return client
 
-    def _upload_temp_file(self, client, content_to_upload, temp_file):
-        temp_file.write(content_to_upload)
-        temp_file.flush()
+    def _create_temp_files(self, total_files):
+        temp_files = []
+        while len(temp_files) < total_files:
+            temp_files.append(self._create_temp_file())
+        return temp_files
+    
+    def _create_temp_file(self):
+        temp_file = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
+        file_contents = ''.join([random.choice(string.ascii_letters + string.digits + ' ') for n in range(64)])
+        temp_file.write(file_contents)
+        temp_file.close()
+        return temp_file
+
+    def _upload_temp_files(self, client, temp_file_names):
         goal = UploadFilesGoal(
             upload_location=self.s3_key_prefix,
-            files=[temp_file.name]
+            files=temp_file_names
         )
         client.send_goal(goal)
         client.wait_for_result(rospy.Duration.from_sec(15.0))
         return client.get_result()
 
-    def _assert_successful_upload(self, result, temp_file_name):
+    def _assert_successful_upload(self, result, temp_file_names):
         self.assertEqual(
             len(result.files_uploaded),
-            1,
-            'Found %d files' % len(result.files_uploaded))
-        uploaded_s3_file_path = result.files_uploaded[0]
+            len(temp_file_names),
+            'Found %d files' % len(result.files_uploaded)
+        )
+        for n in range(len(temp_file_names)):
+            self._assert_successful_file_upload(
+                result.files_uploaded[n], 
+                temp_file_names[n]
+            )
+
+    def _assert_successful_file_upload(self, uploaded_s3_file_path, temp_file_name):
         # mark the uploaded test file for delete upon tearDown
         self.objects_to_delete.append(uploaded_s3_file_path)
+        self.files_to_delete.append(temp_file_name)
         uploaded_s3_key_prefix, uploaded_s3_key = os.path.split(
             uploaded_s3_file_path)
         self.assertEqual(
