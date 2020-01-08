@@ -76,6 +76,7 @@ void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (IsRollingRecorderActive()) {
     AWS_LOG_WARN(__func__, "Rolling recorder already running.");
     return RECORDER_IS_RUNNING;
@@ -83,6 +84,7 @@ RecorderErrorCode RollingRecorder::StartRollingRecorder()
   is_rolling_recorder_running_ = true;
 
   std::string current_time = std::to_string(ros::Time::now().toSec());
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   int recording_exit_code = rosbag_rolling_recorder_->run();
   is_rolling_recorder_running_ = false;
   if (!recording_exit_code) {
@@ -94,6 +96,7 @@ RecorderErrorCode RollingRecorder::StartRollingRecorder()
 
 RecorderErrorCode RollingRecorder::StopRollingRecorder()
 {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (!IsRollingRecorderActive()) {
     return RECORDER_NOT_RUNNING;
   }
@@ -103,6 +106,7 @@ RecorderErrorCode RollingRecorder::StopRollingRecorder()
 
 bool RollingRecorder::IsRollingRecorderActive() const
 {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   return is_rolling_recorder_running_;
 }
 

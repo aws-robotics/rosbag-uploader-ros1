@@ -93,6 +93,7 @@ private:
   ros::Duration max_duration_;
   bool is_rolling_recorder_running_;
   std::string write_directory_;
+  mutable std::recursive_mutex mutex_;
 };
 
 }  // namespace Rosbag
