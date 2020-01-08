@@ -91,9 +91,9 @@ private:
   std::unique_ptr<rosbag::Recorder> rosbag_rolling_recorder_;
   std::unique_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
   ros::Duration max_duration_;
-  bool is_rolling_recorder_running_;
+  bool is_rolling_recorder_running_;  // signals whether the rolling recorder is running
   std::string write_directory_;
-  mutable std::recursive_mutex mutex_;
+  mutable std::recursive_mutex mutex_;  // protects is_rolling_recorder_running_
 };
 
 }  // namespace Rosbag

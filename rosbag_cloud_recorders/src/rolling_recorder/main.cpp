@@ -13,11 +13,12 @@
  * permissions and limitations under the License.
  */
 
+#include <string>
+#include <vector>
 #include <ros/ros.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
 #include <aws/core/utils/logging/LogMacros.h>
 #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
-#include <boost/thread.hpp>
 #include <thread>
 
 int main(int argc, char* argv[])
@@ -28,7 +29,7 @@ int main(int argc, char* argv[])
   ros::Duration bag_rollover_time(10);
   ros::Duration max_record_time(30);
   std::vector<std::string> topics_to_record;
-  topics_to_record.push_back("rosout_agg");
+  topics_to_record.emplace_back("rosout_agg");
 
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
 
@@ -36,7 +37,6 @@ int main(int argc, char* argv[])
   executor.start();
 
   Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, topics_to_record);
-  ros::Duration(5, 0).sleep();
   std::thread start_rolling_recorder( [&rolling_recorder] { rolling_recorder.StartRollingRecorder(); } );
 
   ros::waitForShutdown();
