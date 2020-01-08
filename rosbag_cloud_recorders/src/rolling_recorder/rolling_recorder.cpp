@@ -41,7 +41,7 @@ RollingRecorder::RollingRecorder(
   rosbag_uploader_action_client_(std::make_unique<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
   max_duration_(max_record_time),
   is_rolling_recorder_running_(false),
-  write_directory_(write_directory)
+  write_directory_(std::move(write_directory))
 {
   rosbag::RecorderOptions rolling_recorder_options;
   rolling_recorder_options.max_duration = bag_rollover_time;
@@ -60,7 +60,7 @@ RollingRecorder::RollingRecorder(
 
 RollingRecorder::RollingRecorder(
   const ros::Duration & bag_rollover_time, const ros::Duration & max_record_time, std::vector<std::string> topics_to_record)
-  : RollingRecorder(bag_rollover_time, max_record_time, topics_to_record, "~/.ros/rosbag_uploader/")
+  : RollingRecorder(bag_rollover_time, max_record_time, std::move(topics_to_record), "~/.ros/rosbag_uploader/")
 {
 }
 
@@ -76,19 +76,25 @@ void RollingRecorder::CancelGoalCallBack(RollingRecorderActionServer::GoalHandle
 
 RecorderErrorCode RollingRecorder::StartRollingRecorder()
 {
-  std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (IsRollingRecorderActive()) {
-    AWS_LOG_WARN(__func__, "Rolling recorder already running.");
-    return RECORDER_IS_RUNNING;
+  {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (IsRollingRecorderActive()) {
+      AWS_LOG_WARN(__func__, "Rolling recorder already running.");
+      return RECORDER_IS_RUNNING;
+    }
+    is_rolling_recorder_running_ = true;
   }
-  is_rolling_recorder_running_ = true;
 
   std::string current_time = std::to_string(ros::Time::now().toSec());
-  std::lock_guard<std::recursive_mutex> lock(mutex_);
-  int recording_exit_code = rosbag_rolling_recorder_->run();
-  is_rolling_recorder_running_ = false;
-  if (!recording_exit_code) {
-    AWS_LOG_ERROR(__func__, "Ros bag starting at %s did not finish cleanly.", current_time);
+  int recording_exit_code;
+  {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    recording_exit_code = rosbag_rolling_recorder_->run();
+    is_rolling_recorder_running_ = false;
+  }
+
+  if (recording_exit_code != 0) {
+    AWS_LOG_ERROR(__func__, "Ros bag starting at %s did not finish cleanly.", current_time.c_str());
     return FAILED;
   }
   return SUCCESS;
