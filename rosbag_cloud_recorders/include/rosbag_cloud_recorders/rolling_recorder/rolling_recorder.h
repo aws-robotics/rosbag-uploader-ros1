@@ -79,9 +79,15 @@ private:
   void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
   std::vector<std::string> GetRosgBagListToDelete() const;
+  std::vector<std::string> GetRosgBagListToUplaod() const;
   void StartOldRosBagsPeriodicRemoval();
-  file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
-  RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
+  file_uploader_msgs::UploadFilesGoal ConstructRosBagUploaderGoal(std::string destination, std::vector<std::string> & ros_bags_to_upload) const;
+  RecorderErrorCode SendRosBagUploaderGoal(const file_uploader_msgs::UploadFilesGoal & goal);
+  void ReleaseCurrentGoalHandle();
+  void SetCurrentGoalHandle(RollingRecorderActionServer::GoalHandle & new_goal_handle);
+  void GenerateResult(recorder_msgs::RollingRecorderResult & recording_result, recorder_msgs::RecorderResult & t_recording_result, uint stage, std::string message);
+  void GenerateFeedback(recorder_msgs::RollingRecorderFeedback & record_rosbag_action_feedback, uint stage);
+  bool ValidateGoal(boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal, double current_time_in_sec);
 
   enum LocalRosBagStatus { EXPIRED, ACTIVE, UPLOADED };
 
@@ -94,6 +100,7 @@ private:
   bool is_rolling_recorder_running_;
   std::string write_directory_;
   mutable std::recursive_mutex mutex_;
+  RollingRecorderActionServer::GoalHandle * current_goal_handle_;
 };
 
 }  // namespace Rosbag
