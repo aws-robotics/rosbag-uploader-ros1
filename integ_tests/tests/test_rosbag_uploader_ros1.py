@@ -73,19 +73,18 @@ class TestS3FileUploader(unittest.TestCase):
                 contents
             )
         )
-        self.s3_client.delete_objects(self.s3_bucket, objects_to_delete)
+        if len(objects_to_delete) > 0:
+            self.s3_client.delete_objects(self.s3_bucket, objects_to_delete)
 
     def test_upload_file(self):
         client = self._create_upload_files_action_client()
-        temp_file = self._create_temp_file()
-        temp_file_names = [temp_file.name]
-        result = self._upload_temp_files(client, temp_file_names)
-        self._assert_successful_upload(result, temp_file_names)
+        temp_file_name = self._create_temp_file()
+        result = self._upload_temp_files(client, [temp_file_name])
+        self._assert_successful_upload(result, [temp_file_name])
 
     def test_upload_multiple_files(self):
         client = self._create_upload_files_action_client()
-        temp_files = self._create_temp_files(10)
-        temp_file_names = map(lambda tf: tf.name, temp_files)
+        temp_file_names = self._create_temp_files(10)
         result = self._upload_temp_files(client, temp_file_names)
         self._assert_successful_upload(result, temp_file_names)
 
@@ -96,17 +95,18 @@ class TestS3FileUploader(unittest.TestCase):
         return client
 
     def _create_temp_files(self, total_files):
-        temp_files = []
-        while len(temp_files) < total_files:
-            temp_files.append(self._create_temp_file())
-        return temp_files
+        temp_file_names = []
+        for _ in range(total_files):
+            temp_file_names.append(self._create_temp_file())
+        return temp_file_names
     
     def _create_temp_file(self):
         temp_file = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
-        file_contents = ''.join([random.choice(string.ascii_letters + string.digits + ' ') for n in range(64)])
+        file_contents = ''.join([random.choice(string.ascii_letters + string.digits + ' ') for _ in range(64)])
         temp_file.write(file_contents)
         temp_file.close()
-        return temp_file
+        self.files_to_delete.append(temp_file.name)
+        return temp_file.name
 
     def _upload_temp_files(self, client, temp_file_names):
         goal = UploadFilesGoal(
@@ -132,7 +132,6 @@ class TestS3FileUploader(unittest.TestCase):
     def _assert_successful_file_upload(self, uploaded_s3_file_path, temp_file_name):
         # mark the uploaded test file for delete upon tearDown
         self.objects_to_delete.append(uploaded_s3_file_path)
-        self.files_to_delete.append(temp_file_name)
         uploaded_s3_key_prefix, uploaded_s3_key = os.path.split(
             uploaded_s3_file_path)
         self.assertEqual(
