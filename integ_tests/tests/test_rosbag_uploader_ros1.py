@@ -99,12 +99,12 @@ class TestS3FileUploader(unittest.TestCase):
         for _ in range(total_files):
             temp_file_names.append(self._create_temp_file())
         return temp_file_names
-    
+
     def _create_temp_file(self):
-        temp_file = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
-        file_contents = ''.join([random.choice(string.ascii_letters + string.digits + ' ') for _ in range(64)])
-        temp_file.write(file_contents)
-        temp_file.close()
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file:
+            file_contents = ''.join(
+                [random.choice(string.ascii_letters + string.digits + ' ') for _ in range(64)])
+            temp_file.write(file_contents)
         self.files_to_delete.append(temp_file.name)
         return temp_file.name
 
@@ -123,10 +123,10 @@ class TestS3FileUploader(unittest.TestCase):
             len(temp_file_names),
             'Found %d files' % len(result.files_uploaded)
         )
-        for n in range(len(temp_file_names)):
+        for uploaded_file_name, temp_file_name in zip(result.files_uploaded, temp_file_names):
             self._assert_successful_file_upload(
-                result.files_uploaded[n], 
-                temp_file_names[n]
+                uploaded_file_name,
+                temp_file_name
             )
 
     def _assert_successful_file_upload(self, uploaded_s3_file_path, temp_file_name):
