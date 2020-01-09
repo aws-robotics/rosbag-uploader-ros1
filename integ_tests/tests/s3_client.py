@@ -93,7 +93,7 @@ class S3Client(object):
 
     def list_objects(self, bucket_name):
         response = self.s3_client.list_objects(Bucket=bucket_name)
-        return response['Contents']
+        return response.get('Contents', [])
 
     def wait_for_bucket_create(self, bucket_name):
         waiter = self.s3_client.get_waiter('bucket_exists')
