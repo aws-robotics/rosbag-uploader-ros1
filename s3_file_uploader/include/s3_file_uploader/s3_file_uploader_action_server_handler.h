@@ -20,9 +20,10 @@
 #include <s3_common/s3_upload_manager.h>
 
 #include <array>
+#include <unordered_map>
 #include <vector>
 
-#include<s3_file_uploader/s3_file_uploader_action_server_handler.h>
+#include <file_uploader_msgs/UploadFilesAction.h>
 
 #include <aws/core/utils/logging/LogMacros.h>
 #include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
@@ -35,10 +36,30 @@ namespace S3 {
     
 using UploadFilesActionServer = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>;
 
+
+const std::unordered_map<int, int> kS3ErrorCodeToActionResult (
+{
+  { S3ErrorCode::SUCCESS, file_uploader_msgs::UploadFilesResult::SUCCESS },
+  { S3ErrorCode::CANCELLED, file_uploader_msgs::UploadFilesResult::UPLOAD_CANCELLED },
+  { S3ErrorCode::UPLOADER_BUSY, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR },
+  { S3ErrorCode::S3_ACCESS_DENIED, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR },
+  { S3ErrorCode::FILE_COULDNT_BE_READ, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_INVALID_INPUT },
+  { S3ErrorCode::S3_NO_SUCH_BUCKET, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR }
+});
+
 template<typename T>
 class S3FileUploaderActionServerHandler
 { 
 public:
+    // Maps internal S3ErrorCodes to the error code for UploadFilesResult
+    static  int GetResultCodeFromS3ErrorCode(const S3ErrorCode error_code)
+    {
+        auto search = kS3ErrorCodeToActionResult.find(error_code);
+        if (search == kS3ErrorCodeToActionResult.end()) {
+            return file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR;
+        }
+        return search->second;
+    }
     static void UploadToS3(S3UploadManager& upload_manager, const std::string& bucket, T& goal_handle)
     {
         if (!upload_manager.IsAvailable()) {
@@ -67,7 +88,7 @@ public:
         auto result_code = upload_manager.UploadFiles(
             uploads, bucket, feedback_callback);
         file_uploader_msgs::UploadFilesResult result;
-        result.code = result_code;
+        result.code = GetResultCodeFromS3ErrorCode(result_code);
         for (auto const& upload : completed_uploads) {
             result.files_uploaded.push_back(upload.object_key);
         }

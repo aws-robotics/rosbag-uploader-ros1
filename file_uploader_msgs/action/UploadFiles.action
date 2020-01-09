@@ -8,11 +8,13 @@ string upload_location
 
 # Result Codes
 uint8 SUCCESS=0
+uint8 UPLOAD_CANCELLED=1
 # This includes uploader service errors, invalid credentials,
 # or any error where the service was unreachable
-uint8 UPLOAD_FAILED_SERVICE_ERROR=1
+uint8 UPLOAD_FAILED_SERVICE_ERROR=2
 # This includes invalid destination, invalid files
-uint8 UPLOAD_FAILED_INVALID_INPUT=2
+uint8 UPLOAD_FAILED_INVALID_INPUT=3
+
 
 # A status code from the uploader service
 uint8 code

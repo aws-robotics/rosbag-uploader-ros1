@@ -35,7 +35,6 @@ public:
   explicit S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager = nullptr);
   ~S3FileUploader() = default;
   void Spin();
-
 private:
   ros::NodeHandle node_handle_;
   UploadFilesActionServer action_server_;

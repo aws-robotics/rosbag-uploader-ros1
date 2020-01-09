@@ -36,6 +36,7 @@ using ::testing::Return;
 using ::testing::_;
 using ::testing::ContainerEq;
 using ::testing::Invoke;
+using ::testing::Values;
 
 class MockS3UploadManager : public S3UploadManager
 {
@@ -148,6 +149,10 @@ public:
     }
 };
 
+class S3FileUploaderActionServerHandlerTests_P :
+    public ::testing::WithParamInterface<std::pair<S3ErrorCode,int>>, public S3FileUploaderActionServerHandlerTests
+{};
+
 TEST_F(S3FileUploaderActionServerHandlerTests, TestInactiveUploadManager)
 {
     givenUnAvailableUploadManager();
@@ -185,6 +190,23 @@ TEST_F(S3FileUploaderActionServerHandlerTests, TestCancelUploadToS3)
     assertGoalIsCanceled();
     
     S3FileUploaderActionServerHandler<MockGoalHandle>::CancelUploadToS3(*upload_manager, *goal_handle);
+}
+
+TEST_F(S3FileUploaderActionServerHandlerTests, TestGoalResultCodes)
+{
+    std::vector<std::pair<S3ErrorCode,int>> error_code_pairs {
+        std::pair<S3ErrorCode,int>(S3ErrorCode::SUCCESS, file_uploader_msgs::UploadFilesResult::SUCCESS),
+        std::pair<S3ErrorCode,int>(S3ErrorCode::CANCELLED, file_uploader_msgs::UploadFilesResult::UPLOAD_CANCELLED),
+        std::pair<S3ErrorCode,int>(S3ErrorCode::UPLOADER_BUSY, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR),
+        std::pair<S3ErrorCode,int>(S3ErrorCode::FAILED, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR),
+        std::pair<S3ErrorCode,int>(S3ErrorCode::FILE_COULDNT_BE_READ, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_INVALID_INPUT),
+        std::pair<S3ErrorCode,int>(S3ErrorCode::S3_ACCESS_DENIED, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR),
+        std::pair<S3ErrorCode,int>(S3ErrorCode::S3_NO_SUCH_BUCKET, file_uploader_msgs::UploadFilesResult::UPLOAD_FAILED_SERVICE_ERROR)
+    };
+    for (const auto& pair: error_code_pairs) {
+        EXPECT_EQ(pair.second, S3FileUploaderActionServerHandler<MockGoalHandle>::GetResultCodeFromS3ErrorCode(pair.first));
+    }
+    
 }
 
 int main(int argc, char ** argv)
