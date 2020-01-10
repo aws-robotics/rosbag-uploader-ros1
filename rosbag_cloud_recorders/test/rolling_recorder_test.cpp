@@ -63,6 +63,7 @@ protected:
 
 TEST_F(RollingRecorderNodeFixture, TestGetRollingRecorderHealthStatusApi)
 {
+  ASSERT_FALSE(rolling_recorder_->IsRollingRecorderActive());
   EXPECT_CALL(*rolling_recorder_, IsRollingRecorderActive())
       .WillOnce(Return(true));
   ASSERT_TRUE(rolling_recorder_->IsRollingRecorderActive());
@@ -77,15 +78,11 @@ TEST_F(RollingRecorderNodeFixture, TestStartRollingRecorderApi)
 
 TEST_F(RollingRecorderNodeFixture, TestStopRollingRecorderApi)
 {
-  {
-    EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::RECORDER_NOT_RUNNING, rolling_recorder_->StopRollingRecorder());
-  }
+  EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::RECORDER_NOT_RUNNING, rolling_recorder_->StopRollingRecorder());
 
-  {
-    EXPECT_CALL(*rolling_recorder_, IsRollingRecorderActive())
-          .WillOnce(Return(true));
-    EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::SUCCESS, rolling_recorder_->StopRollingRecorder());
-  }
+  EXPECT_CALL(*rolling_recorder_, IsRollingRecorderActive())
+        .WillOnce(Return(true));
+  EXPECT_EQ(Aws::Rosbag::RecorderErrorCode::SUCCESS, rolling_recorder_->StopRollingRecorder());
 }
 
 TEST_F(RollingRecorderNodeFixture, TestGoalReceivedbyActionServer)
