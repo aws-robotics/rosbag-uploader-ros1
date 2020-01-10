@@ -91,18 +91,32 @@ TEST_F(RollingRecorderNodeFixture, TestGoalReceivedbyActionServer)
   executor.start();
 
   bool message_received = false;
+  recorder_msgs::RollingRecorderGoal goal;
+  RollingRecorderActionClient::GoalHandle gh;
   // Wait 10 seconds for server to start
   ASSERT_TRUE(action_client_->waitForActionServerToStart(ros::Duration(10, 0)));
-  auto transition_call_back = [&](RollingRecorderActionClient::GoalHandle goal_handle) {
+
+  auto transition_cb_for_rejected_goal = [&](RollingRecorderActionClient::GoalHandle goal_handle) {
     if (goal_handle.getCommState() == actionlib::CommState::StateEnum::DONE) {
       EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
       message_received = true;
     }
   };
-  recorder_msgs::RollingRecorderGoal goal;
-  RollingRecorderActionClient::GoalHandle gh = action_client_->sendGoal(goal, transition_call_back);
-  ros::Duration(1, 0).sleep();
-  ASSERT_TRUE(message_received);
+
+  // Test case: empty goal sent to action server
+  {
+    gh = action_client_->sendGoal(goal, transition_cb_for_rejected_goal);
+    ros::Duration(1, 0).sleep();
+    ASSERT_TRUE(message_received);
+  }
+
+  // Test case: invalid goal sent to action server
+  {
+    goal.destination = "";
+    gh = action_client_->sendGoal(goal, transition_cb_for_rejected_goal);
+    ros::Duration(1, 0).sleep();
+    ASSERT_TRUE(message_received);
+  }
   executor.stop();
 }
 

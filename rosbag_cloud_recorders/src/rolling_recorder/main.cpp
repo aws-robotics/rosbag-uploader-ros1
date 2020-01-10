@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
   ros::init(argc, argv, "rosbag_rolling_recorder");
   Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>("RosbagRollingRecord"));
 
+  // these are test variables and will be removed in subsequent PRs
   ros::Duration bag_rollover_time(10);
   ros::Duration max_record_time(30);
   std::vector<std::string> topics_to_record;

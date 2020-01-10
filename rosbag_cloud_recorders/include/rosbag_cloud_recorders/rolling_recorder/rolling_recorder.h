@@ -87,7 +87,7 @@ private:
   void SetCurrentGoalHandle(RollingRecorderActionServer::GoalHandle & new_goal_handle);
   void GenerateResult(recorder_msgs::RollingRecorderResult & recording_result, recorder_msgs::RecorderResult & t_recording_result, uint stage, std::string message);
   void GenerateFeedback(recorder_msgs::RollingRecorderFeedback & record_rosbag_action_feedback, uint stage);
-  bool ValidateGoal(boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal, double current_time_in_sec);
+  bool ValidateGoal(boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal) const;
 
   enum LocalRosBagStatus { EXPIRED, ACTIVE, UPLOADED };
 

@@ -67,7 +67,6 @@ RollingRecorder::RollingRecorder(
 
 void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle)
 {
-  double current_time_in_sec = ros::Time::now().toSec();
   AWS_LOG_INFO(__func__, "A new goal has been recieved by the goal action server");
   recorder_msgs::RollingRecorderResult recording_result;
   recorder_msgs::RecorderResult t_recording_result;
@@ -88,7 +87,7 @@ void RollingRecorder::GoalCallBack(RollingRecorderActionServer::GoalHandle goal_
   boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal = goal_handle.getGoal();
 
   //  Check if goal is valid
-  if (!ValidateGoal(goal, current_time_in_sec)) {
+  if (!ValidateGoal(goal)) {
     AWS_LOG_ERROR(__func__, "Goal was not valid, rejecting goal...");
     GenerateResult(recording_result, t_recording_result, recorder_msgs::RecorderResult::INVALID_INPUT, "Goal was not valid.");
     goal_handle.setRejected(recording_result, "");
@@ -230,16 +229,8 @@ std::vector<std::string> RollingRecorder::GetRosgBagListToUplaod() const
   return rosbag_to_upload;
 }
 
-bool RollingRecorder::ValidateGoal(boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal, double current_time_in_sec)
+bool RollingRecorder::ValidateGoal(boost::shared_ptr<const recorder_msgs::RollingRecorderGoal> goal) const
 {
-  if (goal->start_time.toSec() > current_time_in_sec || goal->start_time.toSec() < current_time_in_sec - max_duration_.toSec()) {
-    return false;
-  }
-
-  if (goal->end_time.toSec() <= goal->start_time.toSec() || goal->end_time.toSec() >= current_time_in_sec + max_duration_.toSec()) {
-    return false;
-  }
-
   if (goal->destination.empty()) {
     return false;
   }
