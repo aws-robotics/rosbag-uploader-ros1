@@ -41,12 +41,8 @@ RollingRecorder::RollingRecorder(
   rosbag_uploader_action_client_(std::make_unique<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
   max_duration_(max_record_time),
   is_rolling_recorder_running_(false),
-<<<<<<< HEAD
   write_directory_(std::move(write_directory)),
   current_goal_handle_(nullptr)
-=======
-  write_directory_(std::move(write_directory))
->>>>>>> abbyxu/f-RollingRecorderStartRecordingImpl
 {
   rosbag::RecorderOptions rolling_recorder_options;
   rolling_recorder_options.max_duration = bag_rollover_time;
@@ -173,19 +169,11 @@ RecorderErrorCode RollingRecorder::StartRollingRecorder()
   }
 
   std::string current_time = std::to_string(ros::Time::now().toSec());
-<<<<<<< HEAD
-  int recording_exit_code;
-  {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    recording_exit_code = rosbag_rolling_recorder_->run();
-    is_rolling_recorder_running_ = false;
-  }
-=======
+
   int recording_exit_code = rosbag_rolling_recorder_->run();
 
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   is_rolling_recorder_running_ = false;
->>>>>>> abbyxu/f-RollingRecorderStartRecordingImpl
 
   if (recording_exit_code != 0) {
     AWS_LOG_ERROR(__func__, "Ros bag starting at %s did not finish cleanly.", current_time.c_str());

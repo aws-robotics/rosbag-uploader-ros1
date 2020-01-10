@@ -99,12 +99,9 @@ private:
   ros::Duration max_duration_;
   bool is_rolling_recorder_running_;  // signals whether the rolling recorder is running
   std::string write_directory_;
-<<<<<<< HEAD
-  mutable std::recursive_mutex mutex_;
-  RollingRecorderActionServer::GoalHandle * current_goal_handle_;
-=======
   mutable std::recursive_mutex mutex_;  // protects is_rolling_recorder_running_
->>>>>>> abbyxu/f-RollingRecorderStartRecordingImpl
+  RollingRecorderActionServer::GoalHandle * current_goal_handle_;
+
 };
 
 }  // namespace Rosbag
