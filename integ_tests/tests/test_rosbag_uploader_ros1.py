@@ -88,6 +88,14 @@ class TestS3FileUploader(unittest.TestCase):
         result = self._upload_temp_files(client, temp_file_names)
         self._assert_successful_upload(result, temp_file_names)
 
+    def test_upload_oversize_file(self):
+        client = self._create_upload_files_action_client()
+        # S3 Limit is 5GB, add a little extra to be sure
+        file_size_in_mb = 5500
+        temp_file_name = self._create_large_temp_file(file_size_in_mb)
+        result = self._upload_temp_files(client, [temp_file_name])
+        self.assertEqual(result.code, 3, "Return code was %d" % result.code)
+
     def _create_upload_files_action_client(self):
         client = actionlib.SimpleActionClient(ACTION, UploadFilesAction)
         res = client.wait_for_server()
@@ -105,6 +113,15 @@ class TestS3FileUploader(unittest.TestCase):
             file_contents = ''.join(
                 [random.choice(string.ascii_letters + string.digits + ' ') for _ in range(64)])
             temp_file.write(file_contents)
+        self.files_to_delete.append(temp_file.name)
+        return temp_file.name
+
+    def _create_large_temp_file(self, file_size_in_mb):
+        temp_file = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
+        temp_file.seek(file_size_in_mb * 1024 * 1024 - 1)
+        temp_file.write(b'0')
+        temp_file.seek(0)
+        temp_file.close()
         self.files_to_delete.append(temp_file.name)
         return temp_file.name
 
