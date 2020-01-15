@@ -17,9 +17,6 @@ uint8 UPLOAD_FAILED_INVALID_INPUT=2
 # A status code from the uploader service
 uint8 code
 
-# Message describing the status
-string message
-
 # The list of files that were uploaded
 string[] files_uploaded
 
