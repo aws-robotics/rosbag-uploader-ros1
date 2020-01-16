@@ -7,7 +7,7 @@ inputs:
   integ-test-package-name:
     description: 'Name of the integration test package'
     required: true
-  integ-test-launch-file-name:
+  integ-test-launch-files:
     description: 'Name of the integration test launch file'
     required: true
   workspace-dir:

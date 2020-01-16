@@ -1,0 +1,9 @@
+<launch>
+    <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
+        <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/config.yaml"/>
+    </include>
+
+    <param name="/s3_file_uploader/s3_bucket" command="$(find rosbag_uploader_ros1_integration_tests)/setup_test_bucket.sh"/>
+
+    <test test-name="TestS3FileUploaderWrongRegion" pkg="rosbag_uploader_ros1_integration_tests" type="test_s3_file_uploader_wrong_region.py" />
+</launch>

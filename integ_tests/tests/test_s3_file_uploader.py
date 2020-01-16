@@ -14,8 +14,6 @@
 
 import filecmp
 import os
-import random
-import string
 import sys
 import tempfile
 import unittest
@@ -41,20 +39,28 @@ class TestS3FileUploader(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rospy.init_node(TEST_NODE_NAME, log_level=rospy.DEBUG)
-        s3 = S3Client(extract_s3_region())
+        s3 = S3Client(cls.extract_s3_region())
         s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
         s3.create_bucket(s3_bucket_name)
         s3.wait_for_bucket_create(s3_bucket_name)
 
     @classmethod
     def tearDownClass(cls):
-        s3 = S3Client(extract_s3_region())
+        s3 = S3Client(cls.extract_s3_region())
         s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
         s3.delete_bucket(s3_bucket_name)
 
+    @classmethod
+    def extract_s3_region(cls):
+        s3_region = rospy.get_param(
+            '/s3_file_uploader/aws_client_configuration/region')
+        if not s3_region:
+            return AWS_DEFAULT_REGION
+        return s3_region
+
     def setUp(self):
         self.s3_bucket = rospy.get_param('/s3_file_uploader/s3_bucket')
-        self.s3_region = extract_s3_region()
+        self.s3_region = TestS3FileUploader.extract_s3_region()
         self.s3_client = S3Client(self.s3_region)
         self.s3_key_prefix = 'foo/bar'
         self.objects_to_delete = []
@@ -76,54 +82,11 @@ class TestS3FileUploader(unittest.TestCase):
         if len(objects_to_delete) > 0:
             self.s3_client.delete_objects(self.s3_bucket, objects_to_delete)
 
-    def test_upload_file(self):
-        client = self._create_upload_files_action_client()
-        temp_file_name = self._create_temp_file()
-        result = self._upload_temp_files(client, [temp_file_name])
-        self._assert_successful_upload(result, [temp_file_name])
-
-    def test_upload_multiple_files(self):
-        client = self._create_upload_files_action_client()
-        temp_file_names = self._create_temp_files(10)
-        result = self._upload_temp_files(client, temp_file_names)
-        self._assert_successful_upload(result, temp_file_names)
-
-    def test_upload_oversize_file(self):
-        client = self._create_upload_files_action_client()
-        # S3 Limit is 5GB, add a little extra to be sure
-        file_size_in_mb = 5500
-        temp_file_name = self._create_large_temp_file(file_size_in_mb)
-        result = self._upload_temp_files(client, [temp_file_name])
-        self.assertEqual(result.code, 3, "Return code was %d" % result.code)
-
     def _create_upload_files_action_client(self):
         client = actionlib.SimpleActionClient(ACTION, UploadFilesAction)
         res = client.wait_for_server()
         self.assertTrue(res, 'Failed to connect to action server')
         return client
-
-    def _create_temp_files(self, total_files):
-        temp_file_names = []
-        for _ in range(total_files):
-            temp_file_names.append(self._create_temp_file())
-        return temp_file_names
-
-    def _create_temp_file(self):
-        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file:
-            file_contents = ''.join(
-                [random.choice(string.ascii_letters + string.digits + ' ') for _ in range(64)])
-            temp_file.write(file_contents)
-        self.files_to_delete.append(temp_file.name)
-        return temp_file.name
-
-    def _create_large_temp_file(self, file_size_in_mb):
-        temp_file = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
-        temp_file.seek(file_size_in_mb * 1024 * 1024 - 1)
-        temp_file.write(b'0')
-        temp_file.seek(0)
-        temp_file.close()
-        self.files_to_delete.append(temp_file.name)
-        return temp_file.name
 
     def _upload_temp_files(self, client, temp_file_names):
         goal = UploadFilesGoal(
@@ -167,14 +130,6 @@ class TestS3FileUploader(unittest.TestCase):
             self.assertTrue(
                 filecmp.cmp(f.name, temp_file_name),
                 'Local file content did not match uploaded content')
-
-
-def extract_s3_region():
-    s3_region = rospy.get_param(
-        '/s3_file_uploader/aws_client_configuration/region')
-    if not s3_region:
-        return AWS_DEFAULT_REGION
-    return s3_region
 
 
 if __name__ == '__main__':

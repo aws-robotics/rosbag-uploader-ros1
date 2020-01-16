@@ -15,6 +15,7 @@ const ROS_DISTRO = core.getInput('ros-distro', {required: true});
 // and therefore currently are intended to be run only as a part of CRON jobs
 // on the master branch
 function shouldSkip():boolean {
+  return false;
   const context = github.context;
   const isNotPull = context.eventName !== 'pull_request';
   const isMaster = context.ref === 'refs/heads/master';
@@ -53,14 +54,21 @@ async function setup() {
 async function rostest() {
   try {  
     const integTestPkgName = core.getInput('integ-test-package-name', {required: true});
-    const integTestLaunchFileName = core.getInput('integ-test-launch-file-name', {required: true});
+    const integTestLaunchFilesString = core.getInput('integ-test-launch-files', {required: true});
+    const integTestLaunchFiles = integTestLaunchFilesString.split("\n");
     const workspaceDir = core.getInput('workspace-dir');
     core.addPath(path.join(workspaceDir, "install", "bin"));
     const execOptions: ExecOptions = {
       cwd: workspaceDir,
       env: Object.assign({}, process.env, ROS_ENV_VARIABLES, INSTALL_ENV_VARS)
     };
-    await exec.exec(`/opt/ros/${ROS_DISTRO}/bin/rostest`, [integTestPkgName, integTestLaunchFileName], execOptions)
+
+    for (let i = 0; i < integTestLaunchFiles.length; i++) {
+      let integTestLaunchFileName = integTestLaunchFiles[i];
+      if (integTestLaunchFileName.trim().length > 0) {
+        await exec.exec(`/opt/ros/${ROS_DISTRO}/bin/rostest`, [integTestPkgName, integTestLaunchFileName], execOptions)
+      }
+    }
   } catch (error) {
     core.setFailed(error.message);
   }
