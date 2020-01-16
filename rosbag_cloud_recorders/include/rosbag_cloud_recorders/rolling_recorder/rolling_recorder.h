@@ -25,7 +25,6 @@
 #include <file_uploader_msgs/UploadFilesGoal.h>
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 #include <actionlib/client/simple_action_client.h>
-#include <actionlib/client/action_client.h>
 #include <string>
 #include <vector>
 
@@ -45,10 +44,10 @@ class RollingRecorder
 {
 public:
   explicit RollingRecorder(
-    const ros::Duration & bag_rollover_time, const ros::Duration & max_record_time);
+    ros::Duration bag_rollover_time, ros::Duration max_record_time);
 
   explicit RollingRecorder(
-    const ros::Duration & bag_rollover_time, const ros::Duration & max_record_time, std::string write_directory);
+    ros::Duration bag_rollover_time, ros::Duration max_record_time, std::string write_directory);
 
   virtual ~RollingRecorder() = default;
 

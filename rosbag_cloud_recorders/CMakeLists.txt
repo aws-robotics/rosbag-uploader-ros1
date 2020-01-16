@@ -47,7 +47,8 @@ catkin_package(
 roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
             src/rolling_recorder/main.cpp
             test/rolling_recorder_test.cpp
-            include/rolling_recorder/rolling_recorder.h)
+            include/rolling_recorder/rolling_recorder.h
+            include/rolling_recorder/rolling_recorder_action_server_handler.h)
 
 include_directories(
     include
@@ -127,15 +128,15 @@ if(CATKIN_ENABLE_TESTING)
       ${GMOCK_BOTH_LIBRARIES}
     )
   else()
-      include_directories(/usr/include/gmock /usr/src/gmock)
-      add_library(test_rolling_recorder_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
-      add_rostest_gtest(test_rolling_recorder
-        test/test_rolling_recorder.test
-        test/rolling_recorder_test.cpp
-      )
-      target_link_libraries(test_rolling_recorder
-        test_rolling_recorder_libgmock
-      )
+    include_directories(/usr/include/gmock /usr/src/gmock)
+    add_library(test_rolling_recorder_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
+    add_rostest_gtest(test_rolling_recorder
+      test/test_rolling_recorder.test
+      test/rolling_recorder_test.cpp
+    )
+    target_link_libraries(test_rolling_recorder
+      test_rolling_recorder_libgmock
+    )
   endif()
 
   target_include_directories(test_rolling_recorder PRIVATE
@@ -149,6 +150,9 @@ if(CATKIN_ENABLE_TESTING)
   )
 
   find_common_test_packages()
+  add_common_gtest(test_rolling_recorder_action_server_handler
+    test/rolling_recorder_action_server_handler_test.cpp
+  )
   add_common_gtest(test_utils
     test/utils/utils_test.cpp
     test/utils/file_utils_test.cpp
@@ -156,6 +160,13 @@ if(CATKIN_ENABLE_TESTING)
   )
   target_include_directories(test_utils
     PRIVATE include
+  )
+  target_include_directories(test_rolling_recorder_action_server_handler
+    PRIVATE include
+  )
+  target_link_libraries(test_rolling_recorder_action_server_handler
+    ${GTEST_LIBRARIES}
+    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
   )
   target_link_libraries(test_utils
     ${GTEST_LIBRARIES}

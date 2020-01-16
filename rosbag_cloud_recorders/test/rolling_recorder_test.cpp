@@ -12,69 +12,63 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include <string>
-#include <vector>
-#include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
-#include <gtest/gtest.h>
+
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/terminal_state.h>
+#include <aws/core/Aws.h>
 #include <ros/ros.h>
 #include <ros/console.h>
-#include <recorder_msgs/RollingRecorderAction.h>
-#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+#include <ros/callback_queue.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
+#include <recorder_msgs/RollingRecorderAction.h>
 
 using namespace Aws::Rosbag;
 using RollingRecorderActionClient = actionlib::ActionClient<recorder_msgs::RollingRecorderAction>;
 
-class RollingRecorderNodeFixture : public ::testing::Test
+using ::testing::Return;
+using ::testing::_;
+using ::testing::ContainerEq;
+using ::testing::Invoke;
+
+class RollingRecorderTest : public ::testing::Test
 {
 protected:
-  void SetUp() override
+  recorder_msgs::RollingRecorderGoal goal;
+  ros::AsyncSpinner executor;
+  ros::NodeHandle nh;
+  RollingRecorderActionClient action_client;
+  RollingRecorderActionClient::GoalHandle goal_handle;
+
+  void TearDown() override
   {
-    ros::NodeHandle nh("~");
-    const ros::Duration max_record_time(5);
-    const ros::Duration bag_rollover_time(5);
-    std::string write_directory("~/.ros/rosbag_uploader/");
-    boost::filesystem::create_directory(write_directory);
-    path_ = boost::filesystem::path(write_directory);
-    action_client_ = std::make_shared<RollingRecorderActionClient>(nh, "RosbagRollingRecord");
-    rolling_recorder_ = std::make_shared<Aws::Rosbag::RollingRecorder>(
-      bag_rollover_time, max_record_time, write_directory);
+    executor.stop();
   }
-
-  void ClearFilesInPath() {
-    if (!boost::filesystem::is_empty(path_)) {
-      boost::filesystem::remove_all(path_);
-    }
+public:
+  RollingRecorderTest():
+    executor(0),
+    nh("~"),
+    action_client(nh, "RosbagRollingRecord")
+  {
+    executor.start();
   }
-
-  boost::filesystem::path path_;
-  std::shared_ptr<RollingRecorderActionClient> action_client_;
-  std::shared_ptr<Aws::Rosbag::RollingRecorder> rolling_recorder_;
 };
 
-TEST_F(RollingRecorderNodeFixture, TestGoalReceivedbyActionServer)
+TEST_F(RollingRecorderTest, TestConstructor)
 {
-  ros::AsyncSpinner executor(0);
-  executor.start();
+  ros::Duration max_record_time(5);
+  ros::Duration bag_rollover_time(5);
+  std::string write_directory("~/.ros/rosbag_uploader/");
 
-  bool message_received = false;
-  // Wait 10 seconds for server to start
-  ASSERT_TRUE(action_client_->waitForActionServerToStart(ros::Duration(10, 0)));
-  auto transition_call_back = [&](RollingRecorderActionClient::GoalHandle goal_handle) {
-    if (goal_handle.getCommState() == actionlib::CommState::StateEnum::DONE) {
-      EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::REJECTED);
-      message_received = true;
-    }
-  };
-  recorder_msgs::RollingRecorderGoal goal;
-  RollingRecorderActionClient::GoalHandle gh = action_client_->sendGoal(goal, transition_call_back);
-  ros::Duration(1, 0).sleep();
-  ASSERT_TRUE(message_received);
-  executor.stop();
+  {
+    Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_directory);
+  }
+
+  {
+    Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time);
+  }
 }
 
 int main(int argc, char ** argv)
