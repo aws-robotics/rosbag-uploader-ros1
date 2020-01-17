@@ -1,0 +1,32 @@
+<launch>
+    <!-- If a node config file argument is provided by the caller we will load it instead of the example config -->
+    <arg name="node_config_file" default="$(find rosbag_cloud_recorders)/config/rolling_recorder_sample_configuration.yaml" />
+
+    <!-- The length of each bag file in seconds.
+         Acceptable values: positive integers
+         If not given defaults to 30 seconds
+         If invalid value is given node will exit and log an error message -->
+    <arg name="bag_rollover_time" default="30" />
+
+    <!-- Directory where rosbags will be written.
+         Defaults to ~/.ros/rosbag_uploader/ -->
+    <arg name="write_directory" default="/opt/abbyxu/.ros/rosbag_uploader/" />
+
+    <!-- The topics that should be recorded into the rosbag.
+         Acceptable values: any list of strings or an empty list.
+         If list is empty or no value is given defaults to all topics.
+         If a topic in the list doesn't exist when recording starts
+         no warning will be given. Behavior here depends on ROSBag implementaiton. -->
+    <arg name="topics_to_record" default='/rosout_agg /rosout' />
+
+    <node name="rosbag_record" pkg="rosbag" type="record" args='--split
+                                                                --duration $(arg bag_rollover_time)
+                                                                --output-prefix $(arg write_directory)
+                                                                $(arg topics_to_record)'>
+    </node>
+
+    <node name="rolling_recorder" pkg="rosbag_cloud_recorders" type="rolling_recorder" >
+      <rosparam file="$(arg node_config_file)" />
+    </node>
+    
+</launch>

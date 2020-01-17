@@ -112,6 +112,11 @@ install(
   FILES_MATCHING PATTERN "*.h"
 )
 
+install(
+  DIRECTORY config launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 ##########
 ## Test ##
 ##########
