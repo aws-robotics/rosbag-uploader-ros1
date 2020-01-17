@@ -14,16 +14,17 @@
  */
 
 #pragma once
+#include <array>
+#include <vector>
 
 #include <actionlib/server/action_server.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <s3_common/s3_upload_manager.h>
 
-#include <array>
-#include <vector>
 
 #include<s3_file_uploader/s3_file_uploader_action_server_handler.h>
 
+#include <aws/s3/S3Client.h>
 #include <aws/core/utils/logging/LogMacros.h>
 #include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 
@@ -64,29 +65,31 @@ public:
             goal_handle.publishFeedback(feedback);
         };
     
-        auto result_code = upload_manager.UploadFiles(
+        auto outcome = upload_manager.UploadFiles(
             uploads, bucket, feedback_callback);
         file_uploader_msgs::UploadFilesResult result;
-        result.code = result_code;
+        result.result_code = static_cast<int>(outcome.GetError().GetErrorType());
         for (auto const& upload : completed_uploads) {
             result.files_uploaded.push_back(upload.object_key);
         }
-        if (S3ErrorCode::SUCCESS != result_code) {
-            goal_handle.setAborted(result, std::string("Goal was aborted due to error uploading files. S3ErrorCode: ") + std::to_string(result_code));
+        if (actionlib_msgs::GoalStatus::PREEMPTING == goal_handle.getGoalStatus().status) {
+            // Goal cancel has been requested
+            goal_handle.setCanceled(result, "");
+            return;
+        }
+        if (!outcome.IsSuccess()) {
+            std::stringstream ss;
+            ss << "Goal was aborted due to error uploading files. Error Message: " << outcome.GetError().GetMessage();
+            goal_handle.setAborted(result, ss.str());
         } else {
             goal_handle.setSucceeded(result, "");
         }
     }
 
-    static void CancelUploadToS3(S3UploadManager& upload_manager, T& goal_handle)
+    static void CancelUploadToS3(S3UploadManager& upload_manager)
     {
         AWS_LOG_INFO(__func__, "Cancelling Goal");
         upload_manager.CancelUpload();
-        // Wait until cancel has finished
-        while (!upload_manager.IsAvailable()){
-            ros::Duration(1.0).sleep();
-        }
-        goal_handle.setCanceled();
     }
 };
 

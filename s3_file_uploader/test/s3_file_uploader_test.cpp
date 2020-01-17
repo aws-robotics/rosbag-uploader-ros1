@@ -19,6 +19,7 @@
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <aws/core/Aws.h>
+#include <aws/s3/S3Client.h>
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/callback_queue.h>
@@ -42,7 +43,7 @@ class MockS3UploadManager : public S3UploadManager
 {
 public:
     MockS3UploadManager() = default;
-    MOCK_METHOD3(UploadFiles, S3ErrorCode(const std::vector<UploadDescription> &,
+    MOCK_METHOD3(UploadFiles, Model::PutObjectOutcome(const std::vector<UploadDescription> &,
         const std::string &,
         const boost::function<void (const std::vector<UploadDescription>&)>&));
     MOCK_METHOD0(CancelUpload, void());
@@ -58,6 +59,7 @@ protected:
     UploadFilesActionClient action_client;
     std::unique_ptr<MockS3UploadManager> upload_manager;
     UploadFilesActionClient::GoalHandle goal_handle;
+    Model::PutObjectOutcome successfull_outcome;
 
     void TearDown() override
     {
@@ -66,7 +68,8 @@ protected:
 public:
     S3UploaderTest():
         executor(0), nh("~"), action_client(nh, "UploadFiles"),
-        upload_manager(std::make_unique<MockS3UploadManager>())
+        upload_manager(std::make_unique<MockS3UploadManager>()),
+        successfull_outcome(Model::PutObjectResult())
     {
         executor.start();
     }
@@ -111,7 +114,7 @@ TEST_F(S3UploaderTest, TestMultipleFilesActionSucceeds)
     EXPECT_CALL(*upload_manager, IsAvailable())
         .WillRepeatedly(Return(true));
     EXPECT_CALL(*upload_manager, UploadFiles(ContainerEq(uploads),_,_))
-        .WillOnce(Return(S3ErrorCode::SUCCESS));
+        .WillOnce(Return(successfull_outcome));
 
     S3FileUploader file_uploader(std::move(upload_manager));
     SanityGoalCheck(actionlib::TerminalState::StateEnum::SUCCEEDED);

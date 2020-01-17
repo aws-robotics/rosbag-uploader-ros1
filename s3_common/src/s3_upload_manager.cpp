@@ -53,7 +53,7 @@ void S3UploadManager::CancelUpload()
     }
 }
 
-S3ErrorCode S3UploadManager::UploadFiles(
+Model::PutObjectOutcome S3UploadManager::UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
         const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback)
@@ -61,18 +61,23 @@ S3ErrorCode S3UploadManager::UploadFiles(
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         if (!IsAvailable()) {
-            return S3ErrorCode::UPLOADER_BUSY;
+            return Model::PutObjectOutcome(Aws::Client::AWSError<S3Errors>(S3Errors::INVALID_ACTION,
+                                       "INVALID_ACTION", "Failed to UploadFiles. Already uploading files", false));
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
     }
     std::vector<UploadDescription> completed_uploads;
-    S3ErrorCode upload_result = S3ErrorCode::SUCCESS;
+    // If no files were provided then upload was successful.
+    Model::PutObjectResult default_result;
+    Model::PutObjectOutcome upload_outcome(default_result);
     std::vector<UploadDescription> uploaded_files;
     for (const auto& upload_description: upload_descriptions) {
         {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
             if(manager_status_ == S3UploadManagerState::CANCELLING) {              
-                upload_result = S3ErrorCode::CANCELLED;
+                AWS_LOG_INFO(__func__, "Goal canceled");
+                upload_outcome = Model::PutObjectOutcome(Aws::Client::AWSError<S3Errors>(S3Errors::UNKNOWN,
+                                                       "UNKNOWN", "Failed to complete uploading files", true));
                 break;
             }
         }
@@ -80,8 +85,8 @@ S3ErrorCode S3UploadManager::UploadFiles(
         auto object_key = upload_description.object_key;
         //bucket comes from config
         AWS_LOGSTREAM_INFO(__func__,"Uploading file " << file_path << " to " << object_key);
-        upload_result = s3_facade_->PutObject(file_path, bucket, object_key);
-        if (upload_result != S3ErrorCode::SUCCESS) {
+        upload_outcome = s3_facade_->PutObject(file_path, bucket, object_key);
+        if (!upload_outcome.IsSuccess()) {
             break;
         }
         completed_uploads.push_back(upload_description);
@@ -91,7 +96,7 @@ S3ErrorCode S3UploadManager::UploadFiles(
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         manager_status_ = S3UploadManagerState::AVAILABLE;
     }
-    return upload_result;
+    return upload_outcome;
 }
 
 bool S3UploadManager::IsAvailable() const

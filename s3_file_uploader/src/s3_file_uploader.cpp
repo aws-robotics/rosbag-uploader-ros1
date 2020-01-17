@@ -64,8 +64,8 @@ S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) 
     );
     
     action_server_.registerCancelCallback(
-        [this](UploadFilesActionServer::GoalHandle goal_handle) {
-            S3FileUploaderActionServerHandler<UploadFilesActionServer::GoalHandle>::CancelUploadToS3(*upload_manager_, goal_handle);
+        [this](UploadFilesActionServer::GoalHandle /*goal_handle*/) {
+            S3FileUploaderActionServerHandler<UploadFilesActionServer::GoalHandle>::CancelUploadToS3(*upload_manager_);
         }
     );
     

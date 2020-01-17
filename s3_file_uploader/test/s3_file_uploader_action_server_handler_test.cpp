@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <aws/core/Aws.h>
-
+#include <aws/s3/S3Client.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <file_uploader_msgs/UploadFilesActionGoal.h>
 #include <file_uploader_msgs/UploadFilesGoal.h>
@@ -41,7 +41,7 @@ class MockS3UploadManager : public S3UploadManager
 {
 public:
     MockS3UploadManager() = default;
-    MOCK_METHOD3(UploadFiles, S3ErrorCode(const std::vector<UploadDescription> &,
+    MOCK_METHOD3(UploadFiles, Model::PutObjectOutcome(const std::vector<UploadDescription> &,
         const std::string &,
         const boost::function<void (const std::vector<UploadDescription>&)>&));
     MOCK_METHOD0(CancelUpload, void());
@@ -59,10 +59,11 @@ public:
     MOCK_METHOD0(setAccepted, void());
     MOCK_METHOD0(setAborted, void());
     MOCK_METHOD0(setSucceeded, void());
-    MOCK_METHOD0(setCanceled, void());
+    MOCK_METHOD2(setCanceled, void(const file_uploader_msgs::UploadFilesResult&, const std::string &));
     MOCK_METHOD2(setAborted, void(const file_uploader_msgs::UploadFilesResult&, const std::string &));
     MOCK_METHOD2(setSucceeded, void(const file_uploader_msgs::UploadFilesResult&, const std::string &));
 
+    MOCK_CONST_METHOD0(getGoalStatus, actionlib_msgs::GoalStatus());
     MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<file_uploader_msgs::UploadFilesGoal>());
     MOCK_CONST_METHOD1(publishFeedback, void(file_uploader_msgs::UploadFilesFeedback &));
 };
@@ -101,26 +102,45 @@ public:
        goal->files.push_back("test_file_name");
        goal->upload_location = "my/upload/dir";
        EXPECT_CALL(*goal_handle, getGoal()).WillRepeatedly(Return(goal));
+       actionlib_msgs::GoalStatus goal_status;
+       goal_status.status = actionlib_msgs::GoalStatus::PENDING;
+       ON_CALL(*goal_handle, getGoalStatus()).WillByDefault(Return(goal_status));
     }
     
-    void givenUploadWithStatus(S3ErrorCode errorCode) {
-        auto upload_files_action = [errorCode](
+    void givenUploadWithOutcome(Model::PutObjectOutcome outcome) {
+        auto upload_files_action = [outcome](
             const std::vector<UploadDescription> & upload_desc,
             const std::string & text,
             const boost::function<void (const std::vector<UploadDescription>&)>& feedback_fn) {
             (void) text;
             feedback_fn(upload_desc);
-            return errorCode;
+            return outcome;
         };
         EXPECT_CALL(*upload_manager, UploadFiles(_, _, _)).WillOnce(Invoke(upload_files_action));
     }
     
     void givenSuccessfullUpload() {
-        givenUploadWithStatus(S3ErrorCode::SUCCESS);
+        // Successful outcomes have a result
+        givenUploadWithOutcome(Model::PutObjectOutcome(Model::PutObjectResult()));
     }
     
     void givenFailedUpload() {
-        givenUploadWithStatus(S3ErrorCode::S3_ACCESS_DENIED);
+        // Failed outcome have an error
+        givenUploadWithOutcome(Model::PutObjectOutcome(Aws::Client::AWSError<S3Errors>(S3Errors::INTERNAL_FAILURE, false)));
+    }
+
+    void givenGoalHandleWithStatus(int status) {
+        actionlib_msgs::GoalStatus goal_status;
+        goal_status.status = status;
+        EXPECT_CALL(*goal_handle, getGoalStatus()).WillRepeatedly(Return(goal_status));
+    }
+
+    void givenGoalHandleCancelRequested() {
+        givenGoalHandleWithStatus(actionlib_msgs::GoalStatus::PREEMPTING);
+    }
+
+    void givenGoalHandlePending() {
+        givenGoalHandleWithStatus(actionlib_msgs::GoalStatus::PENDING);
     }
 
     void assertGoalIsRejected() {
@@ -140,7 +160,7 @@ public:
     }
     
     void assertGoalIsCanceled() {
-        EXPECT_CALL(*goal_handle, setCanceled());
+        EXPECT_CALL(*goal_handle, setCanceled(_, _));
     }
     
     void assertGoalIsAborted() {
@@ -178,13 +198,24 @@ TEST_F(S3FileUploaderActionServerHandlerTests, TestUploadActionFailure)
     S3FileUploaderActionServerHandler<MockGoalHandle>::UploadToS3(*upload_manager, std::string("bucket_"), *goal_handle);
 }
 
-TEST_F(S3FileUploaderActionServerHandlerTests, TestCancelUploadToS3)
+TEST_F(S3FileUploaderActionServerHandlerTests, TestUploadActionCanceled)
 {
-    givenEventuallyAvailableUploadManager();
-    asssertUploadIsCanceled();
+    givenAvailableUploadManager();
+    assertGoalIsAccepted();
+    givenUploadGoal();
+    givenSuccessfullUpload();
+    givenGoalHandleCancelRequested();
     assertGoalIsCanceled();
     
-    S3FileUploaderActionServerHandler<MockGoalHandle>::CancelUploadToS3(*upload_manager, *goal_handle);
+    S3FileUploaderActionServerHandler<MockGoalHandle>::UploadToS3(*upload_manager, std::string("bucket_"), *goal_handle);
+}
+
+
+TEST_F(S3FileUploaderActionServerHandlerTests, TestCancelUploadToS3)
+{
+    asssertUploadIsCanceled();
+    
+    S3FileUploaderActionServerHandler<MockGoalHandle>::CancelUploadToS3(*upload_manager);
 }
 
 int main(int argc, char ** argv)

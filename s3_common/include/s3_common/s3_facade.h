@@ -17,7 +17,6 @@
 
 #include <aws/s3/S3Client.h>
 
-#include <s3_common/s3_common_error_codes.h>
 namespace Aws
 {
 namespace S3
@@ -44,9 +43,9 @@ public:
     * @param file_path path to the file to upload
     * @param bucket the s3 bucket for upload
     * @param key object key for upload
-    * @return error code, SUCCESS if the file is uploaded,
+    * @return S3 PutObjectOutcome describing result of upload,
     */
-    virtual Aws::S3::S3ErrorCode PutObject(const std::string& file_path, const std::string& bucket, const std::string& key);
+    virtual Model::PutObjectOutcome PutObject(const std::string& file_path, const std::string& bucket, const std::string& key);
 
 private:
     Aws::Client::ClientConfiguration config_;

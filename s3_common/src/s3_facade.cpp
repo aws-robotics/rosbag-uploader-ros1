@@ -44,7 +44,7 @@ S3Facade::S3Facade(std::unique_ptr<S3Client> s3_client)
 {
 }
 
-Aws::S3::S3ErrorCode S3Facade::PutObject(
+Model::PutObjectOutcome S3Facade::PutObject(
     const std::string & file_path,
     const std::string & bucket,
     const std::string & key)
@@ -54,8 +54,11 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
             std::make_shared<Aws::FStream>(file_path.c_str(),
                                            std::ios_base::in | std::ios_base::binary);
     if (!file_data->good()) {
-        AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file "<<file_path<<" couldn't be opened for reading");
-        return Aws::S3::S3ErrorCode::FILE_COULDNT_BE_READ;
+        AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file " << file_path << " couldn't be opened for reading");
+        Aws::StringStream result;
+        result << "File " << file_path << " couldn't be opened for reading";
+        return Model::PutObjectOutcome(Aws::Client::AWSError<S3Errors>(S3Errors::INVALID_PARAMETER_VALUE,
+                                       "INVALID_PARAMETER_VALUE", Aws::String(result.str()), false));
     }
     Aws::S3::Model::PutObjectRequest put_object_request;
     put_object_request.SetBucket(bucket.c_str());
@@ -67,18 +70,9 @@ Aws::S3::S3ErrorCode S3Facade::PutObject(
     if (!outcome.IsSuccess()) {
         const auto& error = outcome.GetError();
         AWS_LOGSTREAM_ERROR(__func__, "Failed to upload "<<file_path<<" to s3://"<<bucket<<"/"<<key<<" with message: "<<error.GetMessage());
-        auto error_type = error.GetErrorType();
-        if (error_type == Aws::S3::S3Errors::ACCESS_DENIED) {
-            return Aws::S3::S3ErrorCode::S3_ACCESS_DENIED;
-        }
-        if (error_type == Aws::S3::S3Errors::NO_SUCH_BUCKET) {
-            return Aws::S3::S3ErrorCode::S3_NO_SUCH_BUCKET;
-        }
-        return Aws::S3::S3ErrorCode::FAILED;
-                
     } 
     AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
-    return Aws::S3::S3ErrorCode::SUCCESS;
+    return outcome;
 }
 
 

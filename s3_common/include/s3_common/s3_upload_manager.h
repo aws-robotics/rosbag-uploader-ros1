@@ -18,7 +18,8 @@
 #include <string>
 #include <boost/function.hpp>
 
-#include <s3_common/s3_common_error_codes.h>
+#include <aws/s3/S3Client.h>
+
 #include <s3_common/s3_facade.h>
 
 namespace Aws
@@ -58,7 +59,6 @@ public:
     virtual ~S3UploadManager() = default;
 
     /* Cancel the current upload
-     * @return true if the cancel was successful, false if the no upload was in progress
      */
     virtual void CancelUpload();
 
@@ -66,9 +66,9 @@ public:
      * @param upload_descriptions a vector of files to upload to S3
      * @param bucket the name of the s3 bucket to target. Must be in the same region as the client config
      * @param feedback_callback called with the list of UploadDescriptions that have been finished
-     * @return An Error code describing the result of the upload.
+     * @return An PutObjectOutcome
      */ 
-    virtual S3ErrorCode UploadFiles(
+    virtual Model::PutObjectOutcome UploadFiles(
         const std::vector<UploadDescription> & upload_descriptions,
         const std::string & bucket,
         const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
