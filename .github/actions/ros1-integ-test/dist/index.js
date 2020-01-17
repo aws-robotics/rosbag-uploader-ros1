@@ -5577,12 +5577,9 @@ const ROS_DISTRO = core.getInput('ros-distro', { required: true });
 // and therefore currently are intended to be run only as a part of CRON jobs
 // on the master branch
 function shouldSkip() {
-    return false;
     const context = github.context;
-    const isNotPull = context.eventName !== 'pull_request';
-    const isMaster = context.ref === 'refs/heads/master';
     const isAwsRobotics = context.repo.owner === 'aws-robotics';
-    const shouldSkip = !(isNotPull && isAwsRobotics && isMaster);
+    const shouldSkip = !isAwsRobotics;
     return shouldSkip;
 }
 function loadEnvVariables(envVars, command) {
