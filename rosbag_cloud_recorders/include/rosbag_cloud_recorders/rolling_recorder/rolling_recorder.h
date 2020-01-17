@@ -43,11 +43,6 @@ using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploade
 class RollingRecorder
 {
 public:
-<<<<<<< HEAD
-=======
-  explicit RollingRecorder(const ros::Duration& bag_rollover_time, const ros::Duration& max_record_time);
-
->>>>>>> Fix linter errors
   explicit RollingRecorder(ros::Duration bag_rollover_time, ros::Duration max_record_time, std::string write_directory);
 
   virtual ~RollingRecorder() = default;
