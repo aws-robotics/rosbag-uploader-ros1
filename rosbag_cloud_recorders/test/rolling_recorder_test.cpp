@@ -65,10 +65,6 @@ TEST_F(RollingRecorderTest, TestConstructor)
   {
     Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_directory);
   }
-
-  {
-    Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time);
-  }
 }
 
 int main(int argc, char ** argv)

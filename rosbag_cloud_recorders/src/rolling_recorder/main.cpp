@@ -28,10 +28,10 @@ int main(int argc, char* argv[])
   // TODO(abbyxu): will remove in subsequent PRs
   ros::Duration bag_rollover_time(10);
   ros::Duration max_record_time(30);
-
+  std::string write_dir("~/.ros/rosbag_uploader");
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
 
-  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time);
+  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_dir);
 
   ros::waitForShutdown();
   AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");

@@ -43,11 +43,7 @@ using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploade
 class RollingRecorder
 {
 public:
-  explicit RollingRecorder(
-    ros::Duration bag_rollover_time, ros::Duration max_record_time);
-
-  explicit RollingRecorder(
-    ros::Duration bag_rollover_time, ros::Duration max_record_time, std::string write_directory);
+  explicit RollingRecorder(ros::Duration bag_rollover_time, ros::Duration max_record_time, std::string write_directory);
 
   virtual ~RollingRecorder() = default;
 
