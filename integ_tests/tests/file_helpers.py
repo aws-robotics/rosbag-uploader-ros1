@@ -30,9 +30,7 @@ def create_temp_file():
     return temp_file.name
 
 def create_large_temp_file(file_size_in_mb):
-    temp_file = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
-    temp_file.seek(file_size_in_mb * 1024 * 1024 - 1)
-    temp_file.write(b'0')
-    temp_file.seek(0)
-    temp_file.close()
+    with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file:
+        temp_file.seek(file_size_in_mb * 1024 * 1024 - 1)
+        temp_file.write(b'0')
     return temp_file.name

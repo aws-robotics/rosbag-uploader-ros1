@@ -35,7 +35,7 @@ TEST_NODE_NAME = 'upload_files_action_client'
 AWS_DEFAULT_REGION = 'us-west-2'
 
 
-class TestS3FileUploader(unittest.TestCase):
+class S3FileUploaderTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rospy.init_node(TEST_NODE_NAME, log_level=rospy.DEBUG)
@@ -59,8 +59,9 @@ class TestS3FileUploader(unittest.TestCase):
         return s3_region
 
     def setUp(self):
+        self.action_client = None
         self.s3_bucket = rospy.get_param('/s3_file_uploader/s3_bucket')
-        self.s3_region = TestS3FileUploader.extract_s3_region()
+        self.s3_region = S3FileUploaderTestBase.extract_s3_region()
         self.s3_client = S3Client(self.s3_region)
         self.s3_key_prefix = 'foo/bar'
         self.objects_to_delete = []
@@ -83,19 +84,18 @@ class TestS3FileUploader(unittest.TestCase):
             self.s3_client.delete_objects(self.s3_bucket, objects_to_delete)
 
     def _create_upload_files_action_client(self):
-        client = actionlib.SimpleActionClient(ACTION, UploadFilesAction)
-        res = client.wait_for_server()
+        self.action_client = actionlib.SimpleActionClient(ACTION, UploadFilesAction)
+        res = self.action_client.wait_for_server()
         self.assertTrue(res, 'Failed to connect to action server')
-        return client
 
-    def _upload_temp_files(self, client, temp_file_names):
+    def _upload_temp_files(self, temp_file_names):
         goal = UploadFilesGoal(
             upload_location=self.s3_key_prefix,
             files=temp_file_names
         )
-        client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(15.0))
-        return client.get_result()
+        self.action_client.send_goal(goal)
+        self.action_client.wait_for_result(rospy.Duration.from_sec(15.0))
+        return self.action_client.get_result()
 
     def _assert_successful_upload(self, result, temp_file_names):
         self.assertEqual(

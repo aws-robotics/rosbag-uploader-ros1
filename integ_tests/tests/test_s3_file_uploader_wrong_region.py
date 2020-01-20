@@ -17,23 +17,24 @@ import sys
 import rostest
 
 from file_helpers import create_temp_file
-from test_s3_file_uploader import TestS3FileUploader
+from s3_file_uploader_test_base import S3FileUploaderTestBase
 
 PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'test_s3_file_uploader_wrong_region'
 AWS_REGION = 'eu-west-1'
+INCORRECT_REGION_RESULT_CODE = 100 # Currently incorrect region returns UNKNOWN(100)
 
-class TestS3FileUploaderWrongRegion(TestS3FileUploader):
+class TestS3FileUploaderWrongRegion(S3FileUploaderTestBase):
     @classmethod
     def extract_s3_region(cls):
         return AWS_REGION
 
     def test_bucket_in_wrong_region(self):
-        client = self._create_upload_files_action_client()
+        self._create_upload_files_action_client()
         temp_file_name = create_temp_file()
         self.files_to_delete.append(temp_file_name)
-        result = self._upload_temp_files(client, [temp_file_name])
-        self.assertEqual(result.code, 3, "Return code was %d" % result.code)
+        result = self._upload_temp_files([temp_file_name])
+        self.assertEqual(result.result_code, INCORRECT_REGION_RESULT_CODE, "Result code was %d" % result.result_code)
 
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestS3FileUploaderWrongRegion, sys.argv)
