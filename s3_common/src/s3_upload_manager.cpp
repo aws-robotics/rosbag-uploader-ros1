@@ -62,7 +62,7 @@ Model::PutObjectOutcome S3UploadManager::UploadFiles(
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         if (!IsAvailable()) {
             return Model::PutObjectOutcome(Aws::Client::AWSError<S3Errors>(S3Errors::INVALID_ACTION,
-                                       "INVALID_ACTION", "Failed to UploadFiles. Already uploading files", false));
+                                       "INVALID_ACTION", "UploadFiles aborted. UploadFiles request already active.", false));
         }
         manager_status_ = S3UploadManagerState::UPLOADING;
     }
@@ -74,10 +74,7 @@ Model::PutObjectOutcome S3UploadManager::UploadFiles(
     for (const auto& upload_description: upload_descriptions) {
         {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
-            if(manager_status_ == S3UploadManagerState::CANCELLING) {              
-                AWS_LOG_INFO(__func__, "Goal canceled");
-                upload_outcome = Model::PutObjectOutcome(Aws::Client::AWSError<S3Errors>(S3Errors::UNKNOWN,
-                                                       "UNKNOWN", "Failed to complete uploading files", true));
+            if(manager_status_ == S3UploadManagerState::CANCELLING) {
                 break;
             }
         }

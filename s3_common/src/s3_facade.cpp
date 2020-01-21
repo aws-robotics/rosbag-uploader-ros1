@@ -54,7 +54,7 @@ Model::PutObjectOutcome S3Facade::PutObject(
             std::make_shared<Aws::FStream>(file_path.c_str(),
                                            std::ios_base::in | std::ios_base::binary);
     if (!file_data->good()) {
-        AWS_LOGSTREAM_ERROR(__func__, "Upload failed, file " << file_path << " couldn't be opened for reading");
+        AWS_LOGSTREAM_ERROR(__func__, "Upload aborted, file " << file_path << " couldn't be opened for reading");
         Aws::StringStream result;
         result << "File " << file_path << " couldn't be opened for reading";
         return Model::PutObjectOutcome(Aws::Client::AWSError<S3Errors>(S3Errors::INVALID_PARAMETER_VALUE,

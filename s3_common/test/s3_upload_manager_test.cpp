@@ -229,8 +229,8 @@ TEST_F(S3UploadManagerTest, TestCancelUpload)
     // Finish execution of file upload
     pause_mutex.unlock();
 
-    // Since the upload didn't complete the outcome is failed
-    EXPECT_FALSE(outcome.get().IsSuccess());
+    // Canceled uploads are marked as successfull
+    EXPECT_TRUE(outcome.get().IsSuccess());
     EXPECT_EQ(1u, num_feedback_calls);
     EXPECT_EQ(1u, completed_uploads.size());
     EXPECT_EQ(uploads.at(0), completed_uploads.at(0));
