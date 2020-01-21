@@ -32,7 +32,11 @@ enum RecorderErrorCode
   // The local rosgbag file was not found
   FILE_NOT_FOUND,
   // Fail to remove local rosgbag file
-  FILE_REMOVAL_FAILED
+  FILE_REMOVAL_FAILED,
+  // recorder is not recording
+  RECORDER_NOT_RUNNING,
+  // recorder is already started recording
+  RECORDER_IS_RUNNING,
 };
 
 }  // namespace Rosbag

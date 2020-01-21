@@ -12,21 +12,21 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-#ifndef ROLLING_RECORDER_ROLLING_RECORDER_H
-#define ROLLING_RECORDER_ROLLING_RECORDER_H
-
 #pragma once
+#include <unordered_map>
+#include <string>
+#include <vector>
 
 #include <actionlib/server/action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <ros/ros.h>
+
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <file_uploader_msgs/UploadFilesGoal.h>
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 #include <actionlib/client/simple_action_client.h>
-#include <string>
-#include <vector>
+#include <rosbag_cloud_recorders/utils/periodic_file_deleter.h>
 
 namespace Aws
 {
@@ -47,10 +47,16 @@ public:
 
   virtual ~RollingRecorder() = default;
 
+  /**
+   * Returns a list of rosbag files that are no longer needed and can be deleted.
+   * Used by the periodic_file_deleter.
+   */
+  std::vector<std::string> GetRosBagsToDelete() const;
+
 private:
   void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
   void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
-  std::vector<std::string> GetRosgBagListToDelete() const;
+
   void StartOldRosBagsPeriodicRemoval();
   file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
   RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
@@ -61,9 +67,9 @@ private:
   ros::Duration max_duration_;
   ros::Duration bag_rollover_time_;
   std::string write_directory_;
+  mutable std::recursive_mutex mutex_;  // protects is_rolling_recorder_running_
+  Utils::PeriodicFileDeleter periodic_file_deleter_;
 };
 
 }  // namespace Rosbag
 }  // namespace Aws
-
-#endif  // ROLLING_RECORDER_ROLLING_RECORDER_H
