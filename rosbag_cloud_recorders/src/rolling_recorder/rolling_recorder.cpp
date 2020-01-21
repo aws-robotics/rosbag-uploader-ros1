@@ -15,8 +15,6 @@
 
 #include <string>
 #include <vector>
-#include <mutex>
-
 
 #include <actionlib/server/action_server.h>
 #include <actionlib_msgs/GoalID.h>

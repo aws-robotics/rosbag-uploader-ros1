@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 #pragma once
-#include <unordered_map>
+
 #include <string>
 #include <vector>
 
@@ -67,7 +67,6 @@ private:
   ros::Duration max_duration_;
   ros::Duration bag_rollover_time_;
   std::string write_directory_;
-  mutable std::recursive_mutex mutex_;  // protects is_rolling_recorder_running_
   Utils::PeriodicFileDeleter periodic_file_deleter_;
 };
 
