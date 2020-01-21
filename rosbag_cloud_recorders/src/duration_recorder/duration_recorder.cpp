@@ -22,31 +22,30 @@
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
+
 namespace Aws
 {
 namespace Rosbag
 {
 
 DurationRecorder::DurationRecorder() :
-    node_handle_("~"),
-    action_server_(node_handle_, "RosbagDurationRecord", false)
+  node_handle_("~"),
+  action_server_(node_handle_, "RosbagDurationRecord", false)
 {
-  rosbag_recorder_ = nullptr;
   action_server_.registerGoalCallback(
-      boost::bind(&DurationRecorder::GoalCallBack, this, _1));
+    [](DurationRecorderActionServer::GoalHandle goal_handle) {
+      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::DurationRecorderStart(goal_handle);
+    }
+  );
+
   action_server_.registerCancelCallback(
-      boost::bind(&DurationRecorder::CancelGoalCallBack, this, _1));
+    [](DurationRecorderActionServer::GoalHandle goal_handle) {
+      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::CancelDurationRecorder(goal_handle);
+    }
+  );
+
   action_server_.start();
-}
-
-void DurationRecorder::GoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle)
-{
-  goal_handle.setRejected();
-}
-
-void DurationRecorder::CancelGoalCallBack(DurationRecorderActionServer::GoalHandle goal_handle)
-{
-  (void) goal_handle;
 }
 
 }  // namespace Rosbag

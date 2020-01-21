@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -12,33 +12,29 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 #pragma once
 
 #include <actionlib/server/action_server.h>
-#include <ros/ros.h>
-#include <ros/spinner.h>
-
 #include <recorder_msgs/DurationRecorderAction.h>
-#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
-namespace Aws {
-namespace Rosbag {
+namespace Aws{
+namespace Rosbag{
 
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
 
-/**
- *  Duration recorder is a node that responds to actions to record rosbag files
- */
-class DurationRecorder
+template<typename T>
+class DurationRecorderActionServerHandler
 {
 public:
-  DurationRecorder();
-  ~DurationRecorder() = default;
+  static void DurationRecorderStart(T& goal_handle)
+  {
+    goal_handle.setRejected();
+  }
 
-private:
-  ros::NodeHandle node_handle_;
-  DurationRecorderActionServer action_server_;
+  static void CancelDurationRecorder(T& goal_handle)
+  {
+    goal_handle.setCanceled();
+  }
 };
 
 }  // namespace Rosbag

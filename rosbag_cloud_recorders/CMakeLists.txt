@@ -46,7 +46,9 @@ catkin_package(
 roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
             src/rolling_recorder/main.cpp
             test/rolling_recorder_test.cpp
-            include/rolling_recorder/rolling_recorder.h)
+            test/duration_recorder_action_server_handler_test.cpp
+            include/rolling_recorder/rolling_recorder.h
+            include/duration_recorder/duration_recorder_action_server_handler.h)
 
 include_directories(
     include
@@ -107,6 +109,14 @@ install(
 ## Test ##
 ##########
 if(CATKIN_ENABLE_TESTING)
+    set(TEST_INCLUDE_DIRS
+      ${catkin_INCLUDE_DIRS}
+      ${rosbag_cloud_recorders_INCLUDE_DIRS}
+    )
+    set(TEST_LINK_LIBS
+      ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+      ${catkin_LIBRARIES}
+    )
   find_package(rostest REQUIRED)
 
   add_rostest_gtest(test_duration_recorder
@@ -138,6 +148,16 @@ if(CATKIN_ENABLE_TESTING)
   )
 
   find_common_test_packages()
+  add_common_gtest(test_duration_recorder_action_handler
+    test/duration_recorder_action_server_handler_test.cpp
+  )
+  target_include_directories(test_duration_recorder_action_handler PRIVATE
+      ${TEST_INCLUDE_DIRS}
+  )
+  target_link_libraries(test_duration_recorder_action_handler
+      ${TEST_LINK_LIBS}
+  )
+
   add_common_gtest(test_utils
     test/utils/utils_test.cpp
     test/utils/file_utils_test.cpp

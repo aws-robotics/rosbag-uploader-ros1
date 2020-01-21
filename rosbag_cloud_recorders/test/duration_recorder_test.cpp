@@ -25,7 +25,6 @@
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 using namespace Aws::Rosbag;
-using namespace rosbag;
 
 
 using DurationRecorderActionClient = actionlib::ActionClient<recorder_msgs::DurationRecorderAction>;
@@ -59,6 +58,7 @@ TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
   auto gh = action_client_->sendGoal(goal, transition_call_back);
   ros::Duration(1,0).sleep();
   ASSERT_TRUE(message_received);
+  gh.cancel();
   executor.stop();
 }
 
