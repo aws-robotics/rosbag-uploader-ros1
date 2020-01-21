@@ -49,7 +49,7 @@ roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
             test/rolling_recorder_test.cpp
             test/rolling_recorder_action_server_handler_test.cpp
             include/rolling_recorder/rolling_recorder.h
-            include/rolling_recorder/rolling_recorder_action_server_handler.h)
+            include/rolling_recorder/rolling_recorder_action_server_handler.h
             test/duration_recorder_action_server_handler_test.cpp
             include/rolling_recorder/rolling_recorder.h
             include/duration_recorder/duration_recorder_action_server_handler.h)
