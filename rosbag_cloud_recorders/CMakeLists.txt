@@ -25,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
     actionlib
     actionlib_msgs
     aws_common
+    aws_ros1_common
     file_uploader_msgs
     recorder_msgs
     roscpp
@@ -46,6 +47,9 @@ catkin_package(
 roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
             src/rolling_recorder/main.cpp
             test/rolling_recorder_test.cpp
+            test/rolling_recorder_action_server_handler_test.cpp
+            include/rolling_recorder/rolling_recorder.h
+            include/rolling_recorder/rolling_recorder_action_server_handler.h
             test/duration_recorder_action_server_handler_test.cpp
             include/rolling_recorder/rolling_recorder.h
             include/duration_recorder/duration_recorder_action_server_handler.h)
@@ -53,7 +57,8 @@ roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
-    ${AWSSDK_INCLUDE_DIR}
+    ${aws_common_INCLUDE_DIR}
+    ${aws_ros1_common_INCLUDE_DIR}
 )
 
 add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
@@ -85,6 +90,8 @@ add_executable(
 
 target_link_libraries(rolling_recorder
     ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+    ${aws_common_INCLUDE_DIR}
+    ${aws_ros1_common_INCLUDE_DIR}
 )
 
 #############
@@ -92,7 +99,7 @@ target_link_libraries(rolling_recorder
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS duration_recorder ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+install(TARGETS duration_recorder rolling_recorder ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -103,6 +110,11 @@ install(
   DIRECTORY include/
   DESTINATION include
   FILES_MATCHING PATTERN "*.h"
+)
+
+install(
+  DIRECTORY config launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 ##########
@@ -118,25 +130,32 @@ if(CATKIN_ENABLE_TESTING)
       ${catkin_LIBRARIES}
     )
   find_package(rostest REQUIRED)
+  find_package(GMock QUIET)
 
-  add_rostest_gtest(test_duration_recorder
-    test/test_duration_recorder.test
-    test/duration_recorder_test.cpp
-  )
-  target_include_directories(test_duration_recorder PRIVATE
-    include
-    ${catkin_INCLUDE_DIRS}
-  )
-  target_link_libraries(test_duration_recorder
-    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
-    ${catkin_LIBRARIES}
-    ${GTEST_LIBRARIES}
-  )
+  if(GMOCK_FOUND)
+    add_rostest_gmock(
+      test_rolling_recorder
+      test/test_rolling_recorder.test
+      test/rolling_recorder_test.cpp
+    )
+    target_include_directories(test_rolling_recorder PRIVATE
+      ${GMOCK_INCLUDE_DIRS}
+    )
+    target_link_libraries(test_rolling_recorder
+      ${GMOCK_BOTH_LIBRARIES}
+    )
+  else()
+    include_directories(/usr/include/gmock /usr/src/gmock)
+    add_library(test_rolling_recorder_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
+    add_rostest_gtest(test_rolling_recorder
+      test/test_rolling_recorder.test
+      test/rolling_recorder_test.cpp
+    )
+    target_link_libraries(test_rolling_recorder
+      test_rolling_recorder_libgmock
+    )
+  endif()
 
-  add_rostest_gtest(test_rolling_recorder
-    test/test_rolling_recorder.test
-    test/rolling_recorder_test.cpp
-  )
   target_include_directories(test_rolling_recorder PRIVATE
     include
     ${catkin_INCLUDE_DIRS}
@@ -148,6 +167,11 @@ if(CATKIN_ENABLE_TESTING)
   )
 
   find_common_test_packages()
+
+  add_common_gtest(test_rolling_recorder_action_server_handler
+    test/rolling_recorder_action_server_handler_test.cpp
+  )
+
   add_common_gtest(test_duration_recorder_action_handler
     test/duration_recorder_action_server_handler_test.cpp
   )
@@ -165,6 +189,13 @@ if(CATKIN_ENABLE_TESTING)
   )
   target_include_directories(test_utils
     PRIVATE include
+  )
+  target_include_directories(test_rolling_recorder_action_server_handler
+    PRIVATE include
+  )
+  target_link_libraries(test_rolling_recorder_action_server_handler
+    ${GTEST_LIBRARIES}
+    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
   )
   target_link_libraries(test_utils
     ${GTEST_LIBRARIES}

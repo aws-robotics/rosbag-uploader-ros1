@@ -14,21 +14,27 @@
  */
 
 #include <string>
-#include <vector>
-
 #include <ros/ros.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
+#include <aws/core/utils/logging/LogMacros.h>
+#include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 
 
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "rosbag_rolling_recorder");
-  // Will be made configurable in later PRs
-  std::vector<std::string> topics_to_record{"/rosout"};
-  Aws::Rosbag::RollingRecorder rolling_recorder(
-    ros::Duration(1.0),
-    ros::Duration(1.0),
-    topics_to_record);
-  ros::spin();
+  Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>("RosbagRollingRecord"));
+
+  // TODO(abbyxu): will remove in subsequent PRs
+  ros::Duration bag_rollover_time(10);
+  ros::Duration max_record_time(30);
+  std::string write_dir("~/.ros/rosbag_uploader");
+  AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
+
+  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_dir);
+
+  ros::waitForShutdown();
+  AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
+  Aws::Utils::Logging::ShutdownAWSLogging();
   return 0;
 }

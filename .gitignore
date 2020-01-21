@@ -2,3 +2,4 @@ build/*
 install/*
 log/*
 node_modules/
+coverage.info
