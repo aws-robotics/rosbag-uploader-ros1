@@ -33,64 +33,64 @@
 
 namespace Aws{
 namespace S3 {
-    
+  
 using UploadFilesActionServer = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>;
 
 template<typename T>
 class S3FileUploaderActionServerHandler
 { 
 public:
-    static void UploadToS3(S3UploadManager& upload_manager, const std::string& bucket, T& goal_handle)
-    {
-        if (!upload_manager.IsAvailable()) {
-            goal_handle.setRejected();
-            return;
-        }
-        goal_handle.setAccepted();
-        auto goal = goal_handle.getGoal();
-        std::vector<UploadDescription> uploads(goal->files.size());
-        for (size_t i=0; i<goal->files.size(); i++) {
-            uploads.at(i) = {
-                goal->files[i],
-                GenerateObjectKey(goal->files[i], goal->upload_location)
-            };
-        }
-        std::vector<UploadDescription> completed_uploads;
-    
-        auto feedback_callback = [&](const std::vector<UploadDescription>& uploaded_files) {
-            completed_uploads = uploaded_files;
-            file_uploader_msgs::UploadFilesFeedback feedback;
-            feedback.num_remaining = uploads.size() - uploaded_files.size();
-            feedback.num_uploaded = uploaded_files.size();
-            goal_handle.publishFeedback(feedback);
-        };
-    
-        auto outcome = upload_manager.UploadFiles(
-            uploads, bucket, feedback_callback);
-        file_uploader_msgs::UploadFilesResult result;
-        result.result_code = static_cast<int>(outcome.GetError().GetErrorType());
-        for (auto const& upload : completed_uploads) {
-            result.files_uploaded.push_back(upload.object_key);
-        }
-        if (actionlib_msgs::GoalStatus::PREEMPTING == goal_handle.getGoalStatus().status) {
-            // Goal cancel has been requested
-            goal_handle.setCanceled(result, "");
-            return;
-        }
-        if (!outcome.IsSuccess()) {
-            std::stringstream ss;
-            ss << "Goal was aborted due to error uploading files. Error Message: " << outcome.GetError().GetMessage();
-            goal_handle.setAborted(result, ss.str());
-        } else {
-            goal_handle.setSucceeded(result, "");
-        }
+  static void UploadToS3(S3UploadManager& upload_manager, const std::string& bucket, T& goal_handle)
+  {
+    if (!upload_manager.IsAvailable()) {
+      goal_handle.setRejected();
+      return;
     }
+    goal_handle.setAccepted();
+    auto goal = goal_handle.getGoal();
+    std::vector<UploadDescription> uploads(goal->files.size());
+    for (size_t i=0; i<goal->files.size(); i++) {
+      uploads.at(i) = {
+        goal->files[i],
+        GenerateObjectKey(goal->files[i], goal->upload_location)
+      };
+    }
+    std::vector<UploadDescription> completed_uploads;
+  
+    auto feedback_callback = [&](const std::vector<UploadDescription>& uploaded_files) {
+      completed_uploads = uploaded_files;
+      file_uploader_msgs::UploadFilesFeedback feedback;
+      feedback.num_remaining = uploads.size() - uploaded_files.size();
+      feedback.num_uploaded = uploaded_files.size();
+      goal_handle.publishFeedback(feedback);
+    };
+  
+    auto outcome = upload_manager.UploadFiles(
+      uploads, bucket, feedback_callback);
+    file_uploader_msgs::UploadFilesResult result;
+    result.result_code = static_cast<int>(outcome.GetError().GetErrorType());
+    for (auto const& upload : completed_uploads) {
+      result.files_uploaded.push_back(upload.object_key);
+    }
+    if (actionlib_msgs::GoalStatus::PREEMPTING == goal_handle.getGoalStatus().status) {
+      // Goal cancel has been requested
+      goal_handle.setCanceled(result, "");
+      return;
+    }
+    if (!outcome.IsSuccess()) {
+      std::stringstream ss;
+      ss << "Goal was aborted due to error uploading files. Error Message: " << outcome.GetError().GetMessage();
+      goal_handle.setAborted(result, ss.str());
+    } else {
+      goal_handle.setSucceeded(result, "");
+    }
+  }
 
-    static void CancelUploadToS3(S3UploadManager& upload_manager)
-    {
-        AWS_LOG_INFO(__func__, "Cancelling Goal");
-        upload_manager.CancelUpload();
-    }
+  static void CancelUploadToS3(S3UploadManager& upload_manager)
+  {
+    AWS_LOG_INFO(__func__, "Cancelling Goal");
+    upload_manager.CancelUpload();
+  }
 };
 
 }  // namespace S3

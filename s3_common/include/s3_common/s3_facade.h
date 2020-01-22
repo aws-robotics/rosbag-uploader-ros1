@@ -25,31 +25,31 @@ namespace S3
 class S3Facade
 {
 public:
-    // Creates an S3Client with default ClientConfig
-    S3Facade();
-    S3Facade(const S3Facade & other) = delete;
-    // Provide the ClientConfiguration used to create the S3Client
-    explicit S3Facade(const Aws::Client::ClientConfiguration& config);
-    explicit S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
-    virtual ~S3Facade() = default;
+  // Creates an S3Client with default ClientConfig
+  S3Facade();
+  S3Facade(const S3Facade & other) = delete;
+  // Provide the ClientConfiguration used to create the S3Client
+  explicit S3Facade(const Aws::Client::ClientConfiguration& config);
+  explicit S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
+  virtual ~S3Facade() = default;
 
-    S3Facade & operator=(const S3Facade & other) = delete;
+  S3Facade & operator=(const S3Facade & other) = delete;
 
-    /**
-    * @brief Call s3 PutObject api to upload file to s3
-    *
-    * Synchronous call to S3. Uploads file at file_path to s3.
-    *
-    * @param file_path path to the file to upload
-    * @param bucket the s3 bucket for upload
-    * @param key object key for upload
-    * @return S3 PutObjectOutcome describing result of upload,
-    */
-    virtual Model::PutObjectOutcome PutObject(const std::string& file_path, const std::string& bucket, const std::string& key);
+  /**
+  * @brief Call s3 PutObject api to upload file to s3
+  *
+  * Synchronous call to S3. Uploads file at file_path to s3.
+  *
+  * @param file_path path to the file to upload
+  * @param bucket the s3 bucket for upload
+  * @param key object key for upload
+  * @return S3 PutObjectOutcome describing result of upload,
+  */
+  virtual Model::PutObjectOutcome PutObject(const std::string& file_path, const std::string& bucket, const std::string& key);
 
 private:
-    Aws::Client::ClientConfiguration config_;
-    std::unique_ptr<Aws::S3::S3Client> s3_client_;
+  Aws::Client::ClientConfiguration config_;
+  std::unique_ptr<Aws::S3::S3Client> s3_client_;
 };
 
 }  // namespace S3
