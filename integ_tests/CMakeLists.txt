@@ -10,7 +10,10 @@ catkin_package(
 ## Install ##
 #############
 install(PROGRAMS
-        tests/test_rosbag_uploader_ros1.py
+        tests/file_helpers.py
+        tests/s3_file_uploader_test_base.py
+        tests/test_s3_file_uploader_general.py
+        tests/test_s3_file_uploader_wrong_region.py
         tests/s3_client.py
         scripts/setup_test_bucket.sh
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

@@ -5,5 +5,5 @@
 
     <param name="/s3_file_uploader/s3_bucket" command="$(find rosbag_uploader_ros1_integration_tests)/setup_test_bucket.sh"/>
 
-    <test test-name="TestS3FileUploader" pkg="rosbag_uploader_ros1_integration_tests" type="test_rosbag_uploader_ros1.py" />
+    <test test-name="TestS3FileUploader" pkg="rosbag_uploader_ros1_integration_tests" type="test_s3_file_uploader_general.py" />
 </launch>

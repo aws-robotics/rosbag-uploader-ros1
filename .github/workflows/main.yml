@@ -49,7 +49,9 @@ jobs:
       uses: ./.github/actions/ros1-integ-test/
       with:
         integ-test-package-name: 'rosbag_uploader_ros1_integration_tests'
-        integ-test-launch-file-name: 'test_rosbag_uploader_ros1.test'
+        integ-test-launch-files: | 
+          test_s3_file_uploader_general.test
+          test_s3_file_uploader_wrong_region.test
         ros-distro: ${{ matrix.distro }}
     - name: Log Integration Test Failure
       uses: ./.github/actions/cw-build-status/
