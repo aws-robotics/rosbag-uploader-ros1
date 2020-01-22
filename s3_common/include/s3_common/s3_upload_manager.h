@@ -18,7 +18,8 @@
 #include <string>
 #include <boost/function.hpp>
 
-#include <s3_common/s3_common_error_codes.h>
+#include <aws/s3/S3Client.h>
+
 #include <s3_common/s3_facade.h>
 
 namespace Aws
@@ -28,58 +29,57 @@ namespace S3
 
 enum S3UploadManagerState
 {
-    // The upload manager isn't uploading any files
-    AVAILABLE = 0,
-    // The upload manager is uploading files
-    UPLOADING,
-    // The upload manager is canceling a request to upload files
-    CANCELLING
+  // The upload manager isn't uploading any files
+  AVAILABLE = 0,
+  // The upload manager is uploading files
+  UPLOADING,
+  // The upload manager is canceling a request to upload files
+  CANCELLING
 };
 
 struct UploadDescription
 {
-    std::string file_path;
-    std::string object_key;
-    bool operator==(const UploadDescription& rhs) const
-    {
-        return file_path == rhs.file_path && object_key == rhs.object_key;
-    }
+  std::string file_path;
+  std::string object_key;
+  bool operator==(const UploadDescription& rhs) const
+  {
+    return file_path == rhs.file_path && object_key == rhs.object_key;
+  }
 };
 
 // Manages uploading a list of files to Amazon S3
 class S3UploadManager
 {
 public:
-    // Uses default constructor for S3Facade
-    S3UploadManager();
-    // Use the given ClientConfiguration for constructing an S3Facade
-    explicit S3UploadManager(const Aws::Client::ClientConfiguration &config);
-    explicit S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
-    virtual ~S3UploadManager() = default;
+  // Uses default constructor for S3Facade
+  S3UploadManager();
+  // Use the given ClientConfiguration for constructing an S3Facade
+  explicit S3UploadManager(const Aws::Client::ClientConfiguration &config);
+  explicit S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
+  virtual ~S3UploadManager() = default;
 
-    /* Cancel the current upload
-     * @return true if the cancel was successful, false if the no upload was in progress
-     */
-    virtual void CancelUpload();
+  /* Cancel the current upload
+   */
+  virtual void CancelUpload();
 
-    /* Upload a list of files to S3
-     * @param upload_descriptions a vector of files to upload to S3
-     * @param bucket the name of the s3 bucket to target. Must be in the same region as the client config
-     * @param feedback_callback called with the list of UploadDescriptions that have been finished
-     * @return An Error code describing the result of the upload.
-     */ 
-    virtual S3ErrorCode UploadFiles(
-        const std::vector<UploadDescription> & upload_descriptions,
-        const std::string & bucket,
-        const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
-    virtual bool IsAvailable() const;
+  /* Upload a list of files to S3
+   * @param upload_descriptions a vector of files to upload to S3
+   * @param bucket the name of the s3 bucket to target. Must be in the same region as the client config
+   * @param feedback_callback called with the list of UploadDescriptions that have been finished
+   * @return An PutObjectOutcome
+   */ 
+  virtual Model::PutObjectOutcome UploadFiles(
+    const std::vector<UploadDescription> & upload_descriptions,
+    const std::string & bucket,
+    const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
+  virtual bool IsAvailable() const;
 private:
-    // The current state of the upload manager
-    S3UploadManagerState manager_status_;
-    // Guards manager_status_
-    mutable std::recursive_mutex mutex_;
-    // Facade for interaction with S3 client
-    std::unique_ptr<S3Facade> s3_facade_;
+  // The current state of the upload manager
+  S3UploadManagerState manager_status_;
+  // Guards manager_status_
+  mutable std::recursive_mutex mutex_;
+  // Facade for interaction with S3 client
+  std::unique_ptr<S3Facade> s3_facade_;
 };
 
 

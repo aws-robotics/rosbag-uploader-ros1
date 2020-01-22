@@ -44,53 +44,53 @@ namespace S3
 
 
 S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) :
-    node_handle_("~"),
-    action_server_(node_handle_, "UploadFiles", false)
+  node_handle_("~"),
+  action_server_(node_handle_, "UploadFiles", false)
 {
-    parameter_reader_ = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
+  parameter_reader_ = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
 
-    if (upload_manager) {
-        upload_manager_ = move(upload_manager);
-    } else {
-        Aws::Client::ClientConfigurationProvider configuration_provider(parameter_reader_);
-        Aws::Client::ClientConfiguration aws_sdk_config = configuration_provider.GetClientConfiguration();
-        upload_manager_ = std::make_unique<S3UploadManager>(aws_sdk_config);
+  if (upload_manager) {
+    upload_manager_ = move(upload_manager);
+  } else {
+    Aws::Client::ClientConfigurationProvider configuration_provider(parameter_reader_);
+    Aws::Client::ClientConfiguration aws_sdk_config = configuration_provider.GetClientConfiguration();
+    upload_manager_ = std::make_unique<S3UploadManager>(aws_sdk_config);
+  }
+  
+  action_server_.registerGoalCallback(
+    [this](UploadFilesActionServer::GoalHandle goal_handle) {
+      S3FileUploaderActionServerHandler<UploadFilesActionServer::GoalHandle>::UploadToS3(*upload_manager_, bucket_, goal_handle);
     }
-    
-    action_server_.registerGoalCallback(
-        [this](UploadFilesActionServer::GoalHandle goal_handle) {
-            S3FileUploaderActionServerHandler<UploadFilesActionServer::GoalHandle>::UploadToS3(*upload_manager_, bucket_, goal_handle);
-        }
-    );
-    
-    action_server_.registerCancelCallback(
-        [this](UploadFilesActionServer::GoalHandle goal_handle) {
-            S3FileUploaderActionServerHandler<UploadFilesActionServer::GoalHandle>::CancelUploadToS3(*upload_manager_, goal_handle);
-        }
-    );
-    
-    action_server_.start();
+  );
+  
+  action_server_.registerCancelCallback(
+    [this](UploadFilesActionServer::GoalHandle /*goal_handle*/) {
+      S3FileUploaderActionServerHandler<UploadFilesActionServer::GoalHandle>::CancelUploadToS3(*upload_manager_);
+    }
+  );
+  
+  action_server_.start();
 
 }
 
 void S3FileUploader::Spin() {
-    uint32_t spinner_thread_count = kDefaultNumberOfSpinnerThreads;
-    int spinner_thread_count_input;
-    if (Aws::AwsError::AWS_ERR_OK ==
-        parameter_reader_->ReadParam(Aws::Client::ParameterPath(kSpinnerThreadCountOverrideParameter),
-                                     spinner_thread_count_input)) {
-        spinner_thread_count = static_cast<uint32_t>(spinner_thread_count_input);
-    }
+  uint32_t spinner_thread_count = kDefaultNumberOfSpinnerThreads;
+  int spinner_thread_count_input;
+  if (Aws::AwsError::AWS_ERR_OK ==
+    parameter_reader_->ReadParam(Aws::Client::ParameterPath(kSpinnerThreadCountOverrideParameter),
+                   spinner_thread_count_input)) {
+    spinner_thread_count = static_cast<uint32_t>(spinner_thread_count_input);
+  }
 
-    if (Aws::AwsError::AWS_ERR_OK !=
-        parameter_reader_->ReadParam(Aws::Client::ParameterPath(kBucketNameParameter), bucket_)) {
-        AWS_LOG_ERROR(__func__, "Failed to load s3 bucket name, aborting. Check the configuration file for parameter s3_bucket");
-        return;
-    }
-    AWS_LOG_INFO(__func__, "Starting S3FileUploader spinner with bucket %s and thread count %d\n", bucket_.c_str(), spinner_thread_count);
+  if (Aws::AwsError::AWS_ERR_OK !=
+    parameter_reader_->ReadParam(Aws::Client::ParameterPath(kBucketNameParameter), bucket_)) {
+    AWS_LOG_ERROR(__func__, "Failed to load s3 bucket name, aborting. Check the configuration file for parameter s3_bucket");
+    return;
+  }
+  AWS_LOG_INFO(__func__, "Starting S3FileUploader spinner with bucket %s and thread count %d\n", bucket_.c_str(), spinner_thread_count);
 
-    ros::MultiThreadedSpinner executor(spinner_thread_count);
-    executor.spin();
+  ros::MultiThreadedSpinner executor(spinner_thread_count);
+  executor.spin();
 }
 
 }  // namespace S3
