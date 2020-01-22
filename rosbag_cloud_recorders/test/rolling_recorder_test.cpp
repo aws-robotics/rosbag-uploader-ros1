@@ -83,11 +83,7 @@ public:
   {
     // Delete all files in the write directory to clean up
     boost::filesystem::path path(write_directory);
-    for (boost::filesystem::directory_iterator itr(path);
-       itr != boost::filesystem::directory_iterator(); ++itr) {
-      auto path = itr->path();
-      unlink(path.string().c_str());
-    }
+    boost::filesystem::remove_all(path);
   }
 
   void GivenRollingRecorder()
@@ -134,28 +130,26 @@ public:
     return rosbags;
   }
 
-  bool FilesToDeleteContainsAllOf(const std::vector<std::string>& bags)
+  bool AllFilesInFilesToDeleteHaveCountComparison(const std::vector<std::string>& bags, boost::function<bool(int)> comparator)
   {
     auto files_to_delete = rolling_recorder_->GetRosBagsToDelete();
     std::unordered_set<std::string> files_set(files_to_delete.begin(), files_to_delete.end());
     for (const auto& bag: bags) {
-      if (files_set.count(bag) == 0) {
+      if (!comparator(files_set.count(bag))) {
         return false;
       }
     }
     return true;
   }
 
+  bool FilesToDeleteContainsAllOf(const std::vector<std::string>& bags)
+  {
+    return AllFilesInFilesToDeleteHaveCountComparison(bags, [](int count) -> bool {return count != 0;});
+  }
+
   bool FilesToDeleteContainsNoneOf(const std::vector<std::string>& bags)
   {
-    auto files_to_delete = rolling_recorder_->GetRosBagsToDelete();
-    std::unordered_set<std::string> files_set(files_to_delete.begin(), files_to_delete.end());
-    for (const auto& bag: bags) {
-      if (files_set.count(bag) != 0) {
-        return false;
-      }
-    }
-    return true;
+    return AllFilesInFilesToDeleteHaveCountComparison(bags, [](int count) -> bool {return count == 0;});
   }
 };
 

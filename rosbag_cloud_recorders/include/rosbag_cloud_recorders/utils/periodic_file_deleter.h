@@ -34,7 +34,7 @@ class PeriodicFileDeleter
 public:
   explicit PeriodicFileDeleter(
     boost::function<std::vector<std::string>()> deletion_list_callback,
-    const int sleep_period_s=10);
+    const int interval_period_s=10);
   ~PeriodicFileDeleter();
   // Delete copy and move constructors
   PeriodicFileDeleter(PeriodicFileDeleter const&) = delete;
@@ -51,7 +51,7 @@ private:
   // Callback function to get a list of files for deletion
   boost::function<std::vector<std::string>()> deletion_list_callback_;
   // How often the deleter should check for new files to delete
-  const int sleep_period_s_;
+  const int interval_period_s_;
   // Protects is_active_
   mutable std::mutex mutex_;
   // Runs the deletion loop

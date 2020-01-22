@@ -66,8 +66,10 @@ TEST(GetRosBagStartTimeTest, SucceedsOnProperlyFormattedInputs)
 
 TEST(GetRosBagStartTimeTest, ReturnsZeroOnInvalidInput)
 {
+    // Input is invalid date is not proper format
+    EXPECT_TRUE(GetRosBagStartTime("dir/dir/2020-01-14-17-13-14/1.bag").isZero());
     // Input is invalid because improperly formatted
     EXPECT_TRUE(GetRosBagStartTime("extra-2020-01-14-17-13-14_1.bag").isZero());
-    // Input is invalid because the date is invalid
+    // Input is invalid because the date is correctly formatted but is too far in the future
     EXPECT_TRUE(GetRosBagStartTime("3020-01-14-17-13-14_1.bag").isZero());
 }

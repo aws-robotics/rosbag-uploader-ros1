@@ -54,9 +54,6 @@ public:
   std::vector<std::string> GetRosBagsToDelete() const;
 
 private:
-  void GoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
-  void CancelGoalCallBack(RollingRecorderActionServer::GoalHandle goal_handle);
-
   void StartOldRosBagsPeriodicRemoval();
   file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
   RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
