@@ -31,7 +31,7 @@ RosbagRecorder::~RosbagRecorder()
 {
 }
 
-void RosbagRecorder::Run()
+void RosbagRecorder::Run(std::function<void()> callback)
 {
   if (IsActive()) {
     AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
@@ -39,9 +39,10 @@ void RosbagRecorder::Run()
   }
   AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
   running_.store(true);
-  std::thread([this] {
+  std::thread([this, callback] {
     this->rosbag_recorder_.run();
     this->running_.store(false);
+    callback();
   });
 }
 

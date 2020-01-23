@@ -15,6 +15,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 
 #include <rosbag/recorder.h>
 
@@ -31,7 +32,7 @@ public:
   explicit RosbagRecorder(rosbag::RecorderOptions const& options);
   ~RosbagRecorder();
 
-  virtual void Run();
+  virtual void Run(std::function<void()> callback);
   virtual bool IsActive() const;
 private:
   rosbag::Recorder rosbag_recorder_;

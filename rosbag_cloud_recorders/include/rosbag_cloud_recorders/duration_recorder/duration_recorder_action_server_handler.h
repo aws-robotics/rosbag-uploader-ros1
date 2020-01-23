@@ -37,7 +37,7 @@ public:
       return;
     }
     goal_handle.setAccepted();
-    rosbag_recorder.Run();
+    rosbag_recorder.Run([&] {goal_handle.setRejected();});
   }
 
   static void CancelDurationRecorder(T& goal_handle)
