@@ -66,6 +66,7 @@ add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     src/rolling_recorder/rolling_recorder.cpp
     src/utils/file_utils.cpp
     src/utils/periodic_file_deleter.cpp
+    src/utils/rosbag_recorder.cpp
 )
 
 target_link_libraries(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}

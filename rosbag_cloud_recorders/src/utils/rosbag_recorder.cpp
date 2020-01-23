@@ -12,39 +12,44 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#pragma once
-
+#include <future>
 #include <thread>
+#include <chrono>
 
-#include <actionlib/server/action_server.h>
-#include <recorder_msgs/DurationRecorderAction.h>
+#include <aws/core/utils/logging/LogMacros.h>
 
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
-namespace Aws{
-namespace Rosbag{
-
-using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
-
-template<typename T>
-class DurationRecorderActionServerHandler
+namespace Aws
 {
-public:
-  static void DurationRecorderStart(Utils::RosbagRecorder& rosbag_recorder, T& goal_handle)
-  {
-    if (rosbag_recorder.IsActive()) {
-      goal_handle.setRejected();
-      return;
-    }
-    goal_handle.setAccepted();
-    rosbag_recorder.Run();
-  }
+namespace Rosbag
+{
+namespace Utils
+{
 
-  static void CancelDurationRecorder(T& goal_handle)
-  {
-    goal_handle.setCanceled();
-  }
-};
+RosbagRecorder::~RosbagRecorder()
+{
+}
 
+void RosbagRecorder::Run()
+{
+  if (IsActive()) {
+    AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
+    return;
+  }
+  AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
+  running_.store(true);
+  std::thread([this] {
+    this->rosbag_recorder_.run();
+    this->running_.store(false);
+  });
+}
+
+bool RosbagRecorder::IsActive() const
+{
+  return running_.load();
+}
+
+}  // namespace Utils
 }  // namespace Rosbag
 }  // namespace Aws

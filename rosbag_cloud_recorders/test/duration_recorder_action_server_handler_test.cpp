@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
 
+#include<rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
 using namespace Aws::Rosbag;
 
@@ -31,6 +32,7 @@ public:
   MockGoalHandle(const MockGoalHandle& copy) {
     (void) copy;
   };
+  MOCK_METHOD0(setAccepted, void());
   MOCK_METHOD0(setRejected, void());
   MOCK_METHOD0(setCanceled, void());
 };
@@ -39,6 +41,7 @@ class DurationRecorderActionServerHandlerTests: public ::testing::Test
 {
 protected:
   std::shared_ptr<MockGoalHandle> goal_handle;
+  std::unique_ptr<Utils::RosbagRecorder> rosbag_recorder;
 public:
   DurationRecorderActionServerHandlerTests():
     goal_handle(std::make_shared<MockGoalHandle>())
@@ -57,7 +60,7 @@ public:
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
 {
   assertGoalIsRejected();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*goal_handle);
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestCancelDurationRecorder)
