@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <ros/ros.h>
+
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
 namespace Aws
@@ -25,15 +27,23 @@ namespace Rosbag
 namespace Utils
 {
 
-  /**
-  * @brief delete a file
-  *
-  * Delete file at file_path.
-  *
-  * @param file_path path to the file to be deleted
-  * @return error code, SUCCESS if the file is sucessfully deleted
-  */
+/**
+* @brief delete a file
+*
+* Delete file at file_path.
+*
+* @param file_path path to the file to be deleted
+* @return error code, SUCCESS if the file is sucessfully deleted
+*/
 Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path);
+
+/**
+* @brief Get the time a rosbag started
+*
+* @param file_path path to rosbag file
+* @return the time the file was started
+*/
+ros::Time GetRosBagStartTime(const std::string& file_path);
 
 }  // namespace Utils
 }  // namespace Rosbag

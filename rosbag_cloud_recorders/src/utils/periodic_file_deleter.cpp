@@ -37,10 +37,10 @@ namespace Utils
 
 PeriodicFileDeleter::PeriodicFileDeleter(
   boost::function<std::vector<std::string> ()> deletion_list_callback,
-  const int sleep_period_ms)
+  const int interval_period_s)
 : is_active_(false),
 deletion_list_callback_(std::move(deletion_list_callback)),
-sleep_period_ms_(sleep_period_ms)
+interval_period_s_(interval_period_s)
 {}
 
 PeriodicFileDeleter::~PeriodicFileDeleter()
@@ -88,7 +88,7 @@ void PeriodicFileDeleter::DeleteFiles()
         AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file " << file << ", skipping.");
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_period_ms_));
+    std::this_thread::sleep_for(std::chrono::seconds(interval_period_s_));
   }
 }
 
