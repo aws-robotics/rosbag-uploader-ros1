@@ -45,8 +45,8 @@ RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time,
   write_directory_(std::move(write_directory)),
   periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, bag_rollover_time.toSec())
 {
-  action_server_.registerGoalCallback([](RollingRecorderActionServer::GoalHandle goal_handle) {
-    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::RollingRecorderRosbagUpload(goal_handle);
+  action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
+    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::RollingRecorderRosbagUpload(goal_handle, write_directory_, bag_rollover_time_);
   });
   action_server_.registerCancelCallback([](RollingRecorderActionServer::GoalHandle goal_handle) {
     RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::CancelRollingRecorderRosbagUpload(goal_handle);
@@ -63,7 +63,7 @@ std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
     auto path = itr->path().string();
     // Need to add check for current goal once that's implemented
     if (ros::Time::now() - Utils::GetRosBagStartTime(path) > max_duration_) {
-      AWS_LOGSTREAM_INFO(__func__, "Marking file for deletion: "<<path);
+      AWS_LOGSTREAM_INFO(__func__, "Marking file for deletion: " << path);
       delete_files.emplace_back(path);
     }
   }

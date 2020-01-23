@@ -18,6 +18,7 @@
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
 #include <aws/core/utils/logging/LogMacros.h>
 #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
+#include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -27,7 +28,7 @@ int main(int argc, char* argv[])
   // TODO(abbyxu): will remove in subsequent PRs
   ros::Duration bag_rollover_time(10);
   ros::Duration max_record_time(30);
-  std::string write_dir("~/.ros/rosbag_uploader");
+  std::string write_dir(std::string(std::getenv("HOME")) + "/.ros/");
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
 
   Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_dir);
