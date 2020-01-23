@@ -33,9 +33,8 @@ import rostopic
 
 PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'rolling_recorder'
-ACTION = ''
-TEST_NODE_NAME = 'test_rolling_recorder_action_client'
-AWS_DEFAULT_REGION = 'us-west-2'
+TEST_NODE_NAME = 'test_rolling_recorder_client'
+ROLLING_RECORDER_NODE_START_TIMEOUT = 5
 
 
 class TestRollingRecorder(unittest.TestCase):
@@ -48,55 +47,61 @@ class TestRollingRecorder(unittest.TestCase):
         pass
 
     def setUp(self):
-        self.rrnode_start_timeout = 10
-        pass
+        self.bag_rollover_time = rospy.get_param("~bag_rollover_time")
+        self.topics_to_record = rospy.get_param("~topics_to_record")
+        self.rosbag_directory = rospy.get_param("~write_directory")
 
     def tearDown(self):
         pass
 
-    # The rolling recorder should record the topic /rosout by default 
-    # TODO: This will need to be run from another launch file to not set the topics_to_record arg
-    def test_record_default_topics(self):
-        pass
-
     def test_record_custom_topic(self):
-        topics_to_record = rospy.get_param("~topics_to_record")
-        rospy.loginfo("Topics to record: %s" % topics_to_record)
         # Wait for rolling recorder node to start
         self.wait_for_rolling_recorder_nodes()
 
         # Create publishers 
-        test_topic = topics_to_record.split(' ')[0]
-        self.ft_publisher = rospy.Publisher(test_topic, String, queue_size=10)
+        test_topic = self.topics_to_record.split(' ')[0]
+        self.test_publisher = rospy.Publisher(test_topic, String, queue_size=10)
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
-        # Emit some data for 10 seconds
+        # Find start time of active file
+        active_rosbag = self.get_latest_bag_by_regex("*.bag.active")
+        rospy.loginfo("Active rosbag: %s" % active_rosbag)
+        active_rosbag_start_time = os.path.getctime(active_rosbag)
+
+        # Calculate time active bag will roll over
+        bag_finish_time = active_rosbag_start_time + self.bag_rollover_time
+        bag_finish_time_remaining = bag_finish_time - time.time()
+        rospy.loginfo("Bag finish time remaining: %f" % bag_finish_time_remaining)
+
+        # Emit some data to the test topic
         total_test_messages = 10
+        sleep_between_message = (bag_finish_time_remaining * 0.5)  / total_test_messages
+        rospy.loginfo("Sleep between messages: %f" % sleep_between_message)
         for x in range(total_test_messages):
-            self.ft_publisher.publish("Test message %d" % x)
-            time.sleep(0.1)
+            self.test_publisher.publish("Test message %d" % x)
+            time.sleep(sleep_between_message)
 
-        # Wait for bag to roll-over or finish recording it
-        time.sleep(1.5)
+        # Wait for current bag to finish recording and roll over
+        bag_finish_time_remaining = bag_finish_time - time.time()
+        rospy.loginfo("Bag finish time remaining after publish: %f" % bag_finish_time_remaining)
+        # Add 0.3s as it takes some time for bag rotation to occur
+        time.sleep(bag_finish_time_remaining + 0.3) 
         
-        # Check for rosbag recording on disk
-        rosbag_directory = rospy.get_param("~write_directory")
-        rospy.loginfo("Rosbag directory: %s" % rosbag_directory)
-        rosbag_files = glob.iglob(rosbag_directory + '/*.bag')
-        rosbag_paths = [os.path.join(rosbag_directory, filename) for filename in rosbag_files]
-        rosbags_sorted = sorted(rosbag_paths, key=os.path.getctime, reverse=True)
-        rospy.loginfo("Sorted rosbags: %s " % rosbags_sorted)
-
         # Check that the data is inside the latest rosbag
-        latest_bag = rosbags_sorted[0]
+        latest_bag = self.get_latest_bag_by_regex("*.bag")
         rospy.loginfo("Latest bag: %s " % latest_bag)
         bag = rosbag.Bag(latest_bag)
         total_bag_messages = 0
         for _, msg, _ in bag.read_messages():
-            rospy.loginfo("Msg: %s" % msg)
             total_bag_messages += 1
 
         self.assertEquals(total_bag_messages, total_test_messages)
+
+    def get_latest_bag_by_regex(self, regex_pattern):
+        files = glob.iglob(os.path.join(self.rosbag_directory, regex_pattern))
+        paths = [os.path.join(self.rosbag_directory, filename) for filename in files]
+        paths_sorted = sorted(paths, key=os.path.getctime, reverse=True)
+        return paths_sorted[0]
 
     def wait_for_rolling_recorder_nodes(self):
         required_nodes = set([
@@ -107,7 +112,7 @@ class TestRollingRecorder(unittest.TestCase):
             time.sleep(0.1)
 
     def wait_for_rolling_recorder_node_to_subscribe_to_topic(self):
-        rostopic.wait_for_subscriber(self.ft_publisher, self.rrnode_start_timeout)
+        rostopic.wait_for_subscriber(self.test_publisher, ROLLING_RECORDER_NODE_START_TIMEOUT)
 
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestRollingRecorder, sys.argv)
