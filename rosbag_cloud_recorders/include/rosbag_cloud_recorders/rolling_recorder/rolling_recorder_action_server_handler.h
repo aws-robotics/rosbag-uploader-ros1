@@ -18,7 +18,11 @@
 #include <actionlib/server/action_server.h>
 #include <recorder_msgs/RollingRecorderAction.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder_action_server_handler.h>
-
+#include <boost/filesystem.hpp>
+#include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
+#include <aws/core/utils/logging/LogMacros.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
 
 namespace Aws{
 namespace Rosbag{
@@ -29,15 +33,47 @@ template<typename T>
 class RollingRecorderActionServerHandler
 {
 public:
-    static void RollingRecorderRosbagUpload(T& goal_handle)
-    {
-        goal_handle.setRejected();
+  static void RollingRecorderRosbagUpload(T& goal_handle, const std::string& write_directory, const ros::Duration& bag_rollover_time)
+  {
+    goal_handle.setRejected();
+    //TODO(abbyxu): to add logic to send bags to s3
+    ros::Time time_of_goal_received(ros::Time::now());
+    std::vector<std::string> ros_bags_to_upload = GetRosbagsToUpload(write_directory, bag_rollover_time, time_of_goal_received);
+    //TODO(abbyxu): remove in goalcallback implementation
+    ros_bags_to_upload.emplace_back("Test");
+  }
+
+  static void CancelRollingRecorderRosbagUpload(T& goal_handle)
+  {
+    goal_handle.setCanceled();
+  }
+
+  static std::vector<std::string> GetRosbagsToUpload(const std::string& write_directory, const ros::Duration& bag_rollover_time, ros::Time time_of_goal_received)
+  {
+    std::vector<std::string> ros_bags_to_upload;
+    boost::filesystem::path ros_bag_write_path(write_directory);
+    for (auto i = boost::filesystem::directory_iterator(ros_bag_write_path); i != boost::filesystem::directory_iterator(); i++) {
+      // eliminate directories in a list
+      if (!boost::filesystem::is_directory(i->path())) {
+        if (i->path().extension().string() == ".bag") {
+          ros_bags_to_upload.push_back(write_directory + i->path().filename().string());
+          AWS_LOG_INFO(__func__, "Adding Rosbag named: [%s] to list of bag file to upload.", i->path().filename().string().c_str());
+        }
+        if (i->path().extension().string() == ".active") {
+          bag_rollover_time.sleep();
+          rosbag::Bag ros_bag;
+          ros_bag.open(write_directory + i->path().filename().string());
+
+          rosbag::View view_rosbag(ros_bag);
+          if (time_of_goal_received >= view_rosbag.getBeginTime()) {
+            ros_bags_to_upload.push_back(write_directory + i->path().filename().string());
+          }
+        }
+      }
     }
 
-    static void CancelRollingRecorderRosbagUpload(T& goal_handle)
-    {
-      goal_handle.setCanceled();
-    }
+    return ros_bags_to_upload;
+  }
 };
 
 }  // namespace Rosbag
