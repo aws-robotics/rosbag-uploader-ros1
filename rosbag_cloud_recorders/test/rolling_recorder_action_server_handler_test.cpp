@@ -18,7 +18,9 @@
 #include <recorder_msgs/RollingRecorderGoal.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
+#include <boost/filesystem.hpp>
 #include <ros/ros.h>
+#include <fstream>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder_action_server_handler.h>
 
 using namespace Aws::Rosbag;
@@ -52,10 +54,29 @@ class RollingRecorderActionServerHandlerTests: public ::testing::Test
 protected:
   std::shared_ptr<MockRollingRecorderGoalHandle> goal_handle;
   boost::shared_ptr<recorder_msgs::RollingRecorderGoal> goal;
+  std::string write_directory;
+  ros::Duration bag_rollover_time;
+  boost::filesystem::path path;
 public:
   RollingRecorderActionServerHandlerTests():
     goal_handle(std::make_shared<MockRollingRecorderGoalHandle>()),
-    goal(new recorder_msgs::RollingRecorderGoal()) {}
+    goal(new recorder_msgs::RollingRecorderGoal()),
+    write_directory(std::string(std::getenv("HOME")) + "/.ros/"),
+    bag_rollover_time(ros::Duration(10, 0)),
+    path(write_directory) {}
+
+  void SetUp() override
+  {
+    // Delete all files in the write directory for start testing
+    boost::filesystem::remove_all(path);
+    boost::filesystem::create_directory(path);
+  }
+
+  void TearDown() override
+  {
+    // Delete all files in the write directory for cleaning up
+    boost::filesystem::remove_all(path);
+  }
 
   void assertGoalIsRejected() {
     EXPECT_CALL(*goal_handle, setRejected());
@@ -82,7 +103,7 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderRosbagUpload)
 {
   assertGoalIsRejected();
 
-  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::RollingRecorderRosbagUpload(*goal_handle);
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::RollingRecorderRosbagUpload(*goal_handle, write_directory, bag_rollover_time);
 }
 
 TEST_F(RollingRecorderActionServerHandlerTests, TestCancelRollingRecorderRosbagUpload)
@@ -90,6 +111,21 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestCancelRollingRecorderRosbagU
   assertGoalIsCanceled();
 
   Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::CancelRollingRecorderRosbagUpload(*goal_handle);
+}
+
+TEST_F(RollingRecorderActionServerHandlerTests, TestGetRosbagToUpload)
+{
+  // Create a list of files in the write_directory
+  // TODO(abbyxu): add test for .bag.active file
+  std::vector<std::string> expected_bag_file_names{"test1.bag", "test2.bag", "wrong_file_ext.txt"};
+  for(std::string expected_file_name : expected_bag_file_names)  {
+    std::ofstream new_bag_file(write_directory + expected_file_name);
+  }
+  ros::Time time_of_function_called(ros::Time::now());
+  std::vector<std::string> bag_files_in_write_directory = Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::GetRosbagsToUpload(write_directory, bag_rollover_time, time_of_function_called);
+  for (std::string bag_file_in_write_directory : bag_files_in_write_directory) {
+    EXPECT_EQ(boost::filesystem::extension(bag_file_in_write_directory), ".bag");
+  }
 }
 
 int main(int argc, char ** argv)

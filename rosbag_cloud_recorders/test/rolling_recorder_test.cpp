@@ -91,7 +91,7 @@ public:
   {
     rolling_recorder_ = std::make_shared<RollingRecorder>(bag_rollover_time, max_record_time, write_directory);
   }
-  
+
   std::string GetFileNameForTimeStamp(const ros::Time& time)
   {
     std::stringstream file_name;
