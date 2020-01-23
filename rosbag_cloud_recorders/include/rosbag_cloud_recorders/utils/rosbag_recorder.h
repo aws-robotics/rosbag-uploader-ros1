@@ -14,7 +14,7 @@
  */
 #pragma once
 
-#include <atomic>
+#include <mutex>
 #include <functional>
 
 #include <rosbag/recorder.h>
@@ -32,11 +32,12 @@ public:
   explicit RosbagRecorder(rosbag::RecorderOptions const& options);
   ~RosbagRecorder();
 
-  virtual void Run(std::function<void()> callback);
+  virtual void Run(std::function<void()> pre_record, std::function<void()> post_record);
   virtual bool IsActive() const;
 private:
   rosbag::Recorder rosbag_recorder_;
-  std::atomic<bool> running_;
+  bool is_active_;
+  mutable std::mutex mutex_;
 };
 
 }  // namespace Utils

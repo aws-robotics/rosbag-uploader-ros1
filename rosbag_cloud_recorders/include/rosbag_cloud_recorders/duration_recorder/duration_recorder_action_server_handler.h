@@ -16,6 +16,8 @@
 
 #include <thread>
 
+#include <ros/ros.h>
+
 #include <actionlib/server/action_server.h>
 #include <recorder_msgs/DurationRecorderAction.h>
 
@@ -37,7 +39,23 @@ public:
       return;
     }
     goal_handle.setAccepted();
-    rosbag_recorder.Run([&] {goal_handle.setRejected();});
+    rosbag_recorder.Run(
+      [&]()
+      {
+        recorder_msgs::DurationRecorderFeedback feedback;
+        feedback.started = ros::Time::now();
+        recorder_msgs::RecorderStatus recording_status;
+        recording_status.stage = recorder_msgs::RecorderStatus::RECORDING;
+        feedback.status = recording_status;
+        goal_handle.publishFeedback(feedback);
+      },
+      [&]()
+      {
+        // TODO(prasadra): Implement integration with s3_file _ploader;
+        recorder_msgs::DurationRecorderResult result;
+        goal_handle.setSucceeded(result, "");
+      }
+    );
   }
 
   static void CancelDurationRecorder(T& goal_handle)

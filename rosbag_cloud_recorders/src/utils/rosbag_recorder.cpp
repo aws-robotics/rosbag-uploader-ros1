@@ -31,24 +31,30 @@ RosbagRecorder::~RosbagRecorder()
 {
 }
 
-void RosbagRecorder::Run(std::function<void()> callback)
+void RosbagRecorder::Run(std::function<void()> pre_record, std::function<void()> post_record)
 {
-  if (IsActive()) {
-    AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
-    return;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (is_active_) {
+      AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
+      return;
+    }
+    AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
+    is_active_ = true;
+    std::thread([this, pre_record, post_record]
+      {
+        pre_record();
+        this->rosbag_recorder_.run();
+        this->is_active_ = false;
+        post_record();
+      }
+    );
   }
-  AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
-  running_.store(true);
-  std::thread([this, callback] {
-    this->rosbag_recorder_.run();
-    this->running_.store(false);
-    callback();
-  });
 }
 
 bool RosbagRecorder::IsActive() const
 {
-  return running_.load();
+  return is_active_;
 }
 
 }  // namespace Utils
