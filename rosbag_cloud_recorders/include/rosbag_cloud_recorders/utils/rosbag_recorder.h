@@ -14,8 +14,10 @@
  */
 #pragma once
 
-#include <mutex>
+#include <thread>
 #include <functional>
+
+#include <aws/core/utils/logging/LogMacros.h>
 
 #include <rosbag/recorder.h>
 
@@ -25,19 +27,56 @@ namespace Rosbag
 {
 namespace Utils
 {
-
+/*
+ * Wrapper class around robag::Recorder that allows for executing callback
+ * functions before and after collecting rosbag files for the specified
+ * duration.
+ * 
+ * rosbag::Recorder has non-virtual members that it impractical to extend and
+ * therefore hard to mock. RosbagRecorder is therefore wrapping rosbag::recorder
+ * and is also templatized to allow for injection based mocking.
+ */
+template<typename T>
 class RosbagRecorder
 {
 public:
-  explicit RosbagRecorder(rosbag::Recorder& rosbag_recorder);
-  ~RosbagRecorder();
+  explicit RosbagRecorder(T& rosbag_recorder)
+    :rosbag_recorder_(rosbag_recorder)
+  {
+  };
+  
+  virtual ~RosbagRecorder()
+  {
+    if (runner_thread_.joinable())
+    {
+      runner_thread_.join();
+    }
+  }
 
-  virtual void Run(const std::function<void()> pre_record, const std::function<void()> post_record);
-  virtual bool IsActive() const;
+  virtual void Run(const std::function<void()>& pre_record, const std::function<void()>& post_record)
+  {
+    if (IsActive()) {
+      AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
+      return;
+    }
+    AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
+    runner_thread_ = std::thread([this, pre_record, post_record]
+      {
+        pre_record();
+        this->rosbag_recorder_.run();
+        post_record();
+      }
+    );
+  }
+
+  virtual bool IsActive() const
+  {
+     return runner_thread_.joinable();
+  }
+
 private:
-  rosbag::Recorder& rosbag_recorder_;
-  bool is_active_;
-  mutable std::mutex mutex_;
+  T& rosbag_recorder_;
+  std::thread runner_thread_;
 };
 
 }  // namespace Utils

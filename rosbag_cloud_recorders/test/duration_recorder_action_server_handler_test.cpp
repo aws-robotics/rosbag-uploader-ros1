@@ -41,14 +41,15 @@ MATCHER_P(FeedbackHasStatus, expected_status, "") {
   return expected_status == arg.status.stage;
 }
 
-class MockRosbagRecorder : public Utils::RosbagRecorder
+class MockRosbagRecorder : public Utils::RosbagRecorder<rosbag::Recorder>
 {
 public:
-  MockRosbagRecorder(rosbag::Recorder& rosbag_recorder): Utils::RosbagRecorder(rosbag_recorder) {};
+  MockRosbagRecorder(rosbag::Recorder& rosbag_recorder): Utils::RosbagRecorder<rosbag::Recorder>(rosbag_recorder) {};
   ~MockRosbagRecorder() {};
   
   MOCK_CONST_METHOD0(IsActive, bool());
-  void Run(const std::function<void()> pre_record, const std::function<void()> post_record) {
+  void Run(const std::function<void()>& pre_record, const std::function<void()>& post_record) {
+    std::cout << "Iam invoked \n";
     pre_record();
     post_record();
   }
@@ -60,6 +61,9 @@ public:
   MockGoalHandle() = default;
   MockGoalHandle(const MockGoalHandle& copy) {
     (void) copy;
+  };
+  ~MockGoalHandle()
+  {
   };
   MOCK_METHOD0(setAccepted, void());
   MOCK_METHOD0(setRejected, void());
@@ -112,6 +116,7 @@ public:
   void assertGoalIsSuccess()
   {
     EXPECT_CALL(*goal_handle, setSucceeded(_, _));
+    std::cout<<"reached\n";
   }
   
   void assertPublishFeedback()

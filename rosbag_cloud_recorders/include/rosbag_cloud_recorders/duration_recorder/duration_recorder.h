@@ -42,7 +42,7 @@ public:
 private:
   ros::NodeHandle node_handle_;
   DurationRecorderActionServer action_server_;
-  std::unique_ptr<Utils::RosbagRecorder> rosbag_recorder_;
+  std::unique_ptr<Utils::RosbagRecorder<rosbag::Recorder>> rosbag_recorder_;
 };
 
 }  // namespace Rosbag

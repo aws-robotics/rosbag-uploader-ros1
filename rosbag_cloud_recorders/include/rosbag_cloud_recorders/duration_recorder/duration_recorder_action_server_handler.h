@@ -32,7 +32,7 @@ template<typename T>
 class DurationRecorderActionServerHandler
 {
 public:
-  static void DurationRecorderStart(Utils::RosbagRecorder& rosbag_recorder, T& goal_handle)
+  static void DurationRecorderStart(Utils::RosbagRecorder<rosbag::Recorder>& rosbag_recorder, T& goal_handle)
   {
     if (rosbag_recorder.IsActive()) {
       goal_handle.setRejected();
