@@ -53,20 +53,20 @@ public:
     std::vector<std::string> ros_bags_to_upload;
     boost::filesystem::path ros_bag_write_path(write_directory);
     for (auto i = boost::filesystem::directory_iterator(ros_bag_write_path); i != boost::filesystem::directory_iterator(); i++) {
-      // eliminate directories in a list
-      if (!boost::filesystem::is_directory(i->path())) {
+      if (!boost::filesystem::is_directory(i->path())) {  // eliminate directories in a list
         if (i->path().extension().string() == ".bag") {
           ros_bags_to_upload.push_back(write_directory + i->path().filename().string());
           AWS_LOG_INFO(__func__, "Adding Rosbag named: [%s] to list of bag file to upload.", i->path().filename().string().c_str());
         }
         if (i->path().extension().string() == ".active") {
           bag_rollover_time.sleep();
+          std::string bag_file_name_wo_active_ext = std::string(i->path().filename().string()).erase(i->path().filename().string().size() - 7);
           rosbag::Bag ros_bag;
-          ros_bag.open(write_directory + i->path().filename().string());
+          ros_bag.open(write_directory + bag_file_name_wo_active_ext);
 
           rosbag::View view_rosbag(ros_bag);
           if (time_of_goal_received >= view_rosbag.getBeginTime()) {
-            ros_bags_to_upload.push_back(write_directory + i->path().filename().string());
+            ros_bags_to_upload.push_back(write_directory + bag_file_name_wo_active_ext);
           }
         }
       }

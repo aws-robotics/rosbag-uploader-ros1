@@ -30,6 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
     recorder_msgs
     roscpp
     rosbag
+    std_msgs
     roslint
 )
 
