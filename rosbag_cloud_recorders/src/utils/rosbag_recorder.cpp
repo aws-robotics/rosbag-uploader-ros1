@@ -26,12 +26,16 @@ namespace Rosbag
 {
 namespace Utils
 {
+RosbagRecorder::RosbagRecorder(rosbag::Recorder& rosbag_recorder):
+  rosbag_recorder_(rosbag_recorder)
+{
+}
 
 RosbagRecorder::~RosbagRecorder()
 {
 }
 
-void RosbagRecorder::Run(std::function<void()> pre_record, std::function<void()> post_record)
+void RosbagRecorder::Run(const std::function<void()> pre_record, const std::function<void()> post_record)
 {
   {
     std::lock_guard<std::mutex> lock(mutex_);

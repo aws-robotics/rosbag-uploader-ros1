@@ -23,9 +23,36 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
 
+#include <rosbag/recorder.h>
+
+#include <ros/ros.h>
+
 #include<rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
 using namespace Aws::Rosbag;
+
+using ::testing::Return;
+using ::testing::_;
+using ::testing::Field;
+using ::testing::Property;
+using testing::Eq;
+
+MATCHER_P(FeedbackHasStatus, expected_status, "") {
+  return expected_status == arg.status.stage;
+}
+
+class MockRosbagRecorder : public Utils::RosbagRecorder
+{
+public:
+  MockRosbagRecorder(rosbag::Recorder& rosbag_recorder): Utils::RosbagRecorder(rosbag_recorder) {};
+  ~MockRosbagRecorder() {};
+  
+  MOCK_CONST_METHOD0(IsActive, bool());
+  void Run(const std::function<void()> pre_record, const std::function<void()> post_record) {
+    pre_record();
+    post_record();
+  }
+};
 
 class MockGoalHandle 
 {
@@ -46,24 +73,66 @@ class DurationRecorderActionServerHandlerTests: public ::testing::Test
 {
 protected:
   std::shared_ptr<MockGoalHandle> goal_handle;
-  std::unique_ptr<Utils::RosbagRecorder> rosbag_recorder;
+  std::unique_ptr<MockRosbagRecorder> rosbag_recorder;
 public:
+
   DurationRecorderActionServerHandlerTests():
     goal_handle(std::make_shared<MockGoalHandle>())
   {
+    rosbag::RecorderOptions opts;
+    rosbag::Recorder recorder(opts);
+    rosbag_recorder = std::make_unique<MockRosbagRecorder>(recorder);
   }
 
-  void assertGoalIsRejected() {
+  void givenRecorderActive()
+  {
+    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillOnce(Return(true));
+  }
+
+  void givenRecorderNotActive()
+  {
+    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillOnce(Return(false));
+  }
+
+  void assertGoalIsRejected()
+  {
     EXPECT_CALL(*goal_handle, setRejected());
   }
+  
+  void assertGoalIsAccepted()
+  {
+    EXPECT_CALL(*goal_handle, setAccepted());
+  }
 
-  void assertGoalIsCanceled() {
+  void assertGoalIsCanceled()
+  {
     EXPECT_CALL(*goal_handle, setCanceled());
+  }
+  
+  void assertGoalIsSuccess()
+  {
+    EXPECT_CALL(*goal_handle, setSucceeded(_, _));
+  }
+  
+  void assertPublishFeedback()
+  {
+    recorder_msgs::DurationRecorderFeedback feedback;
+    EXPECT_CALL(*goal_handle, publishFeedback(FeedbackHasStatus(recorder_msgs::RecorderStatus::RECORDING)));
   }
 };
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
 {
+  givenRecorderNotActive();
+  assertGoalIsAccepted();
+  assertPublishFeedback();
+  assertGoalIsSuccess();
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
+}
+
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlreadyActive)
+{
+  givenRecorderActive();
   assertGoalIsRejected();
   DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
 }
@@ -76,6 +145,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestCancelDurationRecorder)
 
 int main(int argc, char ** argv)
 {
+  ros::Time::init();
   ::testing::InitGoogleTest(&argc, argv);
   auto result = RUN_ALL_TESTS();
   return result;

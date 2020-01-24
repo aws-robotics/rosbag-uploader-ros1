@@ -29,13 +29,13 @@ namespace Utils
 class RosbagRecorder
 {
 public:
-  explicit RosbagRecorder(rosbag::RecorderOptions const& options);
+  explicit RosbagRecorder(rosbag::Recorder& rosbag_recorder);
   ~RosbagRecorder();
 
-  virtual void Run(std::function<void()> pre_record, std::function<void()> post_record);
+  virtual void Run(const std::function<void()> pre_record, const std::function<void()> post_record);
   virtual bool IsActive() const;
 private:
-  rosbag::Recorder rosbag_recorder_;
+  rosbag::Recorder& rosbag_recorder_;
   bool is_active_;
   mutable std::mutex mutex_;
 };
