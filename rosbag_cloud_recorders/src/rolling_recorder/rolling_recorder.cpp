@@ -43,10 +43,15 @@ RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time,
   max_duration_(std::move(max_record_time)),
   bag_rollover_time_(std::move(bag_rollover_time)),
   write_directory_(std::move(write_directory)),
-  periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, bag_rollover_time.toSec())
+  periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, bag_rollover_time.toSec()),
+  current_goal_handle_(nullptr)
 {
   action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
-    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::RollingRecorderRosbagUpload(goal_handle, write_directory_, bag_rollover_time_);
+    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::RollingRecorderRosbagUpload(goal_handle,
+                                                                                                             write_directory_,
+                                                                                                             bag_rollover_time_,
+                                                                                                             current_goal_handle_,
+                                                                                                             rosbag_uploader_action_client_);
   });
   action_server_.registerCancelCallback([](RollingRecorderActionServer::GoalHandle goal_handle) {
     RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::CancelRollingRecorderRosbagUpload(goal_handle);

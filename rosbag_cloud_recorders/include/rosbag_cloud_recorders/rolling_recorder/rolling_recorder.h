@@ -55,8 +55,6 @@ public:
 
 private:
   void StartOldRosBagsPeriodicRemoval();
-  file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
-  RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
 
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
@@ -65,6 +63,7 @@ private:
   ros::Duration bag_rollover_time_;
   std::string write_directory_;
   Utils::PeriodicFileDeleter periodic_file_deleter_;
+  RollingRecorderActionServer::GoalHandle * current_goal_handle_;
 };
 
 }  // namespace Rosbag
