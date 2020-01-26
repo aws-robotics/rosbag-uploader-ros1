@@ -44,15 +44,25 @@ MATCHER_P(FeedbackHasStatus, expected_status, "") {
 class MockRosbagRecorder : public Utils::RosbagRecorder<rosbag::Recorder>
 {
 public:
-  MockRosbagRecorder(rosbag::Recorder& rosbag_recorder): Utils::RosbagRecorder<rosbag::Recorder>(rosbag_recorder) {};
+  MockRosbagRecorder(): Utils::RosbagRecorder<rosbag::Recorder>() {};
   ~MockRosbagRecorder() {};
   
   MOCK_CONST_METHOD0(IsActive, bool());
-  void Run(const std::function<void()>& pre_record, const std::function<void()>& post_record) {
-    std::cout << "Iam invoked \n";
+  void Run(
+    rosbag::RecorderOptions const& recorder_options,
+    const std::function<void()>& pre_record,
+    const std::function<void()>& post_record
+  ) {
+    options_ = std::make_unique<rosbag::RecorderOptions>(recorder_options);
     pre_record();
     post_record();
   }
+  
+  rosbag::RecorderOptions getOptions() {
+    return *options_;
+  }
+private:
+  std::unique_ptr<rosbag::RecorderOptions> options_;
 };
 
 class MockGoalHandle 
@@ -68,6 +78,7 @@ public:
   MOCK_METHOD0(setAccepted, void());
   MOCK_METHOD0(setRejected, void());
   MOCK_METHOD0(setCanceled, void());
+  MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<recorder_msgs::DurationRecorderGoal>());
   MOCK_METHOD2(setSucceeded, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
   
   MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::DurationRecorderFeedback &));
@@ -78,14 +89,25 @@ class DurationRecorderActionServerHandlerTests: public ::testing::Test
 protected:
   std::shared_ptr<MockGoalHandle> goal_handle;
   std::unique_ptr<MockRosbagRecorder> rosbag_recorder;
+  boost::shared_ptr<recorder_msgs::DurationRecorderGoal> goal;
+  ros::Duration duration;
+  std::vector<std::string> topics_to_record;
 public:
 
   DurationRecorderActionServerHandlerTests():
-    goal_handle(std::make_shared<MockGoalHandle>())
+    goal_handle(std::make_shared<MockGoalHandle>()),
+    goal(new recorder_msgs::DurationRecorderGoal()),
+    duration(ros::Duration(5.0)),
+    topics_to_record({"/topic1", "/topic2"})
   {
-    rosbag::RecorderOptions opts;
-    rosbag::Recorder recorder(opts);
-    rosbag_recorder = std::make_unique<MockRosbagRecorder>(recorder);
+    rosbag_recorder = std::make_unique<MockRosbagRecorder>();
+  }
+  
+  void givenDurationRecorderGoal()
+  {
+    goal->duration = duration;
+    goal->topics_to_record = topics_to_record;
+    EXPECT_CALL(*goal_handle, getGoal()).Times(1).WillOnce(Return(goal));
   }
 
   void givenRecorderActive()
@@ -116,7 +138,6 @@ public:
   void assertGoalIsSuccess()
   {
     EXPECT_CALL(*goal_handle, setSucceeded(_, _));
-    std::cout<<"reached\n";
   }
   
   void assertPublishFeedback()
@@ -124,11 +145,13 @@ public:
     recorder_msgs::DurationRecorderFeedback feedback;
     EXPECT_CALL(*goal_handle, publishFeedback(FeedbackHasStatus(recorder_msgs::RecorderStatus::RECORDING)));
   }
+
 };
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
 {
   givenRecorderNotActive();
+  givenDurationRecorderGoal();
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsSuccess();

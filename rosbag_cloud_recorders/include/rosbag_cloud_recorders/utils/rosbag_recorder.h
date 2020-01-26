@@ -40,8 +40,7 @@ template<typename T>
 class RosbagRecorder
 {
 public:
-  explicit RosbagRecorder(T& rosbag_recorder)
-    :rosbag_recorder_(rosbag_recorder)
+  explicit RosbagRecorder()
   {
   };
   
@@ -53,17 +52,22 @@ public:
     }
   }
 
-  virtual void Run(const std::function<void()>& pre_record, const std::function<void()>& post_record)
+  virtual void Run(
+    rosbag::RecorderOptions const& recorder_options,
+    const std::function<void()>& pre_record,
+    const std::function<void()>& post_record
+  )
   {
     if (IsActive()) {
       AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
       return;
     }
     AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
-    runner_thread_ = std::thread([this, pre_record, post_record]
+    runner_thread_ = std::thread([recorder_options, pre_record, post_record]
       {
         pre_record();
-        this->rosbag_recorder_.run();
+        T rosbag_recorder(recorder_options);
+        rosbag_recorder.run();
         post_record();
       }
     );
@@ -75,7 +79,6 @@ public:
   }
 
 private:
-  T& rosbag_recorder_;
   std::thread runner_thread_;
 };
 

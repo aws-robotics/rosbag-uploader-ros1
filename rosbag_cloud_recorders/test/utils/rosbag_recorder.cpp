@@ -20,7 +20,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <future>
-#include <atomic>
+
+#include <rosbag/recorder.h>
 
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
@@ -29,30 +30,22 @@ using namespace Aws::Rosbag::Utils;
 class MockRecorder
 {
 public:
-  MockRecorder() {
-    invocation_count_.store(0);
+  MockRecorder(rosbag::RecorderOptions const& options) {
+    (void) options;
   };
   ~MockRecorder() {};
 
-  int get_invocation_count() {
-    return invocation_count_.load();
-  }
-
   void run()
   {
-    invocation_count_++;
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(100ms);
   }
-protected: 
-  std::atomic<int> invocation_count_;
 };
 
 TEST(TestRosbagRecorder, TestRosbagRecorderRun)
 {
- 
-  MockRecorder recorder;
-  RosbagRecorder<MockRecorder> rosbag_recorder(recorder);
+  rosbag::RecorderOptions options;
+  RosbagRecorder<MockRecorder> rosbag_recorder;
  
   ASSERT_FALSE(rosbag_recorder.IsActive());
   
@@ -62,6 +55,7 @@ TEST(TestRosbagRecorder, TestRosbagRecorderRun)
   std::future<bool> pre_invoked_f = pre_invoked.get_future();
   std::future<bool> post_invoked_f = post_invoked.get_future();
   rosbag_recorder.Run(
+    options,
     [&]
     {
       std::promise<bool> invoked = std::move(pre_invoked);
@@ -80,8 +74,8 @@ TEST(TestRosbagRecorder, TestRosbagRecorderRun)
 
 TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
 {
-  MockRecorder recorder;
-  RosbagRecorder<MockRecorder> rosbag_recorder(recorder);
+  RosbagRecorder<MockRecorder> rosbag_recorder;
+  rosbag::RecorderOptions options;
   
   std::promise<void> barrier;
   std::future<void> barrier_future = barrier.get_future();
@@ -98,6 +92,7 @@ TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
   ASSERT_FALSE(rosbag_recorder.IsActive());
   
   rosbag_recorder.Run(
+    options,
     []
     {
     },
@@ -111,6 +106,7 @@ TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
   ASSERT_TRUE(rosbag_recorder.IsActive());
  
   rosbag_recorder.Run(
+    options,
     []
     {
     },
@@ -128,5 +124,4 @@ TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
     std::chrono::seconds(1)
   );
   ASSERT_NE(std::future_status::ready, status);
-  ASSERT_EQ(1, recorder.get_invocation_count());
 }

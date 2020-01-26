@@ -39,7 +39,14 @@ public:
       return;
     }
     goal_handle.setAccepted();
+    auto goal = goal_handle.getGoal();
+    rosbag::RecorderOptions options;
+    // TODO(prasadra): handle invalid input.
+    options.record_all = false;
+    options.max_duration = goal->duration;
+    options.topics = goal->topics_to_record;
     rosbag_recorder.Run(
+      options,
       [&]()
       {
         recorder_msgs::DurationRecorderFeedback feedback;
