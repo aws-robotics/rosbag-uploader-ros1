@@ -40,9 +40,11 @@ template<typename T>
 class RosbagRecorder
 {
 public:
-  explicit RosbagRecorder()
-  {
-  };
+  explicit RosbagRecorder() = default;
+  // Non-copyable. These definitions are required as we have 
+  // non-default destructor.
+  RosbagRecorder(const RosbagRecorder&) = delete;
+  RosbagRecorder& operator=(const RosbagRecorder&) = delete;
   
   virtual ~RosbagRecorder()
   {

@@ -53,16 +53,16 @@ public:
     const std::function<void()>& pre_record,
     const std::function<void()>& post_record
   ) {
-    options_ = std::make_unique<rosbag::RecorderOptions>(recorder_options);
+    options_ = recorder_options;
     pre_record();
     post_record();
   }
   
   rosbag::RecorderOptions getOptions() {
-    return *options_;
+    return options_;
   }
 private:
-  std::unique_ptr<rosbag::RecorderOptions> options_;
+  rosbag::RecorderOptions options_;
 };
 
 class MockGoalHandle 
@@ -145,6 +145,12 @@ public:
     recorder_msgs::DurationRecorderFeedback feedback;
     EXPECT_CALL(*goal_handle, publishFeedback(FeedbackHasStatus(recorder_msgs::RecorderStatus::RECORDING)));
   }
+  
+  void assertRecorderRunWithExpectedOptions()
+  {
+    auto options = rosbag_recorder->getOptions();
+    ASSERT_EQ(options.max_duration, duration);
+  }
 
 };
 
@@ -156,6 +162,8 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
   assertPublishFeedback();
   assertGoalIsSuccess();
   DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
+  
+  assertRecorderRunWithExpectedOptions();
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlreadyActive)
