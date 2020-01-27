@@ -58,7 +58,7 @@ public:
       },
       [&]()
       {
-        // TODO(prasadra): Implement integration with s3_file _ploader;
+        // TODO(prasadra): Implement integration with s3_file_uploader;
         recorder_msgs::DurationRecorderResult result;
         goal_handle.setSucceeded(result, "");
       }

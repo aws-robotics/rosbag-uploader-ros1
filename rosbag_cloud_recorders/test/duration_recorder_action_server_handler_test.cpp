@@ -112,12 +112,12 @@ public:
 
   void givenRecorderActive()
   {
-    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillOnce(Return(true));
+    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillRepeatedly(Return(true));
   }
 
   void givenRecorderNotActive()
   {
-    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillOnce(Return(false));
+    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillRepeatedly(Return(false));
   }
 
   void assertGoalIsRejected()

@@ -16,10 +16,10 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <thread>
-#include <mutex>
 #include <condition_variable>
 #include <future>
+#include <mutex>
+#include <thread>
 
 #include <rosbag/recorder.h>
 
@@ -58,13 +58,11 @@ TEST(TestRosbagRecorder, TestRosbagRecorderRun)
     options,
     [&]
     {
-      std::promise<bool> invoked = std::move(pre_invoked);
-      invoked.set_value(true);
+      pre_invoked.set_value(true);
     },
     [&]
     {
-      std::promise<bool> invoked = std::move(post_invoked);
-      invoked.set_value(true);
+      post_invoked.set_value(true);
     }
   );
 

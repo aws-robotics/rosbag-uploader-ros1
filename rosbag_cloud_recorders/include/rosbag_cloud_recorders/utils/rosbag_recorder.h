@@ -14,8 +14,8 @@
  */
 #pragma once
 
-#include <thread>
 #include <functional>
+#include <thread>
 
 #include <aws/core/utils/logging/LogMacros.h>
 
