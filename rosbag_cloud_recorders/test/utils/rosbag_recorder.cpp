@@ -35,10 +35,11 @@ public:
   };
   ~MockRecorder() {};
 
-  void run()
+  int run()
   {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(100ms);
+    return 0;
   }
 };
 
@@ -54,18 +55,19 @@ TEST(TestRosbagRecorder, TestRosbagRecorderRun)
   
   std::future<bool> pre_invoked_f = pre_invoked.get_future();
   std::future<bool> post_invoked_f = post_invoked.get_future();
-  rosbag_recorder.Run(
+  auto result = rosbag_recorder.Run(
     options,
     [&]
     {
       pre_invoked.set_value(true);
     },
-    [&]
+    [&](int exit_code)
     {
+      ASSERT_EQ(exit_code, 0);
       post_invoked.set_value(true);
     }
   );
-
+  ASSERT_EQ(result, RosbagRecorderRunResult::STARTED);
   ASSERT_TRUE(pre_invoked_f.get());
   ASSERT_TRUE(post_invoked_f.get());
 }
@@ -78,48 +80,40 @@ TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
   std::promise<void> barrier;
   std::future<void> barrier_future = barrier.get_future();
   
-  std::promise<void> barrier_second_invoke;
-  std::future<void> barrier_second_invoke_future = barrier_second_invoke.get_future();
-  
-  std::promise<bool> invoked;
-  std::future<bool> invoked_future = invoked.get_future();
-  
-  std::promise<bool> second_invoked;
-  std::future<bool> second_invoked_future = second_invoked.get_future();
-  
   ASSERT_FALSE(rosbag_recorder.IsActive());
-  
-  rosbag_recorder.Run(
+
+  auto result = rosbag_recorder.Run(
     options,
     []
     {
     },
-    [&]
+    [&](int exit_code)
     {
+      ASSERT_EQ(exit_code, 0);
       barrier_future.wait();
-      invoked.set_value(true);
     }
   );
-  
+
+  ASSERT_EQ(result, RosbagRecorderRunResult::STARTED);
   ASSERT_TRUE(rosbag_recorder.IsActive());
- 
-  rosbag_recorder.Run(
+
+  result = rosbag_recorder.Run(
     options,
     []
     {
     },
-    [&]
+    [&](int exit_code)
     {
-      barrier_second_invoke_future.wait();
-      second_invoked.set_value(true);
+      (void) exit_code;
     }
   );
+
+  ASSERT_EQ(result, RosbagRecorderRunResult::SKIPPED);
+
   barrier.set_value();
-  invoked_future.get();
-  
-  barrier_second_invoke.set_value();
-  std::future_status status = second_invoked_future.wait_for(
-    std::chrono::seconds(1)
-  );
-  ASSERT_NE(std::future_status::ready, status);
+
+  using namespace std::chrono_literals;
+  std::this_thread::sleep_for(1s);
+
+  ASSERT_FALSE(rosbag_recorder.IsActive());
 }

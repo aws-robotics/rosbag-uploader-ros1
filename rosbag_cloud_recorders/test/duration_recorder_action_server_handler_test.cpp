@@ -48,21 +48,27 @@ public:
   ~MockRosbagRecorder() {};
   
   MOCK_CONST_METHOD0(IsActive, bool());
-  void Run(
-    rosbag::RecorderOptions const& recorder_options,
+  Utils::RosbagRecorderRunResult Run(
+    const rosbag::RecorderOptions& recorder_options,
     const std::function<void()>& pre_record,
-    const std::function<void()>& post_record
+    const std::function<void(int)>& post_record
   ) {
     options_ = recorder_options;
     pre_record();
-    post_record();
+    post_record(rosbag_recorder_exit_code_);
+    return Utils::RosbagRecorderRunResult::STARTED;
   }
   
   rosbag::RecorderOptions getOptions() {
     return options_;
   }
+  
+  void SetRosbagRecorderExitCode(int exit_code) {
+    rosbag_recorder_exit_code_ = exit_code;
+  }
 private:
   rosbag::RecorderOptions options_;
+  int rosbag_recorder_exit_code_;
 };
 
 class MockGoalHandle 
@@ -80,7 +86,8 @@ public:
   MOCK_METHOD0(setCanceled, void());
   MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<recorder_msgs::DurationRecorderGoal>());
   MOCK_METHOD2(setSucceeded, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
-  
+  MOCK_METHOD2(setAborted, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
+
   MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::DurationRecorderFeedback &));
 };
 
@@ -114,6 +121,16 @@ public:
   {
     EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillRepeatedly(Return(true));
   }
+  
+  void givenRecorderRanSuccessfully()
+  {
+    rosbag_recorder->SetRosbagRecorderExitCode(0);
+  }
+  
+  void givenRecorderRanUnSuccessfully()
+  {
+    rosbag_recorder->SetRosbagRecorderExitCode(1);
+  }
 
   void givenRecorderNotActive()
   {
@@ -140,6 +157,11 @@ public:
     EXPECT_CALL(*goal_handle, setSucceeded(_, _));
   }
   
+  void assertGoalIsAborted()
+  {
+    EXPECT_CALL(*goal_handle, setAborted(_, _));
+  }
+  
   void assertPublishFeedback()
   {
     recorder_msgs::DurationRecorderFeedback feedback;
@@ -158,9 +180,23 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
 {
   givenRecorderNotActive();
   givenDurationRecorderGoal();
+  givenRecorderRanSuccessfully();
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsSuccess();
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
+  
+  assertRecorderRunWithExpectedOptions();
+}
+
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderFailed)
+{
+  givenRecorderNotActive();
+  givenDurationRecorderGoal();
+  givenRecorderRanUnSuccessfully();
+  assertGoalIsAccepted();
+  assertPublishFeedback();
+  assertGoalIsAborted();
   DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
   
   assertRecorderRunWithExpectedOptions();

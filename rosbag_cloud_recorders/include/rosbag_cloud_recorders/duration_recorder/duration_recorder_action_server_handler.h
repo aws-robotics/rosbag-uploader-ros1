@@ -39,7 +39,7 @@ public:
       return;
     }
     goal_handle.setAccepted();
-    auto goal = goal_handle.getGoal();
+    const auto & goal = goal_handle.getGoal();
     rosbag::RecorderOptions options;
     // TODO(prasadra): handle invalid input.
     options.record_all = false;
@@ -56,10 +56,14 @@ public:
         feedback.status = recording_status;
         goal_handle.publishFeedback(feedback);
       },
-      [&]()
+      [&](int exit_code)
       {
-        // TODO(prasadra): Implement integration with s3_file_uploader;
         recorder_msgs::DurationRecorderResult result;
+        if (exit_code != 0) {
+          goal_handle.setAborted(result, "Rosbag recorder encountered errors");
+          return;
+        }
+        // TODO(prasadra): Implement integration with s3_file_uploader;
         goal_handle.setSucceeded(result, "");
       }
     );

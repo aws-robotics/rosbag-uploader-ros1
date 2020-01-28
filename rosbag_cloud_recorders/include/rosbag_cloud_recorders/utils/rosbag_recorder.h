@@ -14,7 +14,10 @@
  */
 #pragma once
 
+#include <chrono>
 #include <functional>
+#include <future>
+#include <mutex>
 #include <thread>
 
 #include <aws/core/utils/logging/LogMacros.h>
@@ -27,6 +30,15 @@ namespace Rosbag
 {
 namespace Utils
 {
+
+enum RosbagRecorderRunResult
+{
+  // Started the rosbag recorder successfully
+  STARTED = 0,
+  // Rosbag recorder not run as it may be running already
+  SKIPPED
+};
+
 /*
  * Wrapper class around robag::Recorder that allows for executing callback
  * functions before and after collecting rosbag files for the specified
@@ -40,48 +52,53 @@ template<typename T>
 class RosbagRecorder
 {
 public:
-  explicit RosbagRecorder() = default;
-  // Non-copyable. These definitions are required as we have 
-  // non-default destructor.
-  RosbagRecorder(const RosbagRecorder&) = delete;
-  RosbagRecorder& operator=(const RosbagRecorder&) = delete;
-  
-  virtual ~RosbagRecorder()
+  explicit RosbagRecorder()
   {
-    if (runner_thread_.joinable())
-    {
-      runner_thread_.join();
-    }
-  }
+    std::promise<void> p;
+    barrier_ = p.get_future();
+  };
 
-  virtual void Run(
-    rosbag::RecorderOptions const& recorder_options,
+  virtual ~RosbagRecorder() = default;
+
+  virtual RosbagRecorderRunResult Run(
+    const rosbag::RecorderOptions& recorder_options,
     const std::function<void()>& pre_record,
-    const std::function<void()>& post_record
+    const std::function<void(int)>& post_record
   )
   {
-    if (IsActive()) {
-      AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
-      return;
-    }
-    AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
-    runner_thread_ = std::thread([recorder_options, pre_record, post_record]
-      {
-        pre_record();
-        T rosbag_recorder(recorder_options);
-        rosbag_recorder.run();
-        post_record();
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (IsActive()) {
+        AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
+        return RosbagRecorderRunResult::SKIPPED;
       }
-    );
+      AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
+      static auto function_name = __func__;
+      barrier_ = std::async(std::launch::async, [recorder_options, pre_record, post_record]
+        {
+          pre_record();
+          T rosbag_recorder(recorder_options);
+          int exit_code = rosbag_recorder.run();
+          if (exit_code != 0) {
+            AWS_LOG_ERROR(function_name, "RosbagRecorder encountered an error");
+          }
+          post_record(exit_code);
+        }
+      );
+      return RosbagRecorderRunResult::STARTED;
+    }
   }
 
   virtual bool IsActive() const
   {
-     return runner_thread_.joinable();
+    using namespace std::chrono_literals;
+    auto status = barrier_.wait_for(0ms);
+    return std::future_status::ready != status;
   }
 
 private:
-  std::thread runner_thread_;
+  mutable std::mutex mutex_;
+  std::future<void> barrier_;
 };
 
 }  // namespace Utils
