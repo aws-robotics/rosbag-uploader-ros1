@@ -40,7 +40,6 @@ class RollingRecorderTestBase(unittest.TestCase):
 
     def setUp(self):
         self.bag_rollover_time = rospy.get_param("~bag_rollover_time")
-        self.topics_to_record = rospy.get_param("~topics_to_record")
         self.rosbag_directory = rospy.get_param("~write_directory")
 
     def tearDown(self):

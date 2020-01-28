@@ -13,6 +13,8 @@
 # permissions and limitations under the License.
 
 import os
+import random
+import string
 import sys
 import time
 
@@ -27,19 +29,20 @@ import rostopic
 from rolling_recorder_test_base import RollingRecorderTestBase
 
 PKG = 'rosbag_uploader_ros1_integration_tests'
-NAME = 'rolling_recorder_custom_topic'
+NAME = 'rolling_recorder_default_topics'
 
-class TestRollingRecorderCustomTopic(RollingRecorderTestBase):
-    def test_record_custom_topic(self):
-        # Get the custom topic we specified in the test file
-        self.topics_to_record = rospy.get_param("~topics_to_record")
 
+class TestRollingRecorderDefaultTopics(RollingRecorderTestBase):
+    # Curently by default the rolling_recorder records on all topics.
+    # This test ensures that when posting to a random topic with default settings
+    # the messages will be recorded correctly 
+    def test_record_default_topics(self):
         # Wait for rolling recorder node to start
         self.wait_for_rolling_recorder_nodes()
 
         # Create publishers 
-        test_topic = self.topics_to_record.split(' ')[0]
-        self.test_publisher = rospy.Publisher(test_topic, String, queue_size=10)
+        topic_name = '/my_random_topic_' + ''.join([random.choice(string.ascii_letters + string.digits + ' ') for _ in range(8)])
+        self.test_publisher = rospy.Publisher(topic_name, String, queue_size=10)
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
         # Find start time of active file
@@ -70,11 +73,12 @@ class TestRollingRecorderCustomTopic(RollingRecorderTestBase):
         latest_bag = self.get_latest_bag_by_regex("*.bag")
         rospy.loginfo("Latest bag: %s " % latest_bag)
         bag = rosbag.Bag(latest_bag)
-        total_bag_messages = 0
-        for _, msg, _ in bag.read_messages():
-            total_bag_messages += 1
+        total_topic_messages = 0
+        for topic, msg, _ in bag.read_messages():
+            if topic == topic_name:
+                total_topic_messages += 1
 
-        self.assertEquals(total_bag_messages, total_test_messages)
+        self.assertEquals(total_topic_messages, total_test_messages)
 
 if __name__ == '__main__':
-    rostest.rosrun(PKG, NAME, TestRollingRecorderCustomTopic, sys.argv)
+    rostest.rosrun(PKG, NAME, TestRollingRecorderDefaultTopics, sys.argv)
