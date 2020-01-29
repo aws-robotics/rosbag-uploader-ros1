@@ -65,6 +65,7 @@ async function setup() {
 
     await loadROSEnvVariables();
 
+    await exec.exec("rosws", ["update"]);
   } catch (error) {
     core.setFailed(error.message);
   }

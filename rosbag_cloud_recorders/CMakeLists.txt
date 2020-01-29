@@ -123,6 +123,7 @@ install(
 ##########
 if(CATKIN_ENABLE_TESTING)
     set(TEST_INCLUDE_DIRS
+      include
       ${catkin_INCLUDE_DIRS}
       ${rosbag_cloud_recorders_INCLUDE_DIRS}
     )
@@ -139,51 +140,55 @@ if(CATKIN_ENABLE_TESTING)
       test/test_rolling_recorder.test
       test/rolling_recorder_test.cpp
     )
-    target_include_directories(test_rolling_recorder PRIVATE
-      ${GMOCK_INCLUDE_DIRS}
+    target_include_directories(test_rolling_recorder PRIVATE ${GMOCK_INCLUDE_DIRS})
+    target_link_libraries(test_rolling_recorder ${GMOCK_BOTH_LIBRARIES})
+
+    add_rostest_gmock(test_rolling_recorder_action_server_handler
+      test/test_rolling_recorder_action_server_handler.test
+      test/rolling_recorder_action_server_handler_test.cpp
     )
-    target_link_libraries(test_rolling_recorder
-      ${GMOCK_BOTH_LIBRARIES}
+    target_include_directories(test_rolling_recorder_action_server_handler PRIVATE ${GMOCK_INCLUDE_DIRS})
+    target_link_libraries(test_rolling_recorder_action_server_handler ${GMOCK_BOTH_LIBRARIES})
+
+    add_rostest_gmock(test_duration_recorder_action_server_handler
+      test/test_duration_recorder_action_server_handler.test
+      test/duration_recorder_action_server_handler_test.cpp
     )
+    target_include_directories(test_duration_recorder_action_server_handler PRIVATE ${GMOCK_INCLUDE_DIRS})
+    target_link_libraries(test_duration_recorder_action_server_handler ${GMOCK_BOTH_LIBRARIES})
   else()
     include_directories(/usr/include/gmock /usr/src/gmock)
-    add_library(test_rolling_recorder_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
+    add_library(${PROJECT_NAME}_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
+
     add_rostest_gtest(test_rolling_recorder
       test/test_rolling_recorder.test
       test/rolling_recorder_test.cpp
     )
-    target_link_libraries(test_rolling_recorder
-      test_rolling_recorder_libgmock
+    target_link_libraries(test_rolling_recorder ${PROJECT_NAME}_libgmock)
+
+    add_rostest_gtest(test_rolling_recorder_action_server_handler
+      test/test_rolling_recorder_action_server_handler.test
+      test/rolling_recorder_action_server_handler_test.cpp
     )
+    target_link_libraries(test_rolling_recorder_action_server_handler ${PROJECT_NAME}_libgmock)
+
+    add_rostest_gtest(test_duration_recorder_action_server_handler
+      test/test_duration_recorder_action_server_handler.test
+      test/duration_recorder_action_server_handler_test.cpp
+    )
+    target_link_libraries(test_duration_recorder_action_server_handler ${PROJECT_NAME}_libgmock)
   endif()
 
-  target_include_directories(test_rolling_recorder PRIVATE
-    include
-    ${catkin_INCLUDE_DIRS}
-  )
-  target_link_libraries(test_rolling_recorder
-    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
-    ${catkin_LIBRARIES}
-    ${GTEST_LIBRARIES}
-  )
+  target_include_directories(test_rolling_recorder PRIVATE ${TEST_INCLUDE_DIRS})
+  target_link_libraries(test_rolling_recorder ${TEST_LINK_LIBS})
 
-  find_common_test_packages()
+  target_include_directories(test_rolling_recorder_action_server_handler PRIVATE ${TEST_INCLUDE_DIRS})
+  target_link_libraries(test_rolling_recorder_action_server_handler ${TEST_LINK_LIBS})
 
-  add_common_gtest(test_rolling_recorder_action_server_handler
-    test/rolling_recorder_action_server_handler_test.cpp
-  )
+  target_include_directories(test_duration_recorder_action_server_handler PRIVATE ${TEST_INCLUDE_DIRS})
+  target_link_libraries(test_duration_recorder_action_server_handler ${TEST_LINK_LIBS})
 
-  add_common_gtest(test_duration_recorder_action_handler
-    test/duration_recorder_action_server_handler_test.cpp
-  )
-  target_include_directories(test_duration_recorder_action_handler PRIVATE
-      ${TEST_INCLUDE_DIRS}
-  )
-  target_link_libraries(test_duration_recorder_action_handler
-      ${TEST_LINK_LIBS}
-  )
-
-  add_common_gtest(test_utils
+  catkin_add_gtest(test_utils
     test/utils/utils_test.cpp
     test/utils/file_utils_test.cpp
     test/utils/periodic_file_deleter_test.cpp
@@ -191,16 +196,8 @@ if(CATKIN_ENABLE_TESTING)
   target_include_directories(test_utils
     PRIVATE include
   )
-  target_include_directories(test_rolling_recorder_action_server_handler
-    PRIVATE include
-  )
-  target_link_libraries(test_rolling_recorder_action_server_handler
-    ${GTEST_LIBRARIES}
-    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
-  )
   target_link_libraries(test_utils
-    ${GTEST_LIBRARIES}
-    ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
+    ${TEST_LINK_LIBS}
   )
 
 endif()

@@ -117,12 +117,13 @@ public:
   void constructTestRosbagFile(std::string ros_bag_file_name, ros::Time time_of_message_created) {
     rosbag::Bag new_ros_bag;
     new_ros_bag.open(ros_bag_file_name, rosbag::bagmode::Write);
-
+    //(void) time_of_message_created;
 
     std_msgs::String test_message;
     test_message.data = std::string("Running unit tests rolling recorder.");
 
-    new_ros_bag.write("rolling_recorder_unit_test", time_of_message_created, test_message);
+    std::string bag_name = "rolling_recorder_unit_test";
+    new_ros_bag.write(bag_name, time_of_message_created, test_message);
     new_ros_bag.close();
   }
 };
