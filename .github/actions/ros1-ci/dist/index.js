@@ -1008,6 +1008,7 @@ function setup() {
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
+            yield exec.exec("rosws", ["update"]);
         }
         catch (error) {
             core.setFailed(error.message);
