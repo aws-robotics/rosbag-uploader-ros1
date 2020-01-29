@@ -10,7 +10,7 @@
 
     <!-- Directory where rosbags will be written.
          Defaults to ~/.ros/rosbag_uploader/ -->
-    <arg name="write_directory" default="~/.ros/rosbag_uploader/" />
+    <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
 
     <!-- The topics that should be recorded into the rosbag.
          Acceptable values: any list of strings or an empty list.

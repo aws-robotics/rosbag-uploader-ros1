@@ -124,8 +124,22 @@ public:
   {
     std::vector<std::string> rosbags;
     for (int i = 0; i < num_bags; ++i) {
-      std::string suffix = "_" + std::to_string(i) + ".bag";
+      std::string suffix = "_" + std::to_string(i) + ".bag.active";
       rosbags.emplace_back(CreateRosBagFileStartingAtTime(ros::Time::now(), suffix));
+    }
+    return rosbags;
+  }
+
+  std::vector<std::string> GivenInvalidFileNames(int num_bags)
+  {
+    std::vector<std::string> rosbags;
+    for (int i = 0; i < num_bags; ++i) {
+      std::string suffix = "_" + std::to_string(i) + ".bag";
+      std::string file_name = write_directory + "myInvalidBagWithoutADate" + suffix;
+      std::fstream file;
+      file.open(file_name, std::ios::out);
+      file.close();
+      rosbags.emplace_back(file_name);
     }
     return rosbags;
   }
@@ -157,7 +171,7 @@ TEST_F(RollingRecorderTest, TestConstructor)
 {
   ros::Duration max_record_time(5);
   ros::Duration bag_rollover_time(5);
-  std::string write_directory("~/.ros/rosbag_uploader/");
+  std::string write_directory("/tmp/rosbag_uploader/");
 
   {
     Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_directory);
@@ -169,10 +183,11 @@ TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
   GivenRollingRecorder();
   auto old_file_names = GivenOldRosBags(3);
   auto recent_file_names = GivenRecentRosBags(3);
+  auto invalid_file_names = GivenInvalidFileNames(3);
   EXPECT_TRUE(FilesToDeleteContainsAllOf(old_file_names));
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(recent_file_names));
+  EXPECT_TRUE(FilesToDeleteContainsNoneOf(invalid_file_names));
 }
-
 
 int main(int argc, char ** argv)
 {

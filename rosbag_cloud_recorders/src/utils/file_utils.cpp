@@ -18,6 +18,7 @@
 #include <string>
 #include <unistd.h>
 #include <iostream>
+#include <regex>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
@@ -70,11 +71,26 @@ ros::Time GetRosBagStartTime(const std::string& file_path)
   }
 
   // If bag extension wasn't stripped before, remove it now
-  std::string time_stamp = bag_name;
+  std::string ts_unparsed = bag_name;
   index = file_path.find_last_of('.');
   if (index != std::string::npos) {
-    time_stamp = bag_name.substr(0, index);
+    ts_unparsed = bag_name.substr(0, index);
   }
+  
+  // Pull the timestamp out of the remaining string
+  std::regex time_stamp_regex(R"([0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2})");
+  std::smatch match;
+  auto ts_begin = std::sregex_iterator(ts_unparsed.begin(), ts_unparsed.end(), time_stamp_regex);
+  auto ts_end = std::sregex_iterator();
+  while (ts_begin != ts_end) {
+    match = *ts_begin;
+    ts_begin++;
+  }
+  if (match.empty()) {
+    AWS_LOGSTREAM_WARN(__func__, "Could not find timestamp in rosbag filename via regex");
+    return {};
+  }
+  std::string time_stamp = match.str(0);
 
   // Convert time stamp to ros time
   auto input_facet = new boost::posix_time::time_input_facet(kRosBagFileFormat);
@@ -85,7 +101,7 @@ ros::Time GetRosBagStartTime(const std::string& file_path)
   
   ss >> pt;
   if (pt == boost::posix_time::ptime()) {
-    AWS_LOGSTREAM_WARN(__func__, "Parsing rsobag file timestamp failed");
+    AWS_LOGSTREAM_WARN(__func__, "Parsing rosbag file timestamp failed");
     return {};
   }
   try {
