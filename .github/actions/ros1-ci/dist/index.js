@@ -1064,7 +1064,7 @@ function test() {
             //   their parent directories:
             //   PATH
             core.addPath(path.join(workspaceDir, "install", "bin"));
-            yield exec.exec("colcon", ["test"], getExecOptions());
+            yield exec.exec("colcon", ["test", "--packages-skip", "aws_common"], getExecOptions());
             yield exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
         }
         catch (error) {

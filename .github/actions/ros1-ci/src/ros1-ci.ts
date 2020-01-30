@@ -124,7 +124,7 @@ async function test() {
     //   PATH
     core.addPath(path.join(workspaceDir, "install", "bin"))
 
-    await exec.exec("colcon", ["test"], getExecOptions());
+    await exec.exec("colcon", ["test", "--packages-skip", "aws_common"], getExecOptions());
     await exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
 
   } catch (error) {
