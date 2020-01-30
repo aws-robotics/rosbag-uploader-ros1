@@ -14,8 +14,14 @@
  */
 #pragma once
 
+#include <thread>
+
+#include <ros/ros.h>
+
 #include <actionlib/server/action_server.h>
 #include <recorder_msgs/DurationRecorderAction.h>
+
+#include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
 namespace Aws{
 namespace Rosbag{
@@ -26,9 +32,41 @@ template<typename T>
 class DurationRecorderActionServerHandler
 {
 public:
-  static void DurationRecorderStart(T& goal_handle)
+  static void DurationRecorderStart(Utils::RosbagRecorder<rosbag::Recorder>& rosbag_recorder, T& goal_handle)
   {
-    goal_handle.setRejected();
+    if (rosbag_recorder.IsActive()) {
+      goal_handle.setRejected();
+      return;
+    }
+    goal_handle.setAccepted();
+    const auto & goal = goal_handle.getGoal();
+    rosbag::RecorderOptions options;
+    // TODO(prasadra): handle invalid input.
+    options.record_all = false;
+    options.max_duration = goal->duration;
+    options.topics = goal->topics_to_record;
+    rosbag_recorder.Run(
+      options,
+      [&]()
+      {
+        recorder_msgs::DurationRecorderFeedback feedback;
+        feedback.started = ros::Time::now();
+        recorder_msgs::RecorderStatus recording_status;
+        recording_status.stage = recorder_msgs::RecorderStatus::RECORDING;
+        feedback.status = recording_status;
+        goal_handle.publishFeedback(feedback);
+      },
+      [&](int exit_code)
+      {
+        recorder_msgs::DurationRecorderResult result;
+        if (exit_code != 0) {
+          goal_handle.setAborted(result, "Rosbag recorder encountered errors");
+          return;
+        }
+        // TODO(prasadra): Implement integration with s3_file_uploader;
+        goal_handle.setSucceeded(result, "");
+      }
+    );
   }
 
   static void CancelDurationRecorder(T& goal_handle)

@@ -34,8 +34,8 @@ DurationRecorder::DurationRecorder() :
   action_server_(node_handle_, "RosbagDurationRecord", false)
 {
   action_server_.registerGoalCallback(
-    [](DurationRecorderActionServer::GoalHandle goal_handle) {
-      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::DurationRecorderStart(goal_handle);
+    [this](DurationRecorderActionServer::GoalHandle goal_handle) {
+      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::DurationRecorderStart(*rosbag_recorder_, goal_handle);
     }
   );
 

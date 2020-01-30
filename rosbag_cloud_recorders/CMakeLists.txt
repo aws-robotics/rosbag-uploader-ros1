@@ -52,7 +52,8 @@ roslint_cpp(src/rolling_recorder/rolling_recorder.cpp
             include/rolling_recorder/rolling_recorder_action_server_handler.h
             test/duration_recorder_action_server_handler_test.cpp
             include/rolling_recorder/rolling_recorder.h
-            include/duration_recorder/duration_recorder_action_server_handler.h)
+            include/duration_recorder/duration_recorder_action_server_handler.h
+            include/utils/rosbag_recorder.h)
 
 include_directories(
     include
@@ -186,6 +187,7 @@ if(CATKIN_ENABLE_TESTING)
     test/utils/utils_test.cpp
     test/utils/file_utils_test.cpp
     test/utils/periodic_file_deleter_test.cpp
+    test/utils/rosbag_recorder.cpp
   )
   target_include_directories(test_utils
     PRIVATE include
