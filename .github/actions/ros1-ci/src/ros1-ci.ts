@@ -65,6 +65,7 @@ async function setup() {
 
     await loadROSEnvVariables();
 
+    await exec.exec("rosws", ["update"], getExecOptions());
   } catch (error) {
     core.setFailed(error.message);
   }
@@ -74,16 +75,27 @@ async function build() {
   try {
     await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
 
+    const packagesToSkipTests = core.getInput('packages-to-skip-tests');
+    let colconUpToCmakeArgs = [
+        "--packages-up-to",
+      ].concat(packagesToSkipTests.split(" "));
+    await exec.exec("colcon", ["build"].concat(colconUpToCmakeArgs), getExecOptions());
+
     let colconCmakeArgs: any = []
     if (core.getInput('coverage')) {
+      let colconCmakeArgs = [
+        "--packages-skip",
+      ].concat(packagesToSkipTests.split(" "));
+
       colconCmakeArgs = colconCmakeArgs.concat([
         "--cmake-args",
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
         "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
         "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
       ]);
+      await exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
     }
-    await exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
+
   } catch (error) {
     core.setFailed(error.message);
   }
@@ -97,6 +109,7 @@ async function test() {
     }
     const workspaceDir = core.getInput('workspace-dir');
     const packagesToTest = core.getInput('packages-to-test');
+    const packagesToSkipTests = core.getInput('packages-to-skip-tests');
 
     if (packagesToTest.length) {
       const colconCmakeTestArgs = [
@@ -123,7 +136,7 @@ async function test() {
     //   PATH
     core.addPath(path.join(workspaceDir, "install", "bin"))
 
-    await exec.exec("colcon", ["test"], getExecOptions());
+    await exec.exec("colcon", ["test", "--packages-skip", packagesToSkipTests], getExecOptions());
     await exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
 
   } catch (error) {
