@@ -20,8 +20,10 @@
 #include <iostream>
 #include <regex>
 
+#include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
+#include <boost/date_time/local_time_adjustor.hpp>
 
 #include <aws/core/utils/logging/LogMacros.h>
 #include <ros/ros.h>
@@ -53,6 +55,18 @@ Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
   }
 }
 
+boost::posix_time::time_duration GetUTCOffset() {
+    using namespace boost::posix_time;
+
+    // boost::date_time::c_local_adjustor uses the C-API to adjust a
+    // moment given in utc to the same moment in the local time zone.
+    typedef boost::date_time::c_local_adjustor<ptime> local_adj;
+
+    const ptime utc_now = second_clock::universal_time();
+    const ptime now = local_adj::utc_to_local(utc_now);
+
+    return now - utc_now;
+}
 
 ros::Time GetRosBagStartTime(const std::string& file_path)
 {
@@ -98,20 +112,25 @@ ros::Time GetRosBagStartTime(const std::string& file_path)
   ss.imbue(std::locale(ss.getloc(), input_facet));
   ss.str(time_stamp);
   boost::posix_time::ptime pt;
-  
   ss >> pt;
+
   if (pt == boost::posix_time::ptime()) {
     AWS_LOGSTREAM_WARN(__func__, "Parsing rosbag file timestamp failed");
     return {};
   }
+
+  boost::posix_time::ptime utc_pt = pt - GetUTCOffset();
+
   try {
     // This can throw an exception if the time is too far in the future.
-    return ros::Time::fromBoost(pt);
+    return ros::Time::fromBoost(utc_pt);
   } catch (std::exception& e) {
     AWS_LOGSTREAM_WARN(__func__, "Parsing rosbag file timestamp threw exception: " << e.what());
     return {};
   }
 }
+
+
 
 }  // namespace Utils
 }  // namespace Rosbag

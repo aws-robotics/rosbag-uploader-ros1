@@ -29,6 +29,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/callback_queue.h>
+#include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/filesystem.hpp>
@@ -96,8 +97,10 @@ public:
     std::stringstream file_name;
     boost::posix_time::time_facet *const f=
         new boost::posix_time::time_facet("%Y-%m-%d-%H-%M-%S");
+    boost::posix_time::ptime pt = time.toBoost();
+    boost::posix_time::ptime local_pt = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(pt);
     file_name.imbue(std::locale(file_name.getloc(),f));
-    file_name << time.toBoost();
+    file_name << local_pt;
     return file_name.str();
   }
 
