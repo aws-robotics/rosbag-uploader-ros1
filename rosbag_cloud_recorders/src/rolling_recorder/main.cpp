@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
   wordexp_ros("~/.ros/", &wordexp_result, 0);
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
 
-  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, wordexp_result.we_wordv[0]);
+  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, *(wordexp_result.we_wordv));
 
   ros::waitForShutdown();
   AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
