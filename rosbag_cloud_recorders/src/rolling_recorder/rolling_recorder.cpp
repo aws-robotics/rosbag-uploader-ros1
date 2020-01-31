@@ -60,12 +60,15 @@ RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time,
 std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
 {
   AWS_LOG_INFO(__func__, "Getting ros bags to delete");
+  AWS_LOGSTREAM_INFO(__func__, "Current time is: "<< ros::Time::now());
   boost::filesystem::path path(write_directory_);
   std::vector<std::string> delete_files;
   for (boost::filesystem::directory_iterator itr(path);
        itr != boost::filesystem::directory_iterator(); ++itr) {
     auto path = itr->path().string();
+    AWS_LOGSTREAM_INFO(__func__, "Checking path: "<<path);
     auto bag_start_time = Utils::GetRosBagStartTime(path); 
+    AWS_LOGSTREAM_INFO(__func__, "Bag start time is: "<< bag_start_time);
     if (bag_start_time != ros::Time(0) && ros::Time::now() - bag_start_time > max_duration_) {
       AWS_LOGSTREAM_INFO(__func__, "Marking file for deletion: "<<path);
       delete_files.emplace_back(path);

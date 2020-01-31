@@ -1,14 +1,17 @@
 <launch>
-    <arg name="periodic_deleter_interval" value="2" />
+    <arg name="bag_rollover_time" value="2" />
+    <arg name="max_record_time" value="10" />
     <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
 
     <include file="$(find rosbag_cloud_recorders)/launch/rolling_recorder.launch">
-        <arg name="bag_rollover_time" value="$(arg periodic_deleter_interval)" />
+        <arg name="bag_rollover_time" value="$(arg bag_rollover_time)" />
+        <arg name="max_record_time" value="$(arg max_record_time)" />
         <arg name="write_directory" value="$(arg write_directory)" />
     </include>
 
     <test test-name="TestPeriodicFileDeleter" pkg="rosbag_uploader_ros1_integration_tests" type="test_periodic_file_deleter.py">
-        <param name="periodic_deleter_interval" value="$(arg periodic_deleter_interval)" />
+        <param name="periodic_deleter_interval" value="$(arg bag_rollover_time)" />
+        <param name="max_record_time" value="$(arg max_record_time)" />
         <param name="write_directory" value="$(arg write_directory)" />
     </test>
 </launch>

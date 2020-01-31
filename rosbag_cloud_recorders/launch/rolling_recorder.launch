@@ -5,8 +5,15 @@
     <!-- The length of each bag file in seconds.
          Acceptable values: positive integers
          If not given defaults to 30 seconds
-         If invalid value is given node will exit and log an error message -->
+         If an invalid value is given the node will exit and log an error message -->
     <arg name="bag_rollover_time" default="30" />
+
+    <!-- The length of time recordings are kept. Any rosbag older than this time will be deleted.
+         Acceptable values: positive integers
+         If not given defaults to 300 seconds
+         If an invalid value is given the node will exit and log an error message -->
+    <arg name="max_record_time" default="300" />
+
 
     <!-- Directory where rosbags will be written.
          Defaults to ~/.ros/rosbag_uploader/ -->
@@ -27,7 +34,9 @@
     </node>
 
     <node name="rolling_recorder" pkg="rosbag_cloud_recorders" type="rolling_recorder" >
-      <rosparam file="$(arg node_config_file)" />
+      <rosparam command="load" file="$(arg node_config_file)" />
+      <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
+      <param name="max_record_time" value="$(arg max_record_time)" />
     </node>
 
 </launch>

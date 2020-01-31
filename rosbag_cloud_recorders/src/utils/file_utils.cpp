@@ -56,15 +56,10 @@ Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
 }
 
 boost::posix_time::time_duration GetUTCOffset() {
-    using namespace boost::posix_time;
+    using local_adj = boost::date_time::c_local_adjustor<boost::posix_time::ptime>;
 
-    // boost::date_time::c_local_adjustor uses the C-API to adjust a
-    // moment given in utc to the same moment in the local time zone.
-    typedef boost::date_time::c_local_adjustor<ptime> local_adj;
-
-    const ptime utc_now = second_clock::universal_time();
-    const ptime now = local_adj::utc_to_local(utc_now);
-
+    const boost::posix_time::ptime utc_now = boost::posix_time::second_clock::universal_time();
+    const boost::posix_time::ptime now = local_adj::utc_to_local(utc_now);
     return now - utc_now;
 }
 

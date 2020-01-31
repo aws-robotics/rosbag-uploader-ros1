@@ -44,6 +44,7 @@ class TestPeriodicFileDeleter(unittest.TestCase):
 
     def setUp(self):
         self.periodic_deleter_interval = rospy.get_param("~periodic_deleter_interval")
+        self.max_record_time = rospy.get_param("~max_record_time")
         self.rosbag_directory = rospy.get_param("~write_directory")
 
     def tearDown(self):
@@ -81,9 +82,11 @@ class TestPeriodicFileDeleter(unittest.TestCase):
         # Add 0.3s as it takes some time for bag rotation to occur
         time.sleep(bag_finish_time_remaining + 0.3) 
         latest_bag = self.get_latest_bag_by_regex("*.bag")
+        rospy.loginfo("Latest rosbag: %s" % latest_bag)
 
-        # Check that the bag is deleted after periodic_deleter_interval time has passed
-        time.sleep(self.periodic_deleter_interval * 5)
+        # Check that the bag is deleted after at least one interval and max record time has passed
+        time.sleep(self.periodic_deleter_interval + self.max_record_time)
+        rospy.loginfo("Checking latest rosbag still exists: %s" % latest_bag)
         self.assertFalse(os.path.exists(latest_bag))
 
 
