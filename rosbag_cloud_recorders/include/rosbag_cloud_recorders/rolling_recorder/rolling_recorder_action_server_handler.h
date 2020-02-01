@@ -50,28 +50,22 @@ public:
 
   static std::vector<std::string> GetRosbagsToUpload(const std::string& write_directory, const ros::Duration& bag_rollover_time, ros::Time time_of_goal_received)
   {
-    std::vector<std::string> ros_bags_to_upload;
-    boost::filesystem::path ros_bag_write_path(write_directory);
-    for (auto i = boost::filesystem::directory_iterator(ros_bag_write_path); i != boost::filesystem::directory_iterator(); i++) {
-      if (!boost::filesystem::is_directory(i->path())) {  // eliminate directories in a list
-        if (i->path().extension().string() == ".bag") {
-          ros_bags_to_upload.push_back(write_directory + i->path().filename().string());
-          AWS_LOG_INFO(__func__, "Adding Rosbag named: [%s] to list of bag file to upload.", i->path().filename().string().c_str());
-        }
-        if (i->path().extension().string() == ".active") {
-          bag_rollover_time.sleep();
-          std::string bag_file_name_wo_active_ext = std::string(i->path().filename().string()).erase(i->path().filename().string().size() - 7);
-          rosbag::Bag ros_bag;
-          ros_bag.open(write_directory + bag_file_name_wo_active_ext);
+    // Reserved for future use
+    (void) bag_rollover_time;
+    (void) time_of_goal_received;
 
-          rosbag::View view_rosbag(ros_bag);
-          if (time_of_goal_received >= view_rosbag.getBeginTime()) {
-            ros_bags_to_upload.push_back(write_directory + bag_file_name_wo_active_ext);
-          }
-        }
+    std::vector<std::string> ros_bags_to_upload;
+    using namespace boost::filesystem;
+    path ros_bag_write_path(write_directory);
+    for (auto dir_entry = directory_iterator(ros_bag_write_path); dir_entry != directory_iterator(); dir_entry++) {
+      if (is_directory(dir_entry->path())) {
+        continue;
+      }
+      if (dir_entry->path().extension().string() == ".bag") {
+        ros_bags_to_upload.push_back(dir_entry->path().string());
+        AWS_LOG_INFO(__func__, "Adding bag: [%s] to list of bag files to upload.", dir_entry->path().string().c_str());
       }
     }
-
     return ros_bags_to_upload;
   }
 };
