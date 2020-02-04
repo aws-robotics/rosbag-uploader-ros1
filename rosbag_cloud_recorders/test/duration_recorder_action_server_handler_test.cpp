@@ -16,7 +16,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include<rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
@@ -24,7 +24,7 @@
 
 using namespace Aws::Rosbag;
 
-class MockGoalHandle 
+class MockGoalHandle
 {
 public:
   MockGoalHandle() = default;
