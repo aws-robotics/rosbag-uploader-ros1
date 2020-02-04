@@ -27,10 +27,8 @@
 
 using namespace Aws::Rosbag;
 
-using ::testing::Return;
 using ::testing::_;
-using ::testing::ContainerEq;
-using ::testing::Invoke;
+using ::testing::UnorderedElementsAre;
 
 class MockRollingRecorderGoalHandle
 {
@@ -141,8 +139,8 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestGetRosbagToUploadMixedFiles)
   ros::Time time_of_function_called(ros::Time::now());
   std::vector<std::string> bag_files_to_create{"test1.bag", "nonbagfile", "test2.bag"};
   createRosbagInWriteDirectory(std::move(bag_files_to_create));
-  EXPECT_EQ(checkGetRosbagsToUploadFileExtensions(time_of_function_called),
-            std::vector<std::string>({write_directory + "test1.bag", write_directory + "test2.bag"}));
+  EXPECT_THAT(checkGetRosbagsToUploadFileExtensions(time_of_function_called),
+              UnorderedElementsAre(write_directory + "test1.bag", write_directory + "test2.bag"));
 }
 
 TEST_F(RollingRecorderActionServerHandlerTests, TestGetRosbagToUploadNoEligibleFiles)
