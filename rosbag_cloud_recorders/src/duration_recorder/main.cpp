@@ -12,14 +12,20 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 #include <ros/ros.h>
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
+
+#include <aws/core/utils/logging/LogMacros.h>
+#include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "rosbag_duration_recorder");
+  ros::AsyncSpinner spinner(2);
+  Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>("RosbagDurationRecorder"));
+
   Aws::Rosbag::DurationRecorder duration_recorder;
-  ros::spin();
+  spinner.start();
+  ros::waitForShutdown();
   return 0;
 }
