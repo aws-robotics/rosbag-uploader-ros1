@@ -37,6 +37,7 @@
       <rosparam command="load" file="$(arg node_config_file)" />
       <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
       <param name="max_record_time" value="$(arg max_record_time)" />
+      <param name="write_directory" value="$(arg write_directory)" />
     </node>
 
 </launch>

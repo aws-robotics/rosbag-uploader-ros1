@@ -127,7 +127,7 @@ public:
   {
     std::vector<std::string> rosbags;
     for (int i = 0; i < num_bags; ++i) {
-      std::string suffix = "_" + std::to_string(i) + ".bag.active";
+      std::string suffix = "_" + std::to_string(i) + ".bag";
       rosbags.emplace_back(CreateRosBagFileStartingAtTime(ros::Time::now(), suffix));
     }
     return rosbags;
@@ -174,7 +174,6 @@ TEST_F(RollingRecorderTest, TestConstructor)
 {
   ros::Duration max_record_time(5);
   ros::Duration bag_rollover_time(5);
-  std::string write_directory("/tmp/rosbag_uploader/");
 
   {
     Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_directory);

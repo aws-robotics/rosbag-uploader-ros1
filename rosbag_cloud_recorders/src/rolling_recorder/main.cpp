@@ -22,6 +22,7 @@
 
 constexpr char kBagRolloverTimeParameter[] = "bag_rollover_time";
 constexpr char kMaxRecordTimeParameter[] = "max_record_time";
+constexpr char kWriteDirectoryParameter[] = "write_directory";
 
 int main(int argc, char* argv[])
 {
@@ -30,9 +31,11 @@ int main(int argc, char* argv[])
 
   int bag_rollover_time_input;
   int max_record_time_input;
+  std::string write_directory_input;
 
   ros::Duration bag_rollover_time(30);
   ros::Duration max_record_time(300);
+  std::string write_dir("~/.ros/rosbag_uploader");
 
   auto parameter_reader = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kBagRolloverTimeParameter), bag_rollover_time_input)) {
@@ -41,13 +44,12 @@ int main(int argc, char* argv[])
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMaxRecordTimeParameter), max_record_time_input)) {
     max_record_time = ros::Duration(max_record_time_input);
   }
+  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_directory_input)) {
+    write_dir = write_directory_input;
+  }
 
-
-  std::string write_dir("/home/ANT.AMAZON.COM/tim/.ros/rosbag_uploader");
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
-
   Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_dir);
-
   ros::waitForShutdown();
   AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
   Aws::Utils::Logging::ShutdownAWSLogging();
