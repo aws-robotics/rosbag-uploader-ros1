@@ -29,6 +29,12 @@ import rostopic
 TEST_NODE_NAME = 'test_rolling_recorder_client'
 ROLLING_RECORDER_NODE_START_TIMEOUT = 5
 
+# Max time it should take for the current bag to go from active to inactive
+# as bags are not immediately rolled switched because of polling delays
+BAG_DEACTIVATE_TIME = 0.5
+
+
+
 class RollingRecorderTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -39,6 +45,7 @@ class RollingRecorderTestBase(unittest.TestCase):
         pass
 
     def setUp(self):
+        self.bag_deactivate_time = BAG_DEACTIVATE_TIME
         self.bag_rollover_time = rospy.get_param("~bag_rollover_time")
         self.rosbag_directory = rospy.get_param("~write_directory")
 
@@ -46,10 +53,13 @@ class RollingRecorderTestBase(unittest.TestCase):
         pass
 
     def get_latest_bag_by_regex(self, regex_pattern):
+        return self.get_latest_bags_by_regex(regex_pattern, 1)[0]
+
+    def get_latest_bags_by_regex(self, regex_pattern, count):
         files = glob.iglob(os.path.join(self.rosbag_directory, regex_pattern))
         paths = [os.path.join(self.rosbag_directory, filename) for filename in files]
         paths_sorted = sorted(paths, key=os.path.getctime, reverse=True)
-        return paths_sorted[0]
+        return paths_sorted[:count]
 
     def wait_for_rolling_recorder_nodes(self):
         required_nodes = set([

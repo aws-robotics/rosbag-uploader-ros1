@@ -31,7 +31,6 @@ from rolling_recorder_test_base import RollingRecorderTestBase
 PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'rolling_recorder_default_topics'
 
-
 class TestRollingRecorderDefaultTopics(RollingRecorderTestBase):
     # Curently by default the rolling_recorder records on all topics.
     # This test ensures that when posting to a random topic with default settings
@@ -41,7 +40,7 @@ class TestRollingRecorderDefaultTopics(RollingRecorderTestBase):
         self.wait_for_rolling_recorder_nodes()
 
         # Create publishers 
-        topic_name = '/my_random_topic_' + ''.join([random.choice(string.ascii_letters + string.digits + ' ') for _ in range(8)])
+        topic_name = '/my_random_topic_' + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(8)])
         self.test_publisher = rospy.Publisher(topic_name, String, queue_size=10)
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
@@ -63,22 +62,28 @@ class TestRollingRecorderDefaultTopics(RollingRecorderTestBase):
             self.test_publisher.publish("Test message %d" % x)
             time.sleep(sleep_between_message)
 
-        # Wait for current bag to finish recording and roll over
+        # Wait for all messages to be saved to bags.
+        # Because of buffering some messages may go into a second bag, which is
+        # why we're waiting for it to roll over twice
         bag_finish_time_remaining = bag_finish_time - time.time()
-        rospy.loginfo("Bag finish time remaining after publish: %f" % bag_finish_time_remaining)
-        # Add 0.3s as it takes some time for bag rotation to occur
-        time.sleep(bag_finish_time_remaining + 0.3) 
+        time.sleep(bag_finish_time_remaining + self.bag_rollover_time + self.bag_deactivate_time)
         
-        # Check that the data is inside the latest rosbag
-        latest_bag = self.get_latest_bag_by_regex("*.bag")
-        rospy.loginfo("Latest bag: %s " % latest_bag)
-        bag = rosbag.Bag(latest_bag)
+        # Check that the data is inside the latest rosbags
+        latest_bags = self.get_latest_bags_by_regex("*.bag", 2)
+        rospy.loginfo("Latest bags: %s " % latest_bags)
+        total_messages = 0
         total_topic_messages = 0
-        for topic, msg, _ in bag.read_messages():
-            if topic == topic_name:
-                total_topic_messages += 1
+        for bag_path in latest_bags:
+            bag = rosbag.Bag(bag_path)
+            for topic, msg, _ in bag.read_messages():
+                total_messages += 1
+                if topic == topic_name:
+                    total_topic_messages += 1
 
+        # Ensure that all messages published to this topic are recorded
         self.assertEquals(total_topic_messages, total_test_messages)
+        # Ensure that more than just this topic is recorded
+        self.assertTrue(total_messages > total_topic_messages)
 
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestRollingRecorderDefaultTopics, sys.argv)
