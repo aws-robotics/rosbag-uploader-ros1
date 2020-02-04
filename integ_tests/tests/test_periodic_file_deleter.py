@@ -93,8 +93,7 @@ class TestPeriodicFileDeleter(unittest.TestCase):
     def get_latest_bag_by_regex(self, regex_pattern):
         files = glob.iglob(os.path.join(self.rosbag_directory, regex_pattern))
         paths = [os.path.join(self.rosbag_directory, filename) for filename in files]
-        paths_sorted = sorted(paths, key=os.path.getctime, reverse=True)
-        return paths_sorted[0]
+        return max(paths, key=os.path.getctime)
 
     def wait_for_rolling_recorder_nodes(self):
         required_nodes = set([
