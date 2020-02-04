@@ -162,7 +162,6 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(test_rolling_recorder_action_server_handler
     ${GTEST_LIBRARIES}
     ${PROJECT_NAME}_lib
-    ${TEST_LINK_LIBS}
   )
   target_link_libraries(test_utils
     ${GTEST_LIBRARIES}
