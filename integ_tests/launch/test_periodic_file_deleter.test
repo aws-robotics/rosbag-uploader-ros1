@@ -10,7 +10,7 @@
     </include>
 
     <test test-name="TestPeriodicFileDeleter" pkg="rosbag_uploader_ros1_integration_tests" type="test_periodic_file_deleter.py">
-        <param name="periodic_deleter_interval" value="$(arg bag_rollover_time)" />
+        <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
         <param name="max_record_time" value="$(arg max_record_time)" />
         <param name="write_directory" value="$(arg write_directory)" />
     </test>

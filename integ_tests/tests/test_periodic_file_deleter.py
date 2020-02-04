@@ -27,28 +27,16 @@ import rospy
 import rostest
 import rostopic
 
+from rolling_recorder_test_base import RollingRecorderTestBase
 
-TEST_NODE_NAME = 'test_periodic_file_deleter'
-ROLLING_RECORDER_NODE_START_TIMEOUT = 5
 PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'periodic_file_deleter'
 
-class TestPeriodicFileDeleter(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        rospy.init_node(TEST_NODE_NAME, log_level=rospy.DEBUG)
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
+class TestPeriodicFileDeleter(RollingRecorderTestBase):
     def setUp(self):
-        self.periodic_deleter_interval = rospy.get_param("~periodic_deleter_interval")
+        super(TestPeriodicFileDeleter, self).setUp()
         self.max_record_time = rospy.get_param("~max_record_time")
-        self.rosbag_directory = rospy.get_param("~write_directory")
-
-    def tearDown(self):
-        pass
+        self.periodic_deleter_interval = self.bag_rollover_time
 
     def test_record_custom_topic(self):
         # Wait for rolling recorder node to start
@@ -88,23 +76,6 @@ class TestPeriodicFileDeleter(unittest.TestCase):
         time.sleep(self.periodic_deleter_interval + self.max_record_time)
         rospy.loginfo("Checking latest rosbag still exists: %s" % latest_bag)
         self.assertFalse(os.path.exists(latest_bag))
-
-
-    def get_latest_bag_by_regex(self, regex_pattern):
-        files = glob.iglob(os.path.join(self.rosbag_directory, regex_pattern))
-        paths = [os.path.join(self.rosbag_directory, filename) for filename in files]
-        return max(paths, key=os.path.getctime)
-
-    def wait_for_rolling_recorder_nodes(self):
-        required_nodes = set([
-            '/rolling_recorder',
-            '/rosbag_record'
-        ])
-        while not required_nodes.issubset(rosnode.get_node_names()):
-            time.sleep(0.1)
-
-    def wait_for_rolling_recorder_node_to_subscribe_to_topic(self):
-        rostopic.wait_for_subscriber(self.test_publisher, ROLLING_RECORDER_NODE_START_TIMEOUT)
 
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestPeriodicFileDeleter, sys.argv)
