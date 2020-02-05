@@ -105,8 +105,7 @@ public:
   }
 
   void createRosbagInWriteDirectory(std::vector<std::string> bag_files) {
-    for(std::string bag_file : bag_files)  {
-
+    for (std::string bag_file : bag_files)  {
       std::ofstream new_bag_file(write_directory + bag_file);
     }
   }
