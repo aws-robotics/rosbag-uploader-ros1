@@ -60,11 +60,9 @@ target_link_libraries(${PROJECT_NAME}_lib ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
 
 add_executable(duration_recorder src/duration_recorder/main.cpp)
-#target_include_directories(duration_recorder PRIVATE include ${catkin_INCLUDE_DIRS})
 target_link_libraries(duration_recorder ${PROJECT_NAME}_lib)
 
 add_executable(rolling_recorder src/rolling_recorder/main.cpp)
-#target_include_directories(rolling_recorder PRIVATE include ${catkin_INCLUDE_DIRS} ${aws_common_INCLUDE_DIRS})
 target_link_libraries(rolling_recorder ${PROJECT_NAME}_lib)
 
 #############
