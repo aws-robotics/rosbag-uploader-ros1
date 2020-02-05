@@ -66,7 +66,10 @@ async function setup() {
     await loadROSEnvVariables();
 
     // Download dependencies not in apt if .rosinstall exists
-    await exec.exec("rosws", ["update", "2>/dev/null"], getExecOptions());
+    if (core.getInput('packages-to-skip-tests').length) {
+      // Assume that there's a .rosinstall file iff there are packages that we should not test.
+      await exec.exec("rosws", ["update"], getExecOptions());
+    }
   } catch (error) {
     core.setFailed(error.message);
   }
