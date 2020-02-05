@@ -55,10 +55,10 @@ public:
     (void) time_of_goal_received;
 
     std::vector<std::string> ros_bags_to_upload;
-    using namespace boost::filesystem;
-    path ros_bag_write_path(write_directory);
+    using boost::filesystem::directory_iterator;
+    boost::filesystem::path ros_bag_write_path(write_directory);
     for (auto dir_entry = directory_iterator(ros_bag_write_path); dir_entry != directory_iterator(); dir_entry++) {
-      if (is_directory(dir_entry->path())) {
+      if (boost::filesystem::is_directory(dir_entry->path())) {
         continue;
       }
       if (dir_entry->path().extension().string() == ".bag") {
