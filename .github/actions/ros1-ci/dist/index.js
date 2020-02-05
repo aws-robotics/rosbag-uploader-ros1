@@ -1009,7 +1009,10 @@ function setup() {
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
             // Download dependencies not in apt if .rosinstall exists
-            yield exec.exec("rosws", ["update", "2>/dev/null"], getExecOptions());
+            if (core.getInput('packages-to-skip-tests').length) {
+                // Assume that there's a .rosinstall file iff there are packages that we should not test.
+                yield exec.exec("rosws", ["update"], getExecOptions());
+            }
         }
         catch (error) {
             core.setFailed(error.message);
