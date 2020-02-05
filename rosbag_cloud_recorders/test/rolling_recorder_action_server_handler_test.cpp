@@ -24,6 +24,7 @@
 #include <recorder_msgs/RollingRecorderGoal.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder_action_server_handler.h>
 #include <aws_common/fs_utils/wordexp_ros.h>
+#include <wordexp.h>
 
 using namespace Aws::Rosbag;
 
@@ -65,7 +66,7 @@ public:
     bag_rollover_time(ros::Duration(10, 0))
   {
     wordexp_t wordexp_result;
-    wordexp_ros("~/.ros/rr_handler_test_dir/", &wordexp_result, 0);
+    wordexp("~/.ros/rr_handler_test_dir/", &wordexp_result, 0);
     write_directory = *(wordexp_result.we_wordv);
     path = boost::filesystem::path(write_directory);
   }
