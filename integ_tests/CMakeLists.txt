@@ -14,7 +14,9 @@ install(PROGRAMS
         tests/s3_file_uploader_test_base.py
         tests/test_s3_file_uploader_general.py
         tests/test_s3_file_uploader_wrong_region.py
-        tests/test_rolling_recorder.py
+        tests/rolling_recorder_test_base.py
+        tests/test_rolling_recorder_custom_topic.py
+        tests/test_rolling_recorder_default_topics.py
         tests/s3_client.py
         scripts/setup_test_bucket.sh
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
