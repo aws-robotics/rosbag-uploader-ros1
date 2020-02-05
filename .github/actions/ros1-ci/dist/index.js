@@ -1008,6 +1008,7 @@ function setup() {
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
+            yield exec.exec("rosws", ["update"], getExecOptions());
         }
         catch (error) {
             core.setFailed(error.message);
@@ -1018,16 +1019,24 @@ function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
+            const packagesToSkipTests = core.getInput('packages-to-skip-tests');
+            let colconUpToCmakeArgs = [
+                "--packages-up-to",
+            ].concat(packagesToSkipTests.split(" "));
+            yield exec.exec("colcon", ["build"].concat(colconUpToCmakeArgs), getExecOptions());
             let colconCmakeArgs = [];
             if (core.getInput('coverage')) {
+                let colconCmakeArgs = [
+                    "--packages-skip",
+                ].concat(packagesToSkipTests.split(" "));
                 colconCmakeArgs = colconCmakeArgs.concat([
                     "--cmake-args",
                     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                     "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
                     "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
                 ]);
+                yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
             }
-            yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
         }
         catch (error) {
             core.setFailed(error.message);
@@ -1043,6 +1052,7 @@ function test() {
             }
             const workspaceDir = core.getInput('workspace-dir');
             const packagesToTest = core.getInput('packages-to-test');
+            const packagesToSkipTests = core.getInput('packages-to-skip-tests');
             if (packagesToTest.length) {
                 const colconCmakeTestArgs = [
                     "--packages-select",
@@ -1063,7 +1073,7 @@ function test() {
             //   their parent directories:
             //   PATH
             core.addPath(path.join(workspaceDir, "install", "bin"));
-            yield exec.exec("colcon", ["test"], getExecOptions());
+            yield exec.exec("colcon", ["test", "--packages-skip", packagesToSkipTests], getExecOptions());
             yield exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
         }
         catch (error) {

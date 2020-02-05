@@ -17,8 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
-
-#include<rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
@@ -71,7 +70,7 @@ private:
   int rosbag_recorder_exit_code_;
 };
 
-class MockGoalHandle 
+class MockGoalHandle
 {
 public:
   MockGoalHandle() = default;
