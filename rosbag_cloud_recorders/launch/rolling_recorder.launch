@@ -31,7 +31,7 @@
                                                                 --duration $(arg bag_rollover_time)
                                                                 --output-prefix $(arg write_directory)
                                                                 $(arg topics_to_record)'>
-          <param name="rosbag_record_mkdir" command="mkdir -m 777 -p $(arg write_directory)" />
+          <param name="rosbag_record_mkdir" command="mkdir -p $(arg write_directory)" />
     </node>
 
     <node name="rolling_recorder" pkg="rosbag_cloud_recorders" type="rolling_recorder" >
