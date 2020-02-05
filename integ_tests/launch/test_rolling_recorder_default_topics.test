@@ -7,7 +7,7 @@
         <arg name="write_directory" value="$(arg write_directory)" />
     </include>
 
-    <test test-name="TestRollingRecorderCustomTopic" pkg="rosbag_uploader_ros1_integration_tests" type="test_rolling_recorder_default_topics.py">
+    <test test-name="TestRollingRecorderDefaultTopics" pkg="rosbag_uploader_ros1_integration_tests" type="test_rolling_recorder_default_topics.py">
         <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
         <param name="write_directory" value="$(arg write_directory)" />
     </test>
