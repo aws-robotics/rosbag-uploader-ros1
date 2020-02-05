@@ -65,7 +65,8 @@ async function setup() {
 
     await loadROSEnvVariables();
 
-    await exec.exec("rosws", ["update"], getExecOptions());
+    // Download dependencies not in apt if .rosinstall exists
+    await exec.exec("rosws", ["update", "2>/dev/null"], getExecOptions());
   } catch (error) {
     core.setFailed(error.message);
   }
@@ -76,17 +77,19 @@ async function build() {
     await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
 
     const packagesToSkipTests = core.getInput('packages-to-skip-tests');
-    let colconUpToCmakeArgs = [
-        "--packages-up-to",
-      ].concat(packagesToSkipTests.split(" "));
+    let colconUpToCmakeArgs: any = [];
+    if (packagesToSkipTests.length) {
+      colconUpToCmakeArgs = ["--packages-up-to", ].concat(packagesToSkipTests.split(" "));
+    }
     await exec.exec("colcon", ["build"].concat(colconUpToCmakeArgs), getExecOptions());
 
     let colconCmakeArgs: any = []
     if (core.getInput('coverage')) {
-      let colconCmakeArgs = [
-        "--packages-skip",
-      ].concat(packagesToSkipTests.split(" "));
-
+      if (packagesToSkipTests.length) {
+        colconCmakeArgs = [
+          "--packages-skip",
+        ].concat(packagesToSkipTests.split(" "));
+      }
       colconCmakeArgs = colconCmakeArgs.concat([
         "--cmake-args",
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
@@ -136,7 +139,13 @@ async function test() {
     //   PATH
     core.addPath(path.join(workspaceDir, "install", "bin"))
 
-    await exec.exec("colcon", ["test", "--packages-skip", packagesToSkipTests], getExecOptions());
+    let colconArgs: any = []
+    if (packagesToSkipTests.length) {
+      colconArgs = [
+        "--packages-skip",
+      ].concat(packagesToSkipTests.split(" "));
+    }
+    await exec.exec("colcon", ["test"].concat(colconArgs), getExecOptions());
     await exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
 
   } catch (error) {
