@@ -62,14 +62,13 @@ TEST(GetRosBagStartTimeTest, SucceedsOnProperlyFormattedInputs)
     EXPECT_EQ(ros::Time(1579021994), GetRosBagStartTime("dir/dir/2020-01-14-17-13-14.bag"));
     EXPECT_EQ(ros::Time(1579021994), GetRosBagStartTime("dir/dir/2020-01-14-17-13-14_1"));
     EXPECT_EQ(ros::Time(1579021994), GetRosBagStartTime("dir/2020-01-14-17-13-14"));
+    EXPECT_EQ(ros::Time(1579021994), GetRosBagStartTime("dir/_2020-01-14-17-13-14_2.bag"));
 }
 
 TEST(GetRosBagStartTimeTest, ReturnsZeroOnInvalidInput)
 {
     // Input is invalid date is not proper format
     EXPECT_TRUE(GetRosBagStartTime("dir/dir/2020-01-14-17-13-14/1.bag").isZero());
-    // Input is invalid because improperly formatted
-    EXPECT_TRUE(GetRosBagStartTime("extra-2020-01-14-17-13-14_1.bag").isZero());
     // Input is invalid because the date is correctly formatted but is too far in the future
     EXPECT_TRUE(GetRosBagStartTime("3020-01-14-17-13-14_1.bag").isZero());
 }

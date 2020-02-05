@@ -61,12 +61,15 @@ class RollingRecorderTestBase(unittest.TestCase):
         paths_sorted = sorted(paths, key=os.path.getctime, reverse=True)
         return paths_sorted[:count]
 
-    def wait_for_rolling_recorder_nodes(self):
+    def wait_for_rolling_recorder_nodes(self, timeout=5):
         required_nodes = set([
             '/rolling_recorder',
             '/rosbag_record'
         ])
+        start_time = time.time()
         while not required_nodes.issubset(rosnode.get_node_names()):
+            if time.time() > start_time + timeout:
+                raise Exception("Timed out waiting for rolling recorder nodes")
             time.sleep(0.1)
 
     def wait_for_rolling_recorder_node_to_subscribe_to_topic(self):

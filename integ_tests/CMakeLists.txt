@@ -12,6 +12,7 @@ catkin_package(
 install(PROGRAMS
         tests/file_helpers.py
         tests/s3_file_uploader_test_base.py
+        tests/test_periodic_file_deleter.py
         tests/test_s3_file_uploader_general.py
         tests/test_s3_file_uploader_wrong_region.py
         tests/rolling_recorder_test_base.py
