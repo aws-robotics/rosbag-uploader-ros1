@@ -50,6 +50,9 @@ jobs:
       with:
         integ-test-package-name: 'rosbag_uploader_ros1_integration_tests'
         integ-test-launch-files: | 
+          test_periodic_file_deleter.test
+          test_rolling_recorder_custom_topic.test
+          test_rolling_recorder_default_topics.test
           test_s3_file_uploader_general.test
           test_s3_file_uploader_wrong_region.test
         ros-distro: ${{ matrix.distro }}
