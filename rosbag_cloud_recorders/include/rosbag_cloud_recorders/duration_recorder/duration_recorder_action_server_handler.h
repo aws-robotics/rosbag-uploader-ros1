@@ -47,8 +47,10 @@ public:
     options.topics = goal->topics_to_record;
     rosbag_recorder.Run(
       options,
-      [&]()
+      [&goal_handle]()
       {
+        // std::cout << goal_handle << "\n";
+        std::cout << goal_handle.isValid() << "\n";
         recorder_msgs::DurationRecorderFeedback feedback;
         feedback.started = ros::Time::now();
         recorder_msgs::RecorderStatus recording_status;
@@ -56,7 +58,7 @@ public:
         feedback.status = recording_status;
         goal_handle.publishFeedback(feedback);
       },
-      [&](int exit_code)
+      [&goal_handle](int exit_code)
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {

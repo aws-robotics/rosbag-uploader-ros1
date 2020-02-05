@@ -38,7 +38,7 @@ public:
   int run()
   {
     using namespace std::chrono_literals;
-    std::this_thread::sleep_for(100ms);
+    std::this_thread::sleep_for(2000ms);
     return 0;
   }
 };
@@ -67,6 +67,7 @@ TEST(TestRosbagRecorder, TestRosbagRecorderRun)
       post_invoked.set_value(true);
     }
   );
+
   ASSERT_EQ(result, RosbagRecorderRunResult::STARTED);
   ASSERT_TRUE(pre_invoked_f.get());
   ASSERT_TRUE(post_invoked_f.get());
@@ -90,7 +91,7 @@ TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
     [&](int exit_code)
     {
       ASSERT_EQ(exit_code, 0);
-      barrier_future.wait();
+      // barrier_future.wait();
     }
   );
 
@@ -110,7 +111,6 @@ TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
 
   ASSERT_EQ(result, RosbagRecorderRunResult::SKIPPED);
 
-  barrier.set_value();
 
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(1s);

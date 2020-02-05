@@ -54,7 +54,7 @@ class RosbagRecorder
 public:
   explicit RosbagRecorder()
   {
-    std::promise<void> p;
+    std::promise<int> p;
     barrier_ = p.get_future();
   };
 
@@ -74,17 +74,18 @@ public:
       }
       AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
       static auto function_name = __func__;
+      pre_record();
       barrier_ = std::async(std::launch::async, [recorder_options, pre_record, post_record]
         {
-          pre_record();
           T rosbag_recorder(recorder_options);
           int exit_code = rosbag_recorder.run();
           if (exit_code != 0) {
             AWS_LOG_ERROR(function_name, "RosbagRecorder encountered an error");
           }
-          post_record(exit_code);
+          return exit_code;
         }
       );
+      post_record(barrier_.get());
       return RosbagRecorderRunResult::STARTED;
     }
   }
@@ -98,7 +99,7 @@ public:
 
 private:
   mutable std::mutex mutex_;
-  std::future<void> barrier_;
+  std::future<int> barrier_;
 };
 
 }  // namespace Utils

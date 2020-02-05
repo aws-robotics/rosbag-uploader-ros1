@@ -84,6 +84,7 @@ public:
   MOCK_METHOD0(setAccepted, void());
   MOCK_METHOD0(setRejected, void());
   MOCK_METHOD0(setCanceled, void());
+  MOCK_METHOD0(isValid, bool());
   MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<recorder_msgs::DurationRecorderGoal>());
   MOCK_METHOD2(setSucceeded, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
   MOCK_METHOD2(setAborted, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
