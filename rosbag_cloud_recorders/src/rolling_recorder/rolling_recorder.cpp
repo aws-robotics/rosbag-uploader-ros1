@@ -66,7 +66,7 @@ std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
     AWS_LOGSTREAM_DEBUG(__func__, "Checking path: " << path);
     auto bag_start_time = Utils::GetRosBagStartTime(path); 
     AWS_LOGSTREAM_DEBUG(__func__, "Bag start time is: "<< bag_start_time);
-    // TODO: Need to add check path isn't in current goal vector once that's implemented
+    // Need to add check path isn't in current goal vector once that's implemented
     if (bag_start_time != ros::Time(0) && ros::Time::now() - bag_start_time > max_duration_) {
       AWS_LOGSTREAM_DEBUG(__func__, "Marking file for deletion: " << path);
       delete_files.emplace_back(path);
