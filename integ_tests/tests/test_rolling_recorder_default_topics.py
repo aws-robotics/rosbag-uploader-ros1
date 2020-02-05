@@ -82,7 +82,10 @@ class TestRollingRecorderDefaultTopics(RollingRecorderTestBase):
 
         # Ensure that all messages published to this topic are recorded
         self.assertEquals(total_topic_messages, total_test_messages)
-        # Ensure that more than just this topic is recorded
+        # Ensure that more topics than just this topic are recorded
+        # The additional messages will be logs about what the rosbag recorder is doing
+        # published by the rosbag recorder itself, such as Opening/Closing rosbags
+        # as well as any logs this system has written to /rosout. 
         self.assertTrue(total_messages > total_topic_messages)
 
 if __name__ == '__main__':
