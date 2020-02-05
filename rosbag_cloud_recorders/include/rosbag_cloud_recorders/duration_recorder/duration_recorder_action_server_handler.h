@@ -21,7 +21,10 @@
 #include <actionlib/server/action_server.h>
 #include <recorder_msgs/DurationRecorderAction.h>
 
+#include <aws/core/utils/logging/LogMacros.h>
+
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 namespace Aws{
 namespace Rosbag{
@@ -32,12 +35,21 @@ template<typename T>
 class DurationRecorderActionServerHandler
 {
 public:
-  static void DurationRecorderStart(Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder, T& goal_handle)
+  static void DurationRecorderStart(
+    Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder,
+    const DurationRecorderOptions& duration_recorder_options,
+    T& goal_handle)
   {
+    // Used for logging in lambda function
+    static auto current_function = __func__;
+
+    AWS_LOG_INFO(__func__, "Goal received");
     if (rosbag_recorder.IsActive()) {
+      AWS_LOG_INFO(__func__, "Rejecting goal since recorder already active");
       goal_handle.setRejected();
       return;
     }
+    AWS_LOG_INFO(__func__, "Accepted new goal");
     goal_handle.setAccepted();
     const auto & goal = goal_handle.getGoal();
     Utils::RecorderOptions options;
@@ -45,6 +57,8 @@ public:
     options.record_all = false;
     options.max_duration = goal->duration;
     options.topics = goal->topics_to_record;
+    options.prefix = duration_recorder_options.write_directory;
+    
     rosbag_recorder.Run(
       options,
       [goal_handle]() mutable
@@ -60,9 +74,11 @@ public:
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {
+          AWS_LOG_INFO(current_function, "Recorder finished with non zero exit code, aborting goal");
           goal_handle.setAborted(result, "Rosbag recorder encountered errors");
           return;
         }
+        AWS_LOG_INFO(current_function, "Recorder finished successfully");
         // TODO(prasadra): Implement integration with s3_file_uploader;
         goal_handle.setSucceeded(result, "");
       }

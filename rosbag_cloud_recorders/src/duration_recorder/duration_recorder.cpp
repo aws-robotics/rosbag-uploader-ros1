@@ -29,14 +29,19 @@ namespace Aws
 namespace Rosbag
 {
 
-DurationRecorder::DurationRecorder() :
+DurationRecorder::DurationRecorder(): DurationRecorder(DurationRecorderOptions())
+{}
+
+DurationRecorder::DurationRecorder(DurationRecorderOptions duration_recorder_options) :
+  duration_recorder_options_(std::move(duration_recorder_options)),
   node_handle_("~"),
   action_server_(node_handle_, "RosbagDurationRecord", false),
   rosbag_recorder_(std::make_unique<Utils::RosbagRecorder<Utils::Recorder>>())
 {
   action_server_.registerGoalCallback(
     [this](DurationRecorderActionServer::GoalHandle goal_handle) {
-      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::DurationRecorderStart(*rosbag_recorder_, goal_handle);
+      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::DurationRecorderStart(
+        *rosbag_recorder_, duration_recorder_options_, goal_handle);
     }
   );
 

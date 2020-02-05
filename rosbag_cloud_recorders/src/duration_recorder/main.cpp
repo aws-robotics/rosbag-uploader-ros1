@@ -13,18 +13,29 @@
  * permissions and limitations under the License.
  */
 #include <ros/ros.h>
-#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
+#include <aws/core/utils/logging/AWSLogging.h>
 #include <aws/core/utils/logging/LogMacros.h>
 #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
+
+constexpr char kNodeName[] = "rosbag_duration_recorder";
+
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "rosbag_duration_recorder");
-  Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>("RosbagDurationRecorder"));
+  ros::init(argc, argv, kNodeName);
+  Aws::Utils::Logging::InitializeAWSLogging(
+        Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
 
-  Aws::Rosbag::DurationRecorder duration_recorder;
+  Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
+  duration_recorder_options.write_directory = "/tmp/";
+  AWS_LOG_INFO(__func__, "Starting duration recorder");
+
+  Aws::Rosbag::DurationRecorder duration_recorder(duration_recorder_options);
   ros::MultiThreadedSpinner spinner(2);
   spinner.spin();
+  Aws::Utils::Logging::ShutdownAWSLogging();
+  
   return 0;
 }

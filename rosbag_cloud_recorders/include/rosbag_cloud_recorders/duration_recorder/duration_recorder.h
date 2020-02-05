@@ -28,6 +28,12 @@
 namespace Aws {
 namespace Rosbag {
 
+// Will contain option for deleting the rosbag after upload
+struct DurationRecorderOptions
+{
+  std::string write_directory;
+};
+
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
 
 /**
@@ -37,9 +43,11 @@ class DurationRecorder
 {
 public:
   DurationRecorder();
+  explicit DurationRecorder(DurationRecorderOptions duration_recorder_options);
   ~DurationRecorder() = default;
 
 private:
+  DurationRecorderOptions duration_recorder_options_;
   ros::NodeHandle node_handle_;
   DurationRecorderActionServer action_server_;
   std::unique_ptr<Utils::RosbagRecorder<Utils::Recorder>> rosbag_recorder_;
