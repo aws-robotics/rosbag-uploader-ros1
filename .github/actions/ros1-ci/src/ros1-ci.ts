@@ -27,12 +27,23 @@ async function loadROSEnvVariables() {
   ], options)
 }
 
-function getExecOptions(): ExecOptions {
+function getExecOptions(listenerBuffers?): ExecOptions {
+  var listenerBuffers = listenerBuffers || {};
   const workspaceDir = core.getInput('workspace-dir');
   const execOptions: ExecOptions = {
     cwd: workspaceDir,
     env: Object.assign({}, process.env, ROS_ENV_VARIABLES)
   };
+  if (listenerBuffers) {
+    execOptions.listeners = {
+      stdout: (data: Buffer) => {
+        listenerBuffers.stdout += data.toString();
+      },
+      stderr: (data: Buffer) => {
+        listenerBuffers.stderr += data.toString();
+      }
+    };
+  }
   return execOptions
 }
 
@@ -65,10 +76,12 @@ async function setup() {
 
     await loadROSEnvVariables();
 
+    let listenerBuffers = {stdout: '', stderr: ''};
     // Download dependencies not in apt if .rosinstall exists
     if (core.getInput('packages-to-skip-tests').length) {
       // Assume that there's a .rosinstall file iff there are packages that we should not test.
-      await exec.exec("rosws", ["update"], getExecOptions());
+      await exec.exec("rosws", ["update"], getExecOptions(listenerBuffers));
+      console.log(`Captured output: ${listenerBuffers.stdout}`);
     }
   } catch (error) {
     core.setFailed(error.message);
