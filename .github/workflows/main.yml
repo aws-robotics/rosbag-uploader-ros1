@@ -31,7 +31,7 @@ jobs:
         coverage: true
         language: cpp
         packages-to-test: "s3_common s3_file_uploader"
-        packages-to-skip-tests: "aws_common"
+        # Doesn't have to be set explicitly: packages-to-skip-tests: "aws_common"
         ros-distro: ${{ matrix.distro }}
         workspace-dir: ./
     - name: Log Build Failure

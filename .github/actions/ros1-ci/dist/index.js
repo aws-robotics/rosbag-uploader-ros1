@@ -927,6 +927,13 @@ module.exports = require("path");
 
 /***/ }),
 
+/***/ 747:
+/***/ (function(module) {
+
+module.exports = require("fs");
+
+/***/ }),
+
 /***/ 866:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -952,6 +959,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
+const fs = __webpack_require__(747);
 const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES = {};
 const ROS_DISTRO = core.getInput('ros-distro', { required: true });
@@ -1019,13 +1027,34 @@ function setup() {
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
-            let listenerBuffers = { stdout: '', stderr: '' };
+            let colconListBefore = { stdout: '', stderr: '' };
+            let colconListAfter = { stdout: '', stderr: '' };
+            let packagesAddedViaRosws = [];
             // Download dependencies not in apt if .rosinstall exists
-            if (core.getInput('packages-to-skip-tests').length) {
-                // Assume that there's a .rosinstall file iff there are packages that we should not test.
-                yield exec.exec("rosws", ["update"], getExecOptions(listenerBuffers));
-                console.log(`Captured output: ${listenerBuffers.stdout}`);
+            try {
+                if (fs.existsSync(path)) {
+                    // We also need to detect which packages were actually added by rosws, so we can skip testing/linting for them.
+                    yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListBefore));
+                    const packagesBefore = colconListBefore.stdout.split("\n");
+                    yield exec.exec("rosws", ["update"], getExecOptions());
+                    yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListAfter));
+                    const packagesAfter = colconListAfter.stdout.split("\n");
+                    packagesAfter.forEach(packageName => {
+                        if (!packagesBefore.includes(packageName)) {
+                            packagesAddedViaRosws.push(packageName.trim());
+                        }
+                    });
+                }
             }
+            catch (err) {
+                console.error(err);
+            }
+            let packagesToSkipTests = [];
+            if (core.getInput('packages-to-skip-tests').length) {
+                packagesToSkipTests = core.getInput('packages-to-skip-tests').split(" ");
+            }
+            packagesToSkipTests = packagesToSkipTests.concat(packagesAddedViaRosws);
+            core.setOutput('packages-to-skip-tests', packagesToSkipTests.join(" "));
         }
         catch (error) {
             core.setFailed(error.message);
@@ -1037,6 +1066,7 @@ function build() {
         try {
             yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
             const packagesToSkipTests = core.getInput('packages-to-skip-tests');
+            console.log(`Build step | packages-to-skip-tests: ${packagesToSkipTests}`);
             let colconUpToCmakeArgs = [];
             if (packagesToSkipTests.length) {
                 colconUpToCmakeArgs = ["--packages-up-to",].concat(packagesToSkipTests.split(" "));

@@ -3,6 +3,8 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import { ExecOptions } from '@actions/exec/lib/interfaces';
 
+const fs = require('fs');
+
 const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES: any = {};
 const ROS_DISTRO = core.getInput('ros-distro', {required: true});
@@ -76,13 +78,35 @@ async function setup() {
 
     await loadROSEnvVariables();
 
-    let listenerBuffers = {stdout: '', stderr: ''};
+    let colconListBefore = {stdout: '', stderr: ''};
+    let colconListAfter = {stdout: '', stderr: ''};
+    let packagesAddedViaRosws: string[] = [];
     // Download dependencies not in apt if .rosinstall exists
-    if (core.getInput('packages-to-skip-tests').length) {
-      // Assume that there's a .rosinstall file iff there are packages that we should not test.
-      await exec.exec("rosws", ["update"], getExecOptions(listenerBuffers));
-      console.log(`Captured output: ${listenerBuffers.stdout}`);
+    try {
+      if (fs.existsSync(path)) {
+        // We also need to detect which packages were actually added by rosws, so we can skip testing/linting for them.
+        await exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListBefore));
+        const packagesBefore = colconListBefore.stdout.split("\n");
+        await exec.exec("rosws", ["update"], getExecOptions());
+        await exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListAfter));
+        const packagesAfter = colconListAfter.stdout.split("\n");
+        packagesAfter.forEach(packageName => {
+          if (!packagesBefore.includes(packageName)) {
+            packagesAddedViaRosws.push(packageName.trim());
+          }
+        });
+      }
+    } catch(err) {
+      console.error(err);
     }
+
+    let packagesToSkipTests: string[] = [];
+    if (core.getInput('packages-to-skip-tests').length) {
+      packagesToSkipTests = core.getInput('packages-to-skip-tests').split(" ");
+    }
+    packagesToSkipTests = packagesToSkipTests.concat(packagesAddedViaRosws);
+    core.setOutput('packages-to-skip-tests', packagesToSkipTests.join(" "));
+
   } catch (error) {
     core.setFailed(error.message);
   }
@@ -93,6 +117,7 @@ async function build() {
     await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
 
     const packagesToSkipTests = core.getInput('packages-to-skip-tests');
+    console.log(`Build step | packages-to-skip-tests: ${packagesToSkipTests}`);
     let colconUpToCmakeArgs: any = [];
     if (packagesToSkipTests.length) {
       colconUpToCmakeArgs = ["--packages-up-to", ].concat(packagesToSkipTests.split(" "));
