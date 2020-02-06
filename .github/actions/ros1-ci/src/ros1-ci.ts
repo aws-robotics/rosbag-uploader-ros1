@@ -8,6 +8,8 @@ const fs = require('fs');
 const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES: any = {};
 const ROS_DISTRO = core.getInput('ros-distro', {required: true});
+// Optional parameter; Additional packages from a (optional) .rosinstall file will be appended.
+let PACKAGES_TO_SKIP_TESTS = core.getInput('packages-to-skip-tests');
 
 async function loadROSEnvVariables() {
   const options = {
@@ -101,11 +103,11 @@ async function setup() {
     }
 
     let packagesToSkipTests: string[] = [];
-    if (core.getInput('packages-to-skip-tests').length) {
+    if (PACKAGES_TO_SKIP_TESTS.length) {
       packagesToSkipTests = core.getInput('packages-to-skip-tests').split(" ");
     }
     packagesToSkipTests = packagesToSkipTests.concat(packagesAddedViaRosws);
-    core.setOutput('packages-to-skip-tests', packagesToSkipTests.join(" "));
+    PACKAGES_TO_SKIP_TESTS = packagesToSkipTests.join(" ");
 
   } catch (error) {
     core.setFailed(error.message);
@@ -116,20 +118,19 @@ async function build() {
   try {
     await exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
 
-    const packagesToSkipTests = core.getInput('packages-to-skip-tests');
-    console.log(`Build step | packages-to-skip-tests: ${packagesToSkipTests}`);
+    console.log(`Build step | packages-to-skip-tests: ${PACKAGES_TO_SKIP_TESTS}`);
     let colconUpToCmakeArgs: any = [];
-    if (packagesToSkipTests.length) {
-      colconUpToCmakeArgs = ["--packages-up-to", ].concat(packagesToSkipTests.split(" "));
+    if (PACKAGES_TO_SKIP_TESTS.length) {
+      colconUpToCmakeArgs = ["--packages-up-to", ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
     }
     await exec.exec("colcon", ["build"].concat(colconUpToCmakeArgs), getExecOptions());
 
     let colconCmakeArgs: any = []
     if (core.getInput('coverage')) {
-      if (packagesToSkipTests.length) {
+      if (PACKAGES_TO_SKIP_TESTS.length) {
         colconCmakeArgs = [
           "--packages-skip",
-        ].concat(packagesToSkipTests.split(" "));
+        ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
       }
       colconCmakeArgs = colconCmakeArgs.concat([
         "--cmake-args",
@@ -153,7 +154,6 @@ async function test() {
     }
     const workspaceDir = core.getInput('workspace-dir');
     const packagesToTest = core.getInput('packages-to-test');
-    const packagesToSkipTests = core.getInput('packages-to-skip-tests');
 
     if (packagesToTest.length) {
       const colconCmakeTestArgs = [
@@ -181,10 +181,10 @@ async function test() {
     core.addPath(path.join(workspaceDir, "install", "bin"))
 
     let colconArgs: any = []
-    if (packagesToSkipTests.length) {
+    if (PACKAGES_TO_SKIP_TESTS.length) {
       colconArgs = [
         "--packages-skip",
-      ].concat(packagesToSkipTests.split(" "));
+      ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
     }
     await exec.exec("colcon", ["test"].concat(colconArgs), getExecOptions());
     await exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
