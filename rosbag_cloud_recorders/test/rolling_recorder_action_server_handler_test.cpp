@@ -106,7 +106,8 @@ public:
 
   void createRosbagInWriteDirectory(std::vector<std::string> bag_filenames) {
     for (std::string bag_filename : bag_filenames)  {
-      auto bag_file = rosbag::Bag(write_directory + bag_filename, rosbag::bagmode::Write);
+      rosbag::Bag bag_file;
+      bag_file.open(write_directory + bag_filename, rosbag::bagmode::Write);
       std_msgs::String str_msg;
       str_msg.data = std::string("foo");
       bag_file.write("/topic", ros::Time::now(), str_msg);
