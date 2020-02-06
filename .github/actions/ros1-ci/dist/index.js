@@ -976,12 +976,23 @@ function loadROSEnvVariables() {
         ], options);
     });
 }
-function getExecOptions() {
+function getExecOptions(listenerBuffers) {
+    var listenerBuffers = listenerBuffers || {};
     const workspaceDir = core.getInput('workspace-dir');
     const execOptions = {
         cwd: workspaceDir,
         env: Object.assign({}, process.env, ROS_ENV_VARIABLES)
     };
+    if (listenerBuffers) {
+        execOptions.listeners = {
+            stdout: (data) => {
+                listenerBuffers.stdout += data.toString();
+            },
+            stderr: (data) => {
+                listenerBuffers.stderr += data.toString();
+            }
+        };
+    }
     return execOptions;
 }
 function setup() {
@@ -1008,10 +1019,12 @@ function setup() {
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
+            let listenerBuffers = { stdout: '', stderr: '' };
             // Download dependencies not in apt if .rosinstall exists
             if (core.getInput('packages-to-skip-tests').length) {
                 // Assume that there's a .rosinstall file iff there are packages that we should not test.
-                yield exec.exec("rosws", ["update"], getExecOptions());
+                yield exec.exec("rosws", ["update"], getExecOptions(listenerBuffers));
+                console.log(`Captured output: ${listenerBuffers.stdout}`);
             }
         }
         catch (error) {
