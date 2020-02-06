@@ -1,3 +1,4 @@
+# This is only needed until aws_common 2.2.0 gets released.
 - git:
     uri: https://github.com/aws-robotics/utils-common.git
     local-name: utils-common
