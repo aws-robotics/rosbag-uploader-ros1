@@ -32,7 +32,7 @@ template<typename T>
 class DurationRecorderActionServerHandler
 {
 public:
-  static void DurationRecorderStart(Utils::RosbagRecorder<rosbag::Recorder>& rosbag_recorder, T& goal_handle)
+  static void DurationRecorderStart(Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder, T& goal_handle)
   {
     if (rosbag_recorder.IsActive()) {
       goal_handle.setRejected();
@@ -40,7 +40,7 @@ public:
     }
     goal_handle.setAccepted();
     const auto & goal = goal_handle.getGoal();
-    rosbag::RecorderOptions options;
+    Utils::RecorderOptions options;
     // TODO(prasadra): handle invalid input.
     options.record_all = false;
     options.max_duration = goal->duration;

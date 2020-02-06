@@ -44,8 +44,8 @@ enum RosbagRecorderRunResult
  * functions before and after collecting rosbag files for the specified
  * duration.
  * 
- * rosbag::Recorder has non-virtual members that it impractical to extend and
- * therefore hard to mock. RosbagRecorder is therefore wrapping rosbag::recorder
+ * Utils::Recorder has non-virtual members that it impractical to extend and
+ * therefore hard to mock. RosbagRecorder is therefore wrapping Utils::recorder
  * and is also templatized to allow for injection based mocking.
  */
 template<typename T>
@@ -61,7 +61,7 @@ public:
   virtual ~RosbagRecorder() = default;
 
   virtual RosbagRecorderRunResult Run(
-    const rosbag::RecorderOptions& recorder_options,
+    const RecorderOptions& recorder_options,
     const std::function<void()>& pre_record,
     const std::function<void(int)>& post_record
   )
@@ -72,14 +72,13 @@ public:
         AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
         return RosbagRecorderRunResult::SKIPPED;
       }
-      AWS_LOGSTREAM_INFO(__func__, "compression " << recorder_options.compression);
       AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
       static auto function_name = __func__;
       barrier_ = std::async(std::launch::async, [recorder_options, pre_record, post_record]
         {
           pre_record();
           T rosbag_recorder(recorder_options);
-          int exit_code = rosbag_recorder.run();
+          int exit_code = rosbag_recorder.Run();
           if (exit_code != 0) {
             AWS_LOG_ERROR(function_name, "RosbagRecorder encountered an error");
           }

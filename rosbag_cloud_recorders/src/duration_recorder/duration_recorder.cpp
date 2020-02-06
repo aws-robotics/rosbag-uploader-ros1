@@ -32,7 +32,7 @@ namespace Rosbag
 DurationRecorder::DurationRecorder() :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagDurationRecord", false),
-  rosbag_recorder_(std::make_unique<Utils::RosbagRecorder<rosbag::Recorder>>())
+  rosbag_recorder_(std::make_unique<Utils::RosbagRecorder<Utils::Recorder>>())
 {
   action_server_.registerGoalCallback(
     [this](DurationRecorderActionServer::GoalHandle goal_handle) {

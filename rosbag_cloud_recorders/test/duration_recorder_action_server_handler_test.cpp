@@ -37,15 +37,15 @@ MATCHER_P(FeedbackHasStatus, expected_status, "") {
   return expected_status == arg.status.stage;
 }
 
-class MockRosbagRecorder : public Utils::RosbagRecorder<rosbag::Recorder>
+class MockRosbagRecorder : public Utils::RosbagRecorder<Utils::Recorder>
 {
 public:
-  MockRosbagRecorder(): Utils::RosbagRecorder<rosbag::Recorder>() {};
+  MockRosbagRecorder(): Utils::RosbagRecorder<Utils::Recorder>() {};
   ~MockRosbagRecorder() {};
   
   MOCK_CONST_METHOD0(IsActive, bool());
   Utils::RosbagRecorderRunResult Run(
-    const rosbag::RecorderOptions& recorder_options,
+    const Utils::RecorderOptions& recorder_options,
     const std::function<void()>& pre_record,
     const std::function<void(int)>& post_record
   ) {
@@ -55,7 +55,7 @@ public:
     return Utils::RosbagRecorderRunResult::STARTED;
   }
   
-  rosbag::RecorderOptions getOptions() {
+  Utils::RecorderOptions getOptions() {
     return options_;
   }
   
@@ -63,34 +63,86 @@ public:
     rosbag_recorder_exit_code_ = exit_code;
   }
 private:
-  rosbag::RecorderOptions options_;
+  Utils::RecorderOptions options_;
   int rosbag_recorder_exit_code_;
 };
 
-class MockGoalHandle 
+class MockGoalHandle
 {
-public:
-  MockGoalHandle() = default;
-  MockGoalHandle(const MockGoalHandle& copy) {
-    (void) copy;
-  };
-  ~MockGoalHandle()
+  class MockGoalHandleImpl
   {
-  };
-  MOCK_METHOD0(setAccepted, void());
-  MOCK_METHOD0(setRejected, void());
-  MOCK_METHOD0(setCanceled, void());
-  MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<recorder_msgs::DurationRecorderGoal>());
-  MOCK_METHOD2(setSucceeded, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
-  MOCK_METHOD2(setAborted, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
+  public:
+    MockGoalHandleImpl() = default;
+    MockGoalHandleImpl(const MockGoalHandleImpl& copy)
+    {
+      (void) copy;
+    };
+    ~MockGoalHandleImpl()
+    {
+    };
 
-  MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::DurationRecorderFeedback &));
+    MOCK_METHOD0(setAccepted, void());
+    MOCK_METHOD0(setRejected, void());
+    MOCK_METHOD0(setCanceled, void());
+    MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<recorder_msgs::DurationRecorderGoal>());
+    MOCK_METHOD2(setSucceeded, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
+    MOCK_METHOD2(setAborted, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
+
+    MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::DurationRecorderFeedback &));
+  };
+
+public:
+  MockGoalHandle() : goal_handle_impl(std::make_shared<MockGoalHandleImpl>()) {}
+  MockGoalHandle(const MockGoalHandle & copy) = default;
+
+  MockGoalHandleImpl & operator*()
+  {
+    return *goal_handle_impl;
+  }
+
+  void setAccepted()
+  {
+    goal_handle_impl->setAccepted();
+  }
+
+  void setRejected()
+  {
+    goal_handle_impl->setRejected();
+  }
+
+  void setCanceled()
+  {
+    goal_handle_impl->setCanceled();
+  }
+
+  boost::shared_ptr<recorder_msgs::DurationRecorderGoal> getGoal()
+  {
+    return goal_handle_impl->getGoal();
+  }
+
+  void setSucceeded(const recorder_msgs::DurationRecorderResult & result, const std::string & msg)
+  {
+    goal_handle_impl->setSucceeded(result, msg);
+  }
+
+  void setAborted(const recorder_msgs::DurationRecorderResult & result, const std::string & msg)
+  {
+    goal_handle_impl->setAborted(result, msg);
+  }
+
+  void publishFeedback(recorder_msgs::DurationRecorderFeedback & feedback)
+  {
+    goal_handle_impl->publishFeedback(feedback);
+  }
+
+private:
+  std::shared_ptr<MockGoalHandleImpl> goal_handle_impl;
 };
 
 class DurationRecorderActionServerHandlerTests: public ::testing::Test
 {
 protected:
-  std::shared_ptr<MockGoalHandle> goal_handle;
+  MockGoalHandle goal_handle;
   std::unique_ptr<MockRosbagRecorder> rosbag_recorder;
   boost::shared_ptr<recorder_msgs::DurationRecorderGoal> goal;
   ros::Duration duration;
@@ -98,7 +150,6 @@ protected:
 public:
 
   DurationRecorderActionServerHandlerTests():
-    goal_handle(std::make_shared<MockGoalHandle>()),
     goal(new recorder_msgs::DurationRecorderGoal()),
     duration(ros::Duration(5.0)),
     topics_to_record({"/topic1", "/topic2"})
@@ -180,7 +231,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsSuccess();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, goal_handle);
   
   assertRecorderRunWithExpectedOptions();
 }
@@ -193,7 +244,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderFailed)
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsAborted();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, goal_handle);
   
   assertRecorderRunWithExpectedOptions();
 }
@@ -202,13 +253,13 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlread
 {
   givenRecorderActive();
   assertGoalIsRejected();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, *goal_handle);
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, goal_handle);
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestCancelDurationRecorder)
 {
   assertGoalIsCanceled();
-  DurationRecorderActionServerHandler<MockGoalHandle>::CancelDurationRecorder(*goal_handle);
+  DurationRecorderActionServerHandler<MockGoalHandle>::CancelDurationRecorder(goal_handle);
 }
 
 int main(int argc, char ** argv)
