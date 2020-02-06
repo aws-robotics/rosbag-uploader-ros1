@@ -959,6 +959,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
+//const path = require('path');
 const fs = __webpack_require__(747);
 const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES = {};
@@ -1005,6 +1006,34 @@ function getExecOptions(listenerBuffers) {
     }
     return execOptions;
 }
+// If .rosinstall exists, run 'rosws update' and return a list of names of the packages that were added.
+function fetchRosinstallDependencies() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let colconListBefore = { stdout: '', stderr: '' };
+        let colconListAfter = { stdout: '', stderr: '' };
+        let packagesAddedViaRosws = [];
+        // Download dependencies not in apt if .rosinstall exists
+        try {
+            if (fs.existsSync(path.join(core.getInput('workspace-dir'), '.rosinstall'))) {
+                // We also need to detect which packages were actually added by rosws, so we can skip testing/linting for them.
+                yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListBefore));
+                const packagesBefore = colconListBefore.stdout.split("\n");
+                yield exec.exec("rosws", ["update"], getExecOptions());
+                yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListAfter));
+                const packagesAfter = colconListAfter.stdout.split("\n");
+                packagesAfter.forEach(packageName => {
+                    if (!packagesBefore.includes(packageName)) {
+                        packagesAddedViaRosws.push(packageName.trim());
+                    }
+                });
+            }
+        }
+        catch (err) {
+            console.error(err);
+        }
+        return Promise.resolve(packagesAddedViaRosws);
+    });
+}
 function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -1029,33 +1058,11 @@ function setup() {
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
-            let colconListBefore = { stdout: '', stderr: '' };
-            let colconListAfter = { stdout: '', stderr: '' };
-            let packagesAddedViaRosws = [];
-            // Download dependencies not in apt if .rosinstall exists
-            try {
-                if (fs.existsSync(path)) {
-                    // We also need to detect which packages were actually added by rosws, so we can skip testing/linting for them.
-                    yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListBefore));
-                    const packagesBefore = colconListBefore.stdout.split("\n");
-                    yield exec.exec("rosws", ["update"], getExecOptions());
-                    yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListAfter));
-                    const packagesAfter = colconListAfter.stdout.split("\n");
-                    packagesAfter.forEach(packageName => {
-                        if (!packagesBefore.includes(packageName)) {
-                            packagesAddedViaRosws.push(packageName.trim());
-                        }
-                    });
-                }
-            }
-            catch (err) {
-                console.error(err);
-            }
-            let packagesToSkipTests = [];
+            // Get .rosinstall dependencies and update PACKAGES_TO_SKIP_TESTS accordingly.
+            let packagesToSkipTests = yield fetchRosinstallDependencies();
             if (PACKAGES_TO_SKIP_TESTS.length) {
-                packagesToSkipTests = core.getInput('packages-to-skip-tests').split(" ");
+                packagesToSkipTests = packagesToSkipTests.concat(PACKAGES_TO_SKIP_TESTS.split(" "));
             }
-            packagesToSkipTests = packagesToSkipTests.concat(packagesAddedViaRosws);
             PACKAGES_TO_SKIP_TESTS = packagesToSkipTests.join(" ");
         }
         catch (error) {
