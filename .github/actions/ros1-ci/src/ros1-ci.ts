@@ -3,7 +3,6 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import { ExecOptions } from '@actions/exec/lib/interfaces';
 
-//const path = require('path');
 const fs = require('fs');
 
 const COVERAGE_FOLDER_NAME = "coverage";
@@ -61,7 +60,7 @@ async function fetchRosinstallDependencies(): Promise<string[]> {
   // Download dependencies not in apt if .rosinstall exists
   try {
     if (fs.existsSync(path.join(core.getInput('workspace-dir'), '.rosinstall'))) {
-      // We also need to detect which packages were actually added by rosws, so we can skip testing/linting for them.
+      // Detect which packages were actually added by rosws, so we can skip testing/linting for them.
       await exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListBefore));
       const packagesBefore = colconListBefore.stdout.split("\n");
       await exec.exec("rosws", ["update"], getExecOptions());
@@ -76,7 +75,6 @@ async function fetchRosinstallDependencies(): Promise<string[]> {
   } catch(err) {
     console.error(err);
   }
-
   return Promise.resolve(packagesAddedViaRosws);
 }
 
@@ -109,7 +107,7 @@ async function setup() {
 
     await loadROSEnvVariables();
 
-    // Get .rosinstall dependencies and update PACKAGES_TO_SKIP_TESTS accordingly.
+    // Update PACKAGES_TO_SKIP_TESTS with the new packages added by 'rosws update'.
     let packagesToSkipTests = await fetchRosinstallDependencies();
     if (PACKAGES_TO_SKIP_TESTS.length) {
       packagesToSkipTests = packagesToSkipTests.concat(PACKAGES_TO_SKIP_TESTS.split(" "));

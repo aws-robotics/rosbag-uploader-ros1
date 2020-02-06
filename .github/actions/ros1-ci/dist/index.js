@@ -959,7 +959,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
-//const path = require('path');
 const fs = __webpack_require__(747);
 const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES = {};
@@ -1015,7 +1014,7 @@ function fetchRosinstallDependencies() {
         // Download dependencies not in apt if .rosinstall exists
         try {
             if (fs.existsSync(path.join(core.getInput('workspace-dir'), '.rosinstall'))) {
-                // We also need to detect which packages were actually added by rosws, so we can skip testing/linting for them.
+                // Detect which packages were actually added by rosws, so we can skip testing/linting for them.
                 yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListBefore));
                 const packagesBefore = colconListBefore.stdout.split("\n");
                 yield exec.exec("rosws", ["update"], getExecOptions());
@@ -1058,7 +1057,7 @@ function setup() {
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
-            // Get .rosinstall dependencies and update PACKAGES_TO_SKIP_TESTS accordingly.
+            // Update PACKAGES_TO_SKIP_TESTS with the new packages added by 'rosws update'.
             let packagesToSkipTests = yield fetchRosinstallDependencies();
             if (PACKAGES_TO_SKIP_TESTS.length) {
                 packagesToSkipTests = packagesToSkipTests.concat(PACKAGES_TO_SKIP_TESTS.split(" "));
