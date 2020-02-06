@@ -12,13 +12,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import glob
 import os
 import sys
 import time
 import unittest
-
-from std_msgs.msg import String
 
 import rosbag
 import rosnode
@@ -26,14 +23,15 @@ import rospy
 import rostest
 import rostopic
 
+from file_helpers import get_latest_bag_by_regex, get_latest_bags_by_regex
+from std_msgs.msg import String
+
 TEST_NODE_NAME = 'test_rolling_recorder_client'
 ROLLING_RECORDER_NODE_START_TIMEOUT = 5
 
 # Max time it should take for the current bag to go from active to inactive
 # as bags are not immediately rolled switched because of polling delays
 BAG_DEACTIVATE_TIME = 0.5
-
-
 
 class RollingRecorderTestBase(unittest.TestCase):
     @classmethod
@@ -52,15 +50,6 @@ class RollingRecorderTestBase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def get_latest_bag_by_regex(self, regex_pattern):
-        return self.get_latest_bags_by_regex(regex_pattern, 1)[0]
-
-    def get_latest_bags_by_regex(self, regex_pattern, count):
-        files = glob.iglob(os.path.join(self.rosbag_directory, regex_pattern))
-        paths = [os.path.join(self.rosbag_directory, filename) for filename in files]
-        paths_sorted = sorted(paths, key=os.path.getctime, reverse=True)
-        return paths_sorted[:count]
-
     def wait_for_rolling_recorder_nodes(self, timeout=5):
         required_nodes = set([
             '/rolling_recorder',
@@ -74,3 +63,9 @@ class RollingRecorderTestBase(unittest.TestCase):
 
     def wait_for_rolling_recorder_node_to_subscribe_to_topic(self):
         rostopic.wait_for_subscriber(self.test_publisher, ROLLING_RECORDER_NODE_START_TIMEOUT)
+
+    def get_latest_bag_by_regex(self, regex_pattern):
+        return get_latest_bag_by_regex(self.rosbag_directory, regex_pattern)
+
+    def get_latest_bags_by_regex(self, regex_pattern, count):
+        return get_latest_bags_by_regex(self.rosbag_directory, regex_pattern, count)

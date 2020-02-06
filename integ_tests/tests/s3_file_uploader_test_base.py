@@ -14,7 +14,6 @@
 
 import filecmp
 import os
-import sys
 import tempfile
 import unittest
 
@@ -28,8 +27,6 @@ import rostest
 
 from s3_client import S3Client
 
-PKG = 'rosbag_uploader_ros1_integration_tests'
-NAME = 'rosbag_uploader_ros1_integration_tests'
 ACTION = '/s3_file_uploader/UploadFiles'
 TEST_NODE_NAME = 'upload_files_action_client'
 AWS_DEFAULT_REGION = 'us-west-2'
@@ -130,7 +127,3 @@ class S3FileUploaderTestBase(unittest.TestCase):
             self.assertTrue(
                 filecmp.cmp(f.name, temp_file_name),
                 'Local file content did not match uploaded content')
-
-
-if __name__ == '__main__':
-    rostest.rosrun(PKG, NAME, TestS3FileUploader, sys.argv)

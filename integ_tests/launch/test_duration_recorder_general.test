@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find rosbag_cloud_recorders)/launch/duration_recorder.launch">
+    </include>
+
+    <test test-name="TestDurationRecorder" pkg="rosbag_uploader_ros1_integration_tests" type="test_duration_recorder_general.py" />
+</launch>

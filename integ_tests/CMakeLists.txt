@@ -10,15 +10,17 @@ catkin_package(
 ## Install ##
 #############
 install(PROGRAMS
+        tests/duration_recorder_test_base.py
         tests/file_helpers.py
-        tests/s3_file_uploader_test_base.py
+        tests/rolling_recorder_test_base.py
+        tests/test_duration_recorder_general.py
         tests/test_periodic_file_deleter.py
         tests/test_s3_file_uploader_general.py
         tests/test_s3_file_uploader_wrong_region.py
-        tests/rolling_recorder_test_base.py
         tests/test_rolling_recorder_custom_topic.py
         tests/test_rolling_recorder_default_topics.py
         tests/s3_client.py
+        tests/s3_file_uploader_test_base.py
         scripts/setup_test_bucket.sh
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 

@@ -1,8 +1,9 @@
 #Goal
 # Upload destination. No validity checks are done at the time of acceptance
+# // What is this? An s3 bucket? A path inside the S3 bucket?
 string destination
 
-# Duration of time to record for
+# Duration of time in seconds to record for
 # Acceptable values: positive integers
 # If value is invalid goal is rejected
 duration duration
