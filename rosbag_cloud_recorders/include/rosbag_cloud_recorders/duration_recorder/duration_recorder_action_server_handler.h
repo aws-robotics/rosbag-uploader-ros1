@@ -89,6 +89,14 @@ public:
   {
     goal_handle.setCanceled();
   }
+
+  /* Get the bags to upload from the given write directory.
+   * Since the rosbag only records a single file this will just be the latest bag
+   */
+  static std::vector<std::string> GetRosbagsToUpload(std::string write_directory)
+  {
+
+  }
 };
 
 }  // namespace Rosbag
