@@ -17,17 +17,13 @@
 #include <gtest/gtest.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
-
-#include<rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
+#include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
 
-#include <rosbag/recorder.h>
-
 #include <ros/ros.h>
-
-#include<rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
 using namespace Aws::Rosbag;
 

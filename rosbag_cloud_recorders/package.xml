@@ -15,7 +15,9 @@
   <depend>actionlib_msgs</depend>
   <depend>recorder_msgs</depend>
   <depend>roscpp</depend>
-  <depend>rosbag</depend>
+  <depend>rosbag_storage</depend>
+  <depend>topic_tools</depend>
+  <depend>xmlrpcpp</depend>
   <depend>aws_ros1_common</depend>
   <depend>aws_common</depend>
   <depend>file_uploader_msgs</depend>

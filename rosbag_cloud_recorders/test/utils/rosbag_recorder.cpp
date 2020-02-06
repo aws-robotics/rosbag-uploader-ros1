@@ -21,8 +21,6 @@
 #include <mutex>
 #include <thread>
 
-#include <rosbag/recorder.h>
-
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
 using namespace Aws::Rosbag::Utils;

@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 14)
 include(CheckCXXCompilerFlag)
 # Removed -Wmissing-declarations until gmock is ignored
 # Removed -Werror=pedantic until ros.h is fixed
-set(FLAGS -Wno-long-long -Wall -Wextra -Wcast-align -Wcast-qual -Wformat -Wwrite-strings)
+set(FLAGS -Wno-long-long -Wall -Wextra -Wcast-align -Wformat -Wwrite-strings)
 foreach(FLAG ${FLAGS})
   check_cxx_compiler_flag(${FLAG} R${FLAG})
   if(${R${FLAG}})
@@ -21,6 +21,8 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_CXX_FLAGS}")
 
+set(ROSBAG_RECORDER_DEPS topic_tools xmlrpcpp rosbag_storage)
+
 find_package(catkin REQUIRED COMPONENTS
     actionlib
     actionlib_msgs
@@ -29,16 +31,22 @@ find_package(catkin REQUIRED COMPONENTS
     file_uploader_msgs
     recorder_msgs
     roscpp
-    rosbag
+    ${ROSBAG_RECORDER_DEPS}
     roslint
 )
+
+find_package(Boost REQUIRED COMPONENTS date_time regex program_options filesystem)
+find_package(BZip2 REQUIRED)
+
+# Support large bags (>2GB) on 32-bit systems
+add_definitions(-D_FILE_OFFSET_BITS=64)
 
 set(ROSBAG_CLOUD_RECORDER_LIB_TARGET ${PROJECT_NAME}_lib)
 
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
-    CATKIN_DEPENDS actionlib actionlib_msgs recorder_msgs roscpp rosbag file_uploader_msgs
+    CATKIN_DEPENDS actionlib actionlib_msgs recorder_msgs roscpp file_uploader_msgs ${ROSBAG_RECORDER_DEPS}
 )
 
 ###########
@@ -67,10 +75,13 @@ add_library(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     src/rolling_recorder/rolling_recorder.cpp
     src/utils/file_utils.cpp
     src/utils/periodic_file_deleter.cpp
+    src/utils/recorder.cpp
 )
 
 target_link_libraries(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}
     ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${BZIP2_LIBRARIES}
 )
 
 add_dependencies(${ROSBAG_CLOUD_RECORDER_LIB_TARGET}

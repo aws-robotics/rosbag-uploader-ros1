@@ -18,7 +18,7 @@
 #include <actionlib/server/action_server.h>
 #include <ros/ros.h>
 #include <ros/spinner.h>
-#include <rosbag/recorder.h>
+#include <rosbag_cloud_recorders/utils/recorder.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>

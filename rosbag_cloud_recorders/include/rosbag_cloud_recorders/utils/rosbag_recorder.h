@@ -22,7 +22,7 @@
 
 #include <aws/core/utils/logging/LogMacros.h>
 
-#include <rosbag/recorder.h>
+#include <rosbag_cloud_recorders/utils/recorder.h>
 
 namespace Aws
 {
@@ -72,6 +72,7 @@ public:
         AWS_LOG_INFO(__func__, "Failed to run RosbagRecorder, recorder already active");
         return RosbagRecorderRunResult::SKIPPED;
       }
+      AWS_LOGSTREAM_INFO(__func__, "compression " << recorder_options.compression);
       AWS_LOG_INFO(__func__, "Starting a new RosbagRecorder session");
       static auto function_name = __func__;
       barrier_ = std::async(std::launch::async, [recorder_options, pre_record, post_record]
