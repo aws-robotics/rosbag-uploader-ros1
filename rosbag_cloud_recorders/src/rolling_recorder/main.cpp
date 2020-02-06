@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
   }
 
   wordexp_t wordexp_result;
-  wordexp_ros(write_dir, &wordexp_result, 0);
+  wordexp_ros(write_dir.c_str(), &wordexp_result, 0);
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
   Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, *(wordexp_result.we_wordv));
   ros::waitForShutdown();
