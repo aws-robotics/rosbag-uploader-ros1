@@ -28,12 +28,12 @@ using namespace Aws::Rosbag::Utils;
 class MockRecorder
 {
 public:
-  MockRecorder(rosbag::RecorderOptions const& options) {
+  MockRecorder(RecorderOptions const& options) {
     (void) options;
   };
   ~MockRecorder() {};
 
-  int run()
+  int Run()
   {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(100ms);
@@ -43,7 +43,7 @@ public:
 
 TEST(TestRosbagRecorder, TestRosbagRecorderRun)
 {
-  rosbag::RecorderOptions options;
+  RecorderOptions options;
   RosbagRecorder<MockRecorder> rosbag_recorder;
  
   ASSERT_FALSE(rosbag_recorder.IsActive());
@@ -73,7 +73,7 @@ TEST(TestRosbagRecorder, TestRosbagRecorderRun)
 TEST(TestRosbagRecorder, TestRosbagRecorderIsActive)
 {
   RosbagRecorder<MockRecorder> rosbag_recorder;
-  rosbag::RecorderOptions options;
+  RecorderOptions options;
   
   std::promise<void> barrier;
   std::future<void> barrier_future = barrier.get_future();
