@@ -62,8 +62,14 @@ public:
         continue;
       }
       if (dir_entry->path().extension().string() == ".bag") {
-        ros_bags_to_upload.push_back(dir_entry->path().string());
-        AWS_LOG_INFO(__func__, "Adding bag: [%s] to list of bag files to upload.", dir_entry->path().string().c_str());
+        rosbag::Bag ros_bag;
+        ros_bag.open(dir_entry->path().string());
+        rosbag::View view_rosbag(ros_bag);
+        if (time_of_goal_received >= view_rosbag.getBeginTime()) {
+          ros_bags_to_upload.push_back(dir_entry->path().string());
+          AWS_LOG_INFO(__func__, "Adding bag: [%s] to list of bag files to upload.", dir_entry->path().string().c_str());
+        }
+        ros_bag.close();
       }
     }
     return ros_bags_to_upload;

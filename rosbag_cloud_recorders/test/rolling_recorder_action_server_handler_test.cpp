@@ -104,9 +104,13 @@ public:
     EXPECT_CALL(*goal_handle, setAborted(_, _));
   }
 
-  void createRosbagInWriteDirectory(std::vector<std::string> bag_files) {
-    for (std::string bag_file : bag_files)  {
-      std::ofstream new_bag_file(write_directory + bag_file);
+  void createRosbagInWriteDirectory(std::vector<std::string> bag_filenames) {
+    for (std::string bag_filename : bag_filenames)  {
+      auto bag_file = rosbag::Bag(write_directory + bag_filename, rosbag::bagmode::Write);
+      std_msgs::String str_msg;
+      str_msg.data = std::string("foo");
+      bag_file.write("/topic", ros::Time::now(), str_msg);
+      bag_file.close();
     }
   }
 
@@ -136,10 +140,15 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestCancelRollingRecorderRosbagU
 
 TEST_F(RollingRecorderActionServerHandlerTests, TestGetRosbagToUploadMixedFiles)
 {
-  ros::Time time_of_function_called(ros::Time::now());
-  std::vector<std::string> bag_files_to_create{"test1.bag", "nonbagfile", "test2.bag"};
-  createRosbagInWriteDirectory(std::move(bag_files_to_create));
-  EXPECT_THAT(checkGetRosbagsToUploadFileExtensions(time_of_function_called),
+  createRosbagInWriteDirectory(std::vector<std::string>({"test1.bag", "nonbagfile", "test2.bag"}));
+
+  auto goal_received_time = ros::Time::now();
+  // We want to make absolutely sure that bags created after setting goal_received_time will have a later start time. Short sleep will do.
+  std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(10));
+
+  createRosbagInWriteDirectory(std::vector<std::string>({"test_late1.bag", "nonbagfile2", "test_late2.bag"}));
+
+  EXPECT_THAT(checkGetRosbagsToUploadFileExtensions(goal_received_time),
               UnorderedElementsAre(write_directory + "test1.bag", write_directory + "test2.bag"));
 }
 
