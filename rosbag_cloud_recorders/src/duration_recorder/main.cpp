@@ -16,11 +16,14 @@
 
 #include <aws/core/utils/logging/AWSLogging.h>
 #include <aws/core/utils/logging/LogMacros.h>
+#include <aws_common/fs_utils/wordexp_ros.h>
 #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
+#include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 constexpr char kNodeName[] = "rosbag_duration_recorder";
+constexpr char kWriteDirectoryParameter[] = "write_directory";
 
 int main(int argc, char* argv[])
 {
@@ -29,7 +32,19 @@ int main(int argc, char* argv[])
         Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
 
   Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
-  duration_recorder_options.write_directory = "/tmp/";
+
+  std::string write_dir_input;
+  duration_recorder_options.write_directory = "~/.ros/dr_rosbag_uploader";
+
+  auto parameter_reader = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
+  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_dir_input)) {
+    wordexp_t wordexp_result;
+    wordexp_ros(write_dir_input.c_str(), &wordexp_result, 0);
+    if (nullptr != wordexp_result.we_wordv && nullptr != *(wordexp_result.we_wordv)) {
+      duration_recorder_options.write_directory = *(wordexp_result.we_wordv);
+    }
+  }
+
   AWS_LOG_INFO(__func__, "Starting duration recorder");
 
   Aws::Rosbag::DurationRecorder duration_recorder(duration_recorder_options);
