@@ -192,7 +192,6 @@ int Recorder::Run() {
     record_thread.join();
     queue_condition_.notify_all();
 
-    check_master_timer.stop();
     subscribers_.clear();
     currently_recording_.clear();
     queue_.reset();
