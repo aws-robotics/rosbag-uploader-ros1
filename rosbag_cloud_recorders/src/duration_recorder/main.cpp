@@ -12,6 +12,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+#include <cerrno>
 #include <ros/ros.h>
 
 #include <boost/filesystem.hpp>
@@ -35,7 +36,7 @@ bool ExpandAndCreateDir(std::string dir, std::string& expanded_dir)
   if (0 == result && wordexp_result.we_wordc == 1) {
     expanded_dir = *(wordexp_result.we_wordv);
   } else {
-    AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory" << expanded_dir);
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << std::strerror(errno));
     return false;
   }
   if (!boost::filesystem::exists(expanded_dir)) {
