@@ -14,6 +14,8 @@
  */
 #include <ros/ros.h>
 
+#include <boost/filesystem.hpp>
+
 #include <aws/core/utils/logging/AWSLogging.h>
 #include <aws/core/utils/logging/LogMacros.h>
 #include <aws_common/fs_utils/wordexp_ros.h>
@@ -34,15 +36,19 @@ int main(int argc, char* argv[])
   Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
 
   std::string write_dir_input;
-  duration_recorder_options.write_directory = "~/.ros/dr_rosbag_uploader";
+  duration_recorder_options.write_directory = "~/.ros/dr_rosbag_uploader/";
 
   auto parameter_reader = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_dir_input)) {
     wordexp_t wordexp_result;
-    wordexp_ros(write_dir_input.c_str(), &wordexp_result, 0);
-    if (nullptr != wordexp_result.we_wordv && nullptr != *(wordexp_result.we_wordv)) {
+    int result = wordexp_ros(write_dir_input.c_str(), &wordexp_result, 0);
+    // Directory was successfully read and expanded
+    if (0 == result && wordexp_result.we_wordc == 1) {
       duration_recorder_options.write_directory = *(wordexp_result.we_wordv);
     }
+  }
+  if (!boost::filesystem::exists(duration_recorder_options.write_directory)) {
+    boost::filesystem::create_directories(duration_recorder_options.write_directory);
   }
 
   AWS_LOG_INFO(__func__, "Starting duration recorder");
