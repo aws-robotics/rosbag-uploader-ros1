@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cerrno>
 #include <exception>
+#include <functional>
 #include <string>
 #include <unistd.h>
 #include <iostream>
@@ -128,7 +129,7 @@ ros::Time GetRosBagStartTime(const std::string& file_path)
   }
 }
 
-std::vector<std::string> GetRosbagsToUpload(const std::string& search_directory, const boost::function<bool (rosbag::View&)>& select_file)
+std::vector<std::string> GetRosbagsToUpload(const std::string& search_directory, const std::function<bool (rosbag::View&)>& select_file)
 {
   std::vector<std::string> ros_bags_to_upload;
   using boost::filesystem::directory_iterator;
@@ -142,7 +143,6 @@ std::vector<std::string> GetRosbagsToUpload(const std::string& search_directory,
       ros_bag.open(dir_entry->path().string());
       rosbag::View view_rosbag(ros_bag);
       if (select_file(view_rosbag)){
-      //if (time_of_goal_received >= view_rosbag.getBeginTime()) {
         ros_bags_to_upload.push_back(dir_entry->path().string());
         AWS_LOG_INFO(__func__, "Adding bag: [%s] to list of bag files to upload.", dir_entry->path().string().c_str());
       }

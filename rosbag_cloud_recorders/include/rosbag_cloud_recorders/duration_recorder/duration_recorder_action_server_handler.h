@@ -16,14 +16,10 @@
 
 #include <thread>
 
-#include <boost/filesystem.hpp>
-
 #include <ros/ros.h>
 
 #include <actionlib/server/action_server.h>
 #include <recorder_msgs/DurationRecorderAction.h>
-#include <rosbag/bag.h>
-#include <rosbag/view.h>
 
 #include <aws/core/utils/logging/LogMacros.h>
 
@@ -62,7 +58,6 @@ public:
     options.max_duration = goal->duration;
     options.topics = goal->topics_to_record;
     options.prefix = duration_recorder_options.write_directory;
-
     rosbag_recorder.Run(
       options,
       [goal_handle]() mutable

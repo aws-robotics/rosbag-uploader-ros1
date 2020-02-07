@@ -15,7 +15,7 @@
 #pragma once
 
 #include <string>
-
+#include <functional>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
@@ -47,7 +47,7 @@ Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path);
 */
 ros::Time GetRosBagStartTime(const std::string& file_path);
 
-std::vector<std::string> GetRosbagsToUpload(const std::string& write_directory, const boost::function<bool (rosbag::View&)>& select_file);
+std::vector<std::string> GetRosbagsToUpload(const std::string& write_directory, const std::function<bool (rosbag::View&)>& select_file);
 
 }  // namespace Utils
 }  // namespace Rosbag
