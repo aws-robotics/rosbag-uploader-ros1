@@ -28,7 +28,7 @@
 constexpr char kNodeName[] = "rosbag_duration_recorder";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
 
-bool ExpandAndCreateDir(std::string dir, std::string& expanded_dir)
+bool ExpandAndCreateDir(const std::string& dir, std::string& expanded_dir)
 {
   wordexp_t wordexp_result;
   int result = wordexp_ros(dir.c_str(), &wordexp_result, 0);
