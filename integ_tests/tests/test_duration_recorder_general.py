@@ -16,10 +16,14 @@ from functools import partial
 import random
 import string
 import sys
+import threading
 import time
 
+import rosbag
+import rospy
 import rostest
 
+from std_msgs.msg import String
 from recorder_msgs.msg import DurationRecorderResult
 from duration_recorder_test_base import DurationRecorderTestBase
 
@@ -47,7 +51,7 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
     def test_record_specific_topic(self):
         self._create_duration_recorder_action_client()
         start_time = time.time()
-        topic_name = '/my_random_topic_' + self.create_random_word(8) 
+        topic_name = '/my_random_topic_' + create_random_word(8) 
 
         # Start publishing messages on another thread
         initial_delay = 0.5
@@ -63,7 +67,7 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
         self.check_rosbags_were_recorded(start_time, 1)
 
         # Ensure that the rosbag contains all the test messages
-        rosbag = self.get_latest_bag_by_regex("*.bag") 
+        latest_bag = self.get_latest_bag_by_regex("*.bag") 
         total_topic_messages = 0
         bag = rosbag.Bag(latest_bag)
         for topic, msg, _ in bag.read_messages():
@@ -75,12 +79,12 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
         publisher = rospy.Publisher(topic, String, queue_size=total_messages)
         time.sleep(initial_delay)
         for _ in range(total_messages):
-            msg = self.create_random_word() 
+            msg = create_random_word(64) 
             publisher.publish(msg)
             time.sleep(interval)
 
-    def create_random_word(self, length):
-        ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(length)])
+def create_random_word(length):
+    return ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(length)])
 
 
 if __name__ == '__main__':
