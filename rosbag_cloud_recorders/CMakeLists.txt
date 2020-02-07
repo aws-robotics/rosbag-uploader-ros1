@@ -169,9 +169,6 @@ if(CATKIN_ENABLE_TESTING)
     test/utils/rosbag_recorder.cpp
   )
   target_include_directories(test_utils PRIVATE ${TEST_INCLUDE_DIRS})
-  target_link_libraries(test_utils
-    ${GTEST_LIBRARIES}
-    ${PROJECT_NAME}_lib
-  )
+  target_link_libraries(test_utils ${TEST_LINK_LIBS})
 
 endif()

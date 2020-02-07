@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cerrno>
 #include <exception>
+#include <functional>
 #include <string>
 #include <unistd.h>
 #include <iostream>
@@ -24,9 +25,12 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/date_time/local_time_adjustor.hpp>
+#include <boost/filesystem.hpp>
 
 #include <aws/core/utils/logging/LogMacros.h>
 #include <ros/ros.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
 
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
@@ -125,7 +129,28 @@ ros::Time GetRosBagStartTime(const std::string& file_path)
   }
 }
 
-
+std::vector<std::string> GetRosbagsToUpload(const std::string& search_directory, const std::function<bool (rosbag::View&)>& select_file)
+{
+  std::vector<std::string> ros_bags_to_upload;
+  using boost::filesystem::directory_iterator;
+  boost::filesystem::path ros_bag_search_path(search_directory);
+  for (auto dir_entry = directory_iterator(ros_bag_search_path); dir_entry != directory_iterator(); dir_entry++) {
+    if (boost::filesystem::is_directory(dir_entry->path())) {
+      continue;
+    }
+    if (dir_entry->path().extension().string() == ".bag") {
+      rosbag::Bag ros_bag;
+      ros_bag.open(dir_entry->path().string());
+      rosbag::View view_rosbag(ros_bag);
+      if (select_file(view_rosbag)){
+        ros_bags_to_upload.push_back(dir_entry->path().string());
+        AWS_LOG_INFO(__func__, "Adding bag: [%s] to list of bag files to upload.", dir_entry->path().string().c_str());
+      }
+      ros_bag.close();
+    }
+  }
+  return ros_bags_to_upload;
+}
 
 }  // namespace Utils
 }  // namespace Rosbag

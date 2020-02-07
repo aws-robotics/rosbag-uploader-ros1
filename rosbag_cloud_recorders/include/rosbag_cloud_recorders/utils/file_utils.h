@@ -15,8 +15,10 @@
 #pragma once
 
 #include <string>
-
+#include <functional>
 #include <ros/ros.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
 
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
@@ -44,6 +46,8 @@ Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path);
 * @return the time the file was started
 */
 ros::Time GetRosBagStartTime(const std::string& file_path);
+
+std::vector<std::string> GetRosbagsToUpload(const std::string& write_directory, const std::function<bool (rosbag::View&)>& select_file);
 
 }  // namespace Utils
 }  // namespace Rosbag

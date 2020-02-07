@@ -58,7 +58,6 @@ public:
     options.max_duration = goal->duration;
     options.topics = goal->topics_to_record;
     options.prefix = duration_recorder_options.write_directory;
-    
     rosbag_recorder.Run(
       options,
       [goal_handle]() mutable
