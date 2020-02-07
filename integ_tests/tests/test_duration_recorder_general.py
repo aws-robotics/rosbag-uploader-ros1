@@ -38,7 +38,7 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
     def test_record_multiple_times(self):
         self._create_duration_recorder_action_client()
         start_time = time.time()
-        total_recordings = 100
+        total_recordings = 5
         for _ in range(total_recordings):
             action_result = self.record_for_duration(1)
             self.assertEquals(action_result.result.result, RESULT_CODE_SUCCESS)
