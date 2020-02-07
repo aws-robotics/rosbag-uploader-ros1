@@ -52,7 +52,6 @@ public:
   {
     // Reserved for future use
     (void) bag_rollover_time;
-    (void) time_of_goal_received;
 
     std::vector<std::string> ros_bags_to_upload;
     using boost::filesystem::directory_iterator;
