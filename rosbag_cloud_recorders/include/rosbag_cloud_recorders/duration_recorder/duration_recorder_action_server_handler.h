@@ -16,10 +16,14 @@
 
 #include <thread>
 
+#include <boost/filesystem.hpp>
+
 #include <ros/ros.h>
 
 #include <actionlib/server/action_server.h>
 #include <recorder_msgs/DurationRecorderAction.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
 
 #include <aws/core/utils/logging/LogMacros.h>
 
@@ -70,7 +74,7 @@ public:
         feedback.status = recording_status;
         goal_handle.publishFeedback(feedback);
       },
-      [current_function, goal_handle](int exit_code) mutable
+      [goal_handle](int exit_code) mutable
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {
@@ -88,14 +92,6 @@ public:
   static void CancelDurationRecorder(T& goal_handle)
   {
     goal_handle.setCanceled();
-  }
-
-  /* Get the bags to upload from the given write directory.
-   * Since the rosbag only records a single file this will just be the latest bag
-   */
-  static std::vector<std::string> GetRosbagsToUpload(std::string write_directory)
-  {
-
   }
 };
 

@@ -104,25 +104,6 @@ public:
     EXPECT_CALL(*goal_handle, setAborted(_, _));
   }
 
-  void createRosbagInWriteDirectory(std::vector<std::string> bag_filenames) {
-    for (std::string bag_filename : bag_filenames)  {
-      rosbag::Bag bag_file;
-      bag_file.open(write_directory + bag_filename, rosbag::bagmode::Write);
-      std_msgs::String str_msg;
-      str_msg.data = std::string("foo");
-      bag_file.write("/topic", ros::Time::now(), str_msg);
-      bag_file.close();
-    }
-  }
-
-  std::vector<std::string> checkGetRosbagsToUploadFileExtensions(ros::Time time_of_goal_received) {
-    std::vector<std::string> bag_files_in_write_directory = Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::GetRosbagsToUpload(write_directory, bag_rollover_time, time_of_goal_received);
-    for (std::string bag_file_in_write_directory : bag_files_in_write_directory) {
-      EXPECT_EQ(boost::filesystem::extension(bag_file_in_write_directory), ".bag");
-    }
-    return bag_files_in_write_directory;
-  }
-
 };
 
 TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderRosbagUpload)
@@ -137,29 +118,6 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestCancelRollingRecorderRosbagU
   assertGoalIsCanceled();
 
   Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::CancelRollingRecorderRosbagUpload(*goal_handle);
-}
-
-TEST_F(RollingRecorderActionServerHandlerTests, TestGetRosbagToUploadMixedFiles)
-{
-  createRosbagInWriteDirectory(std::vector<std::string>({"test1.bag", "nonbagfile", "test2.bag"}));
-
-  auto goal_received_time = ros::Time::now();
-  // We want to make absolutely sure that bags created after setting goal_received_time will have a later start time. Short sleep will do.
-  std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(10));
-
-  createRosbagInWriteDirectory(std::vector<std::string>({"test_late1.bag", "nonbagfile2", "test_late2.bag"}));
-
-  EXPECT_THAT(checkGetRosbagsToUploadFileExtensions(goal_received_time),
-              UnorderedElementsAre(write_directory + "test1.bag", write_directory + "test2.bag"));
-}
-
-TEST_F(RollingRecorderActionServerHandlerTests, TestGetRosbagToUploadNoEligibleFiles)
-{
-  ros::Time time_of_function_called(ros::Time::now());
-  std::vector<std::string> bag_files_to_create{"test1.bag.test", "test1.bag.random", "test1.bag.how.about.this.Bag", "text_file.txt"};
-  createRosbagInWriteDirectory(std::move(bag_files_to_create));
-  EXPECT_EQ(checkGetRosbagsToUploadFileExtensions(time_of_function_called),
-            std::vector<std::string>({}));
 }
 
 int main(int argc, char ** argv)
