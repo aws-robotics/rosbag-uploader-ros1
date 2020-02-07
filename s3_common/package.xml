@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>s3_common</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>Common utilities for interacting with AWS S3</description>
 
   <author email="ros-contributions@amazon.com">AWS RoboMaker</author>

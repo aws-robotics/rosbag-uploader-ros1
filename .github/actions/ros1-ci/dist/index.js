@@ -927,6 +927,13 @@ module.exports = require("path");
 
 /***/ }),
 
+/***/ 747:
+/***/ (function(module) {
+
+module.exports = require("fs");
+
+/***/ }),
+
 /***/ 866:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -952,9 +959,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
+const fs = __webpack_require__(747);
 const COVERAGE_FOLDER_NAME = "coverage";
 const ROS_ENV_VARIABLES = {};
 const ROS_DISTRO = core.getInput('ros-distro', { required: true });
+// Optional parameter; Additional packages from a (optional) .rosinstall file will be appended.
+let PACKAGES_TO_SKIP_TESTS = core.getInput('packages-to-skip-tests');
 function loadROSEnvVariables() {
     return __awaiter(this, void 0, void 0, function* () {
         const options = {
@@ -976,13 +986,52 @@ function loadROSEnvVariables() {
         ], options);
     });
 }
-function getExecOptions() {
+function getExecOptions(listenerBuffers) {
+    var listenerBuffers = listenerBuffers || {};
     const workspaceDir = core.getInput('workspace-dir');
     const execOptions = {
         cwd: workspaceDir,
         env: Object.assign({}, process.env, ROS_ENV_VARIABLES)
     };
+    if (listenerBuffers) {
+        execOptions.listeners = {
+            stdout: (data) => {
+                listenerBuffers.stdout += data.toString();
+            },
+            stderr: (data) => {
+                listenerBuffers.stderr += data.toString();
+            }
+        };
+    }
     return execOptions;
+}
+// If .rosinstall exists, run 'rosws update' and return a list of names of the packages that were added.
+function fetchRosinstallDependencies() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let colconListBefore = { stdout: '', stderr: '' };
+        let colconListAfter = { stdout: '', stderr: '' };
+        let packagesAddedViaRosws = [];
+        // Download dependencies not in apt if .rosinstall exists
+        try {
+            if (fs.existsSync(path.join(core.getInput('workspace-dir'), '.rosinstall'))) {
+                // Detect which packages were actually added by rosws, so we can skip testing/linting for them.
+                yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListBefore));
+                const packagesBefore = colconListBefore.stdout.split("\n");
+                yield exec.exec("rosws", ["update"], getExecOptions());
+                yield exec.exec("colcon", ["list", "--names-only"], getExecOptions(colconListAfter));
+                const packagesAfter = colconListAfter.stdout.split("\n");
+                packagesAfter.forEach(packageName => {
+                    if (!packagesBefore.includes(packageName)) {
+                        packagesAddedViaRosws.push(packageName.trim());
+                    }
+                });
+            }
+        }
+        catch (err) {
+            console.error(err);
+        }
+        return Promise.resolve(packagesAddedViaRosws);
+    });
 }
 function setup() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -1008,6 +1057,12 @@ function setup() {
             yield exec.exec("sudo", ["pip3", "install", "-U"].concat(python3Packages));
             yield exec.exec("rosdep", ["update"]);
             yield loadROSEnvVariables();
+            // Update PACKAGES_TO_SKIP_TESTS with the new packages added by 'rosws update'.
+            let packagesToSkipTests = yield fetchRosinstallDependencies();
+            if (PACKAGES_TO_SKIP_TESTS.length) {
+                packagesToSkipTests = packagesToSkipTests.concat(PACKAGES_TO_SKIP_TESTS.split(" "));
+            }
+            PACKAGES_TO_SKIP_TESTS = packagesToSkipTests.join(" ");
         }
         catch (error) {
             core.setFailed(error.message);
@@ -1018,16 +1073,27 @@ function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield exec.exec("rosdep", ["install", "--from-paths", ".", "--ignore-src", "-r", "-y", "--rosdistro", ROS_DISTRO], getExecOptions());
+            console.log(`Build step | packages-to-skip-tests: ${PACKAGES_TO_SKIP_TESTS}`);
+            let colconUpToCmakeArgs = [];
+            if (PACKAGES_TO_SKIP_TESTS.length) {
+                colconUpToCmakeArgs = ["--packages-up-to",].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
+            }
+            yield exec.exec("colcon", ["build"].concat(colconUpToCmakeArgs), getExecOptions());
             let colconCmakeArgs = [];
             if (core.getInput('coverage')) {
+                if (PACKAGES_TO_SKIP_TESTS.length) {
+                    colconCmakeArgs = [
+                        "--packages-skip",
+                    ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
+                }
                 colconCmakeArgs = colconCmakeArgs.concat([
                     "--cmake-args",
                     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                     "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
                     "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
                 ]);
+                yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
             }
-            yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
         }
         catch (error) {
             core.setFailed(error.message);
@@ -1063,7 +1129,13 @@ function test() {
             //   their parent directories:
             //   PATH
             core.addPath(path.join(workspaceDir, "install", "bin"));
-            yield exec.exec("colcon", ["test"], getExecOptions());
+            let colconArgs = [];
+            if (PACKAGES_TO_SKIP_TESTS.length) {
+                colconArgs = [
+                    "--packages-skip",
+                ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
+            }
+            yield exec.exec("colcon", ["test"].concat(colconArgs), getExecOptions());
             yield exec.exec("colcon", ["test-result", "--all", "--verbose"], getExecOptions());
         }
         catch (error) {

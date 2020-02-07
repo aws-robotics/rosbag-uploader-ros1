@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(s3_common)
-set(S3_COMMON_VERSION 0.0.0)
+set(S3_COMMON_VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 14)
 

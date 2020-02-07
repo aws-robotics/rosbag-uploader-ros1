@@ -17,6 +17,7 @@
 #include <ros/ros.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
 #include <aws/core/utils/logging/LogMacros.h>
+#include <aws_common/fs_utils/wordexp_ros.h>
 #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 #include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 
@@ -48,8 +49,10 @@ int main(int argc, char* argv[])
     write_dir = write_directory_input;
   }
 
+  wordexp_t wordexp_result;
+  wordexp_ros(write_dir.c_str(), &wordexp_result, 0);
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
-  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_dir);
+  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, *(wordexp_result.we_wordv));
   ros::waitForShutdown();
   AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
   Aws::Utils::Logging::ShutdownAWSLogging();
