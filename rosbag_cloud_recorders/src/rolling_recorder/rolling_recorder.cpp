@@ -55,21 +55,31 @@ RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time,
   periodic_file_deleter_.Start();
 }
 
+void RollingRecorder::UpdateStatus(RollingRecorderStatus status) {
+  status_ = status;
+}
+
 std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
 {
   AWS_LOG_DEBUG(__func__, "Getting ros bags to delete");
-  boost::filesystem::path path(write_directory_);
+  boost::filesystem::path dir_path(write_directory_);
   std::vector<std::string> delete_files;
-  for (boost::filesystem::directory_iterator itr(path);
+  for (boost::filesystem::directory_iterator itr(dir_path);
        itr != boost::filesystem::directory_iterator(); ++itr) {
-    auto path = itr->path().string();
-    AWS_LOGSTREAM_DEBUG(__func__, "Checking path: " << path);
-    auto bag_start_time = Utils::GetRosBagStartTime(path);
+    if (itr->path().extension().string() != ".bag") {
+      continue;
+    }
+    auto file_path = itr->path().string();
+    if (std::count(status_.current_upload_goal.files.begin(), status_.current_upload_goal.files.end(), file_path)) {
+      AWS_LOGSTREAM_DEBUG(__func__, "Skipping deletion of upload candidate: " << file_path);
+      continue;
+    }
+    AWS_LOGSTREAM_DEBUG(__func__, "Checking path: " << file_path);
+    auto bag_start_time = Utils::GetRosBagStartTime(file_path);
     AWS_LOGSTREAM_DEBUG(__func__, "Bag start time is: "<< bag_start_time);
-    // Need to add check path isn't in current goal vector once that's implemented
     if (bag_start_time != ros::Time(0) && ros::Time::now() - bag_start_time > max_duration_) {
-      AWS_LOGSTREAM_DEBUG(__func__, "Marking file for deletion: " << path);
-      delete_files.emplace_back(path);
+      AWS_LOGSTREAM_DEBUG(__func__, "Marking file for deletion: " << file_path);
+      delete_files.emplace_back(file_path);
     }
   }
   return delete_files;
