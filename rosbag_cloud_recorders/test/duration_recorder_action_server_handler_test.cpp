@@ -17,8 +17,10 @@
 #include <gtest/gtest.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
+
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
@@ -147,6 +149,7 @@ protected:
   boost::shared_ptr<recorder_msgs::DurationRecorderGoal> goal;
   ros::Duration duration;
   std::vector<std::string> topics_to_record;
+  Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
 public:
 
   DurationRecorderActionServerHandlerTests():
@@ -231,7 +234,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsSuccess();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, goal_handle);
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, duration_recorder_options, goal_handle);
   
   assertRecorderRunWithExpectedOptions();
 }
@@ -244,7 +247,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderFailed)
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsAborted();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, goal_handle);
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, duration_recorder_options, goal_handle);
   
   assertRecorderRunWithExpectedOptions();
 }
@@ -253,7 +256,8 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlread
 {
   givenRecorderActive();
   assertGoalIsRejected();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, goal_handle);
+
+  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, duration_recorder_options, goal_handle);
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestCancelDurationRecorder)
