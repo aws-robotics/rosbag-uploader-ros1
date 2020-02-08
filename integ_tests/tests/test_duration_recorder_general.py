@@ -24,7 +24,7 @@ import rospy
 import rostest
 
 from std_msgs.msg import String
-from recorder_msgs.msg import DurationRecorderResult
+from recorder_msgs.msg import DurationRecorderResult, DurationRecorderGoal
 from duration_recorder_test_base import DurationRecorderTestBase
 
 PKG = 'rosbag_uploader_ros1_integration_tests'
@@ -52,22 +52,41 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
         self._create_duration_recorder_action_client()
         start_time = time.time()
         topic_name = '/my_random_topic_' + create_random_word(8) 
-
-        # Start publishing messages on another thread
-        initial_delay = 0.5
+        duration = 5
         interval = 0.1
         total_test_messages = 10
-        pub_func = partial(self.publish_periodic_data_to_topic, topic_name, initial_delay, interval, total_test_messages)
-        pub_thread = threading.Thread(name='pub_to_topic', target=pub_func)
-        pub_thread.daemon = True
-        pub_thread.start()
 
-        action_result = self.record_for_duration(2, [topic_name])
+        # Publish some data to the topic before recording is not started.
+        # This data SHOULD NOT be recorded into the rosbag
+        self.publish_periodic_data_to_topic(topic_name, interval, total_test_messages)
+
+        # Start the duration recorder for `duration` seconds
+        goal = DurationRecorderGoal(
+            duration=rospy.Duration.from_sec(duration),
+            topics_to_record=[topic_name]
+        )
+        self.action_client.send_goal(goal)
+
+        # Wait for duration recorder to start recording
+        time.sleep(0.5)
+
+        # Publish some data to that topic
+        self.publish_periodic_data_to_topic(topic_name, interval, total_test_messages)
+
+        # Wait for the duration recorder to finish
+        self.action_client.wait_for_result(rospy.Duration.from_sec(10.0))
+        action_result = self.action_client.get_result()
+
+        # Publish some data to the topic after recording has finished
+        # This data SHOULD NOT be recorded into the rosbag
+        self.publish_periodic_data_to_topic(topic_name, interval, total_test_messages)
+
+        # Ensure the duration recorder created the bag correctly
         self.assertEquals(action_result.result.result, RESULT_CODE_SUCCESS)
         self.check_rosbags_were_recorded(start_time, 1)
 
         # Ensure that the rosbag contains all the test messages
-        latest_bag = self.get_latest_bag_by_regex("*.bag") 
+        latest_bag = self.get_latest_bag_by_regex("*.bag")
         total_topic_messages = 0
         bag = rosbag.Bag(latest_bag)
         for topic, msg, _ in bag.read_messages():
@@ -75,9 +94,8 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
                 total_topic_messages += 1
         self.assertEquals(total_topic_messages, total_test_messages)
     
-    def publish_periodic_data_to_topic(self, topic, initial_delay, interval, total_messages):
+    def publish_periodic_data_to_topic(self, topic, interval, total_messages):
         publisher = rospy.Publisher(topic, String, queue_size=total_messages)
-        time.sleep(initial_delay)
         for _ in range(total_messages):
             msg = create_random_word(64) 
             publisher.publish(msg)
