@@ -56,7 +56,7 @@ RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time,
 }
 
 void RollingRecorder::UpdateStatus(RollingRecorderStatus status) {
-  status_ = status;
+  status_ = std::move(status);
 }
 
 std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
@@ -70,7 +70,9 @@ std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
       continue;
     }
     auto file_path = itr->path().string();
-    if (std::count(status_.current_upload_goal.files.begin(), status_.current_upload_goal.files.end(), file_path)) {
+    if (status_.current_upload_goal.files.end() != std::find(status_.current_upload_goal.files.begin(),
+                                                             status_.current_upload_goal.files.end(),
+                                                             file_path)) {
       AWS_LOGSTREAM_DEBUG(__func__, "Skipping deletion of upload candidate: " << file_path);
       continue;
     }
