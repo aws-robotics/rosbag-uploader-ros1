@@ -16,6 +16,7 @@
 #pragma once
 
 #include <actionlib/server/action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <rosbag_cloud_recorders/utils/recorder.h>
@@ -51,6 +52,7 @@ private:
   ros::NodeHandle node_handle_;
   DurationRecorderActionServer action_server_;
   std::unique_ptr<Utils::RosbagRecorder<Utils::Recorder>> rosbag_recorder_;
+
 };
 
 }  // namespace Rosbag

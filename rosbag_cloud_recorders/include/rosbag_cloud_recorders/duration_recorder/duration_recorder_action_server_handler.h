@@ -24,6 +24,9 @@
 #include <aws/core/utils/logging/LogMacros.h>
 
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
+#include <rosbag_cloud_recorders/utils/file_utils.h>
+#include <rosbag_cloud_recorders/utils/s3_client_utils.h>
+
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 namespace Aws{
@@ -51,6 +54,7 @@ public:
     }
     AWS_LOG_INFO(__func__, "Accepted new goal");
     goal_handle.setAccepted();
+    static ros::Time time_of_goal_received = ros::Time::now();
     const auto & goal = goal_handle.getGoal();
     Utils::RecorderOptions options;
     // TODO(prasadra): handle invalid input.
@@ -63,7 +67,7 @@ public:
       [goal_handle]() mutable
       {
         recorder_msgs::DurationRecorderFeedback feedback;
-        feedback.started = ros::Time::now();
+        feedback.started = time_of_goal_received;
         recorder_msgs::RecorderStatus recording_status;
         recording_status.stage = recorder_msgs::RecorderStatus::RECORDING;
         feedback.status = recording_status;
@@ -77,7 +81,15 @@ public:
           goal_handle.setAborted(result, "Rosbag recorder encountered errors");
           return;
         }
-        AWS_LOG_INFO(current_function, "Recorder finished successfully");
+        AWS_LOG_INFO(current_function, "Recording finished");
+        std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(write_directory,
+              [time_of_goal_received](rosbag::View& rosbag) -> bool
+              {
+                return time_of_goal_received < rosbag.getBeginTime();
+              }
+          );
+        auto goal = Utils::ConstructRosBagUploaderGoal(goal->destination, ros_bags_to_upload);
+
         // TODO(prasadra): Implement integration with s3_file_uploader;
         goal_handle.setSucceeded(result, "");
       }
