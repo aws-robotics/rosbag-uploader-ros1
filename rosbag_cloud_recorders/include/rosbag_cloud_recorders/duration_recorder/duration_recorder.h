@@ -16,14 +16,14 @@
 #pragma once
 
 #include <actionlib/server/action_server.h>
-#include <actionlib/client/simple_action_client.h>
+#include <actionlib/client/action_client.h>
 #include <ros/ros.h>
 #include <ros/spinner.h>
-#include <rosbag_cloud_recorders/utils/recorder.h>
 
+#include <file_uploader_msgs/UploadFilesAction.h>
 #include <recorder_msgs/DurationRecorderAction.h>
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
-
+#include <rosbag_cloud_recorders/utils/recorder.h>
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
 namespace Aws {
@@ -36,7 +36,7 @@ struct DurationRecorderOptions
 };
 
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
-
+using S3FileUploaderActionClient = actionlib::ActionClient<file_uploader_msgs::UploadFilesAction>;
 /**
  *  Duration recorder is a node that responds to actions to record rosbag files
  */
@@ -51,6 +51,7 @@ private:
   DurationRecorderOptions duration_recorder_options_;
   ros::NodeHandle node_handle_;
   DurationRecorderActionServer action_server_;
+  S3FileUploaderActionClient upload_client_;
   std::unique_ptr<Utils::RosbagRecorder<Utils::Recorder>> rosbag_recorder_;
 
 };

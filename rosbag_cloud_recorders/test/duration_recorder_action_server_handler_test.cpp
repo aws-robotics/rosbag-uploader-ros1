@@ -225,7 +225,7 @@ public:
   }
 
 };
-
+/*
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
 {
   givenRecorderNotActive();
@@ -265,7 +265,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestCancelDurationRecorder)
   assertGoalIsCanceled();
   DurationRecorderActionServerHandler<MockGoalHandle>::CancelDurationRecorder(goal_handle);
 }
-
+*/
 int main(int argc, char ** argv)
 {
   ros::Time::init();

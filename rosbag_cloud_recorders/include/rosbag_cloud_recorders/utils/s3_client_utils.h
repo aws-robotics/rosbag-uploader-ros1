@@ -16,6 +16,8 @@
 
 #include <file_uploader_msgs/UploadFilesAction.h>
 
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+
 namespace Aws
 {
 namespace Rosbag
@@ -25,10 +27,10 @@ namespace Utils
 
 file_uploader_msgs::UploadFilesGoal ConstructRosBagUploaderGoal(std::string destination, std::vector<std::string> & ros_bags_to_upload);
 
-RecorderErrorCode SendRosBagUploaderGoal(
+/*RecorderErrorCode SendRosBagUploaderGoal(
   const file_uploader_msgs::UploadFilesGoal & goal,
   std::unique_ptr<T_simple_action_client> & rosbag_uploader_action_client,
-  int & result_code);
+  int & result_code);*/
 
 }  // namespace Utils
 }  // namespace Rosbag

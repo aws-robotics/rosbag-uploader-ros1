@@ -18,21 +18,25 @@
 
 #include <ros/ros.h>
 
+#include <actionlib/client/action_client.h>
+#include <actionlib/client/terminal_state.h>
 #include <actionlib/server/action_server.h>
+
+#include <file_uploader_msgs/UploadFilesAction.h>
 #include <recorder_msgs/DurationRecorderAction.h>
 
 #include <aws/core/utils/logging/LogMacros.h>
 
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 #include <rosbag_cloud_recorders/utils/file_utils.h>
 #include <rosbag_cloud_recorders/utils/s3_client_utils.h>
-
-#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 namespace Aws{
 namespace Rosbag{
 
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
+using S3FileUploaderActionClient = actionlib::ActionClient<file_uploader_msgs::UploadFilesAction>;
 
 template<typename T>
 class DurationRecorderActionServerHandler
@@ -41,6 +45,7 @@ public:
   static void DurationRecorderStart(
     Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder,
     const DurationRecorderOptions& duration_recorder_options,
+    S3FileUploaderActionClient& upload_client,
     T& goal_handle)
   {
     // Used for logging in lambda function
@@ -73,7 +78,7 @@ public:
         feedback.status = recording_status;
         goal_handle.publishFeedback(feedback);
       },
-      [goal_handle](int exit_code) mutable
+      [goal_handle, duration_recorder_options, &upload_client](int exit_code) mutable
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {
@@ -82,14 +87,17 @@ public:
           return;
         }
         AWS_LOG_INFO(current_function, "Recording finished");
-        std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(write_directory,
-              [time_of_goal_received](rosbag::View& rosbag) -> bool
+        std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(duration_recorder_options.write_directory,
+              [](rosbag::View& rosbag) -> bool
               {
                 return time_of_goal_received < rosbag.getBeginTime();
               }
           );
-        auto goal = Utils::ConstructRosBagUploaderGoal(goal->destination, ros_bags_to_upload);
-
+        auto goal = Utils::ConstructRosBagUploaderGoal(goal_handle.getGoal()->destination, ros_bags_to_upload);
+        auto upload_gh = upload_client.sendGoal(goal);
+        while (upload_gh.getCommState() != actionlib::CommState::StateEnum::DONE) {
+          ros::Duration(0.5).sleep();
+        }
         // TODO(prasadra): Implement integration with s3_file_uploader;
         goal_handle.setSucceeded(result, "");
       }
