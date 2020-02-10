@@ -49,12 +49,14 @@ Checks: >
   readability-*,
   -cert-err58-cpp,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-pro-type-vararg,
   -google-runtime-references,
   -hicpp-no-array-decay,
   -hicpp-special-member-functions,
   -hicpp-vararg,
   -misc-misplaced-const,
+  -modernize-pass-by-value,
   -readability-avoid-const-params-in-decls,
   -readability-else-after-return
 
