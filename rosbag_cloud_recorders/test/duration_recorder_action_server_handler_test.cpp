@@ -16,6 +16,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <actionlib/client/client_helpers.h>
+#include <actionlib/client/action_client.h>
+#include <actionlib/client/terminal_state.h>
+
+#include <file_uploader_msgs/UploadFilesAction.h>
 #include <recorder_msgs/DurationRecorderAction.h>
 
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
@@ -24,6 +29,10 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/ref.hpp>
+#include <boost/filesystem.hpp>
+#include <wordexp.h>
+#include <stdio.h>
+#include <string>
 
 #include <ros/ros.h>
 
@@ -33,7 +42,9 @@ using ::testing::Return;
 using ::testing::_;
 using ::testing::Field;
 using ::testing::Property;
-using testing::Eq;
+using ::testing::ReturnRef;
+using ::testing::Const;
+using ::testing::Eq;
 
 MATCHER_P(FeedbackHasStatus, expected_status, "") {
   return expected_status == arg.status.stage;
@@ -69,17 +80,17 @@ private:
   int rosbag_recorder_exit_code_;
 };
 
-class MockGoalHandle
+class MockServerGoalHandle
 {
-  class MockGoalHandleImpl
+  class MockServerGoalHandleImpl
   {
   public:
-    MockGoalHandleImpl() = default;
-    MockGoalHandleImpl(const MockGoalHandleImpl& copy)
+    MockServerGoalHandleImpl() = default;
+    MockServerGoalHandleImpl(const MockServerGoalHandleImpl& copy)
     {
       (void) copy;
     };
-    ~MockGoalHandleImpl()
+    ~MockServerGoalHandleImpl()
     {
     };
 
@@ -94,10 +105,10 @@ class MockGoalHandle
   };
 
 public:
-  MockGoalHandle() : goal_handle_impl(std::make_shared<MockGoalHandleImpl>()) {}
-  MockGoalHandle(const MockGoalHandle & copy) = default;
+  MockServerGoalHandle() : goal_handle_impl(std::make_shared<MockServerGoalHandleImpl>()) {}
+  MockServerGoalHandle(const MockServerGoalHandle & copy) = default;
 
-  MockGoalHandleImpl & operator*()
+  MockServerGoalHandleImpl & operator*()
   {
     return *goal_handle_impl;
   }
@@ -138,18 +149,38 @@ public:
   }
 
 private:
-  std::shared_ptr<MockGoalHandleImpl> goal_handle_impl;
+  std::shared_ptr<MockServerGoalHandleImpl> goal_handle_impl;
 };
+
+/*
+class MockClientGoalHandle//: public actionlib::ClientGoalHandle<file_uploader_msgs::UploadFilesAction>
+{
+public:
+  MOCK_CONST_METHOD0(getCommState, actionlib::CommState::StateEnum());
+};
+
+class MockS3UploadClient
+{
+public:
+  MockS3UploadClient() = default;
+  //MOCK_METHOD1(sendGoal, actionlib::ClientGoalHandle<file_uploader_msgs::UploadFilesAction>(file_uploader_msgs::UploadFilesGoal));
+  MOCK_CONST_METHOD1(sendGoal, const MockClientGoalHandle& (file_uploader_msgs::UploadFilesGoal));
+};*/
 
 class DurationRecorderActionServerHandlerTests: public ::testing::Test
 {
 protected:
-  MockGoalHandle goal_handle;
+  MockServerGoalHandle server_goal_handle;
+  //MockClientGoalHandle client_goal_handle;
+  //actionlib::ClientGoalHandle<file_uploader_msgs::UploadFilesAction> client_goal_handle;
+  //MockS3UploadClient s3_upload_client;
   std::unique_ptr<MockRosbagRecorder> rosbag_recorder;
   boost::shared_ptr<recorder_msgs::DurationRecorderGoal> goal;
   ros::Duration duration;
   std::vector<std::string> topics_to_record;
   Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
+  std::string write_directory;
+  boost::filesystem::path path;
 public:
 
   DurationRecorderActionServerHandlerTests():
@@ -158,22 +189,50 @@ public:
     topics_to_record({"/topic1", "/topic2"})
   {
     rosbag_recorder = std::make_unique<MockRosbagRecorder>();
+    // Setup for fake bags
+    wordexp_t wordexp_result;
+    // Make sure this directory gets created
+    wordexp("~/.ros/dr_handler_test_dir/", &wordexp_result, 0);
+    write_directory = *(wordexp_result.we_wordv);
+    duration_recorder_options.write_directory = write_directory;
+    path = boost::filesystem::path(write_directory);
+  }
+
+  void TearDown() override
+  {
+    // Delete all files in the write directory to clean up
+    boost::filesystem::remove_all(path);
   }
   
+  std::string createRosbagAtTime(ros::Time time)
+  {
+    static int bag_count = 0;
+    rosbag::Bag bag;
+    std::string bag_name = write_directory + "test_bag_" + std::to_string(bag_count);
+    bag.open(bag_name, rosbag::bagmode::Write);
+    std_msgs::String str;
+    str.data = std::string("foo");
+    bag_count++;
+    bag.write("topic", time, str);
+    bag.close();
+    return bag_name;
+  }
+
   void givenDurationRecorderGoal()
   {
     goal->duration = duration;
     goal->topics_to_record = topics_to_record;
-    EXPECT_CALL(*goal_handle, getGoal()).Times(1).WillOnce(Return(goal));
+    EXPECT_CALL(*server_goal_handle, getGoal()).WillRepeatedly(Return(goal));
   }
 
   void givenRecorderActive()
   {
-    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillRepeatedly(Return(true));
+    EXPECT_CALL(*rosbag_recorder, IsActive()).WillRepeatedly(Return(true));
   }
   
   void givenRecorderRanSuccessfully()
   {
+    //createRosbagAtTime(ros::Time::now());
     rosbag_recorder->SetRosbagRecorderExitCode(0);
   }
   
@@ -184,38 +243,44 @@ public:
 
   void givenRecorderNotActive()
   {
-    EXPECT_CALL(*rosbag_recorder, IsActive()).Times(1).WillRepeatedly(Return(false));
+    EXPECT_CALL(*rosbag_recorder, IsActive()).WillRepeatedly(Return(false));
   }
+
+  /*void givenUploadSuccessfull()
+  {
+    EXPECT_CALL(client_goal_handle, getCommState()).WillRepeatedly(Return(actionlib::CommState::StateEnum::DONE));
+    EXPECT_CALL(Const(s3_upload_client), sendGoal(_)).WillOnce(Return(client_goal_handle));
+  }*/
 
   void assertGoalIsRejected()
   {
-    EXPECT_CALL(*goal_handle, setRejected());
+    EXPECT_CALL(*server_goal_handle, setRejected());
   }
   
   void assertGoalIsAccepted()
   {
-    EXPECT_CALL(*goal_handle, setAccepted());
+    EXPECT_CALL(*server_goal_handle, setAccepted());
   }
 
   void assertGoalIsCanceled()
   {
-    EXPECT_CALL(*goal_handle, setCanceled());
+    EXPECT_CALL(*server_goal_handle, setCanceled());
   }
   
   void assertGoalIsSuccess()
   {
-    EXPECT_CALL(*goal_handle, setSucceeded(_, _));
+    EXPECT_CALL(*server_goal_handle, setSucceeded(_, _));
   }
   
   void assertGoalIsAborted()
   {
-    EXPECT_CALL(*goal_handle, setAborted(_, _));
+    EXPECT_CALL(*server_goal_handle, setAborted(_, _));
   }
   
   void assertPublishFeedback()
   {
     recorder_msgs::DurationRecorderFeedback feedback;
-    EXPECT_CALL(*goal_handle, publishFeedback(FeedbackHasStatus(recorder_msgs::RecorderStatus::RECORDING)));
+    EXPECT_CALL(*server_goal_handle, publishFeedback(FeedbackHasStatus(recorder_msgs::RecorderStatus::RECORDING)));
   }
   
   void assertRecorderRunWithExpectedOptions()
@@ -231,10 +296,12 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStart)
   givenRecorderNotActive();
   givenDurationRecorderGoal();
   givenRecorderRanSuccessfully();
+  givenUploadSuccessfull();
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsSuccess();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, duration_recorder_options, goal_handle);
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
   
   assertRecorderRunWithExpectedOptions();
 }
@@ -247,7 +314,8 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderFailed)
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertGoalIsAborted();
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, duration_recorder_options, goal_handle);
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
   
   assertRecorderRunWithExpectedOptions();
 }
@@ -257,13 +325,15 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlread
   givenRecorderActive();
   assertGoalIsRejected();
 
-  DurationRecorderActionServerHandler<MockGoalHandle>::DurationRecorderStart(*rosbag_recorder, duration_recorder_options, goal_handle);
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestCancelDurationRecorder)
 {
   assertGoalIsCanceled();
-  DurationRecorderActionServerHandler<MockGoalHandle>::CancelDurationRecorder(goal_handle);
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::CancelDurationRecorder(
+    server_goal_handle);
 }
 */
 int main(int argc, char ** argv)

@@ -18,7 +18,7 @@
 
 #include <ros/ros.h>
 
-#include <actionlib/client/action_client.h>
+#include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <actionlib/server/action_server.h>
 
@@ -36,17 +36,36 @@ namespace Aws{
 namespace Rosbag{
 
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
-using S3FileUploaderActionClient = actionlib::ActionClient<file_uploader_msgs::UploadFilesAction>;
 
-template<typename T>
+
+
+template<typename GoalHandle_T, typename UploadClient_T>
 class DurationRecorderActionServerHandler
 {
 public:
+  static void HandleDurationRecorderUploadResult(
+    GoalHandle_T goal_handle,
+    const actionlib::SimpleClientGoalState& end_state,
+    file_uploader_msgs::UploadFilesResultConstPtr /*upload_result*/)
+  {
+    recorder_msgs::DurationRecorderResult result;
+    std::string msg;
+    if (end_state != actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) {
+      msg = "Upload failed with message: " + end_state.getText();
+      result.result.result = recorder_msgs::RecorderResult::DEPENDENCY_FAILURE;
+      goal_handle.setAborted(result, msg);
+    } else {
+      result.result.result = recorder_msgs::RecorderResult::SUCCESS;
+      msg = "Upload Succeeded";
+      goal_handle.setSucceeded(result, msg);
+    }
+  }
+
   static void DurationRecorderStart(
     Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder,
     const DurationRecorderOptions& duration_recorder_options,
-    S3FileUploaderActionClient& upload_client,
-    T& goal_handle)
+    UploadClient_T& upload_client,
+    GoalHandle_T& goal_handle)
   {
     // Used for logging in lambda function
     static auto current_function = __func__;
@@ -94,17 +113,14 @@ public:
               }
           );
         auto goal = Utils::ConstructRosBagUploaderGoal(goal_handle.getGoal()->destination, ros_bags_to_upload);
-        auto upload_gh = upload_client.sendGoal(goal);
-        while (upload_gh.getCommState() != actionlib::CommState::StateEnum::DONE) {
-          ros::Duration(0.5).sleep();
-        }
-        // TODO(prasadra): Implement integration with s3_file_uploader;
-        goal_handle.setSucceeded(result, "");
+        upload_client.sendGoal(goal);
+        upload_client.waitForResult();
+        HandleDurationRecorderUploadResult(goal_handle, upload_client.getState(), upload_client.getResult());
       }
     );
   }
 
-  static void CancelDurationRecorder(T& goal_handle)
+  static void CancelDurationRecorder(GoalHandle_T& goal_handle)
   {
     goal_handle.setCanceled();
   }
