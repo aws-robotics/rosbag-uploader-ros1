@@ -45,8 +45,8 @@ class DurationRecorderActionServerHandler
 public:
   static void HandleDurationRecorderUploadResult(
     GoalHandle_T goal_handle,
-    const actionlib::SimpleClientGoalState& end_state,
-    file_uploader_msgs::UploadFilesResultConstPtr /*upload_result*/)
+    const actionlib::SimpleClientGoalState& end_state)//,
+    //file_uploader_msgs::UploadFilesResultConstPtr /*upload_result*/)
   {
     recorder_msgs::DurationRecorderResult result;
     std::string msg;
@@ -115,7 +115,7 @@ public:
         auto goal = Utils::ConstructRosBagUploaderGoal(goal_handle.getGoal()->destination, ros_bags_to_upload);
         upload_client.sendGoal(goal);
         upload_client.waitForResult();
-        HandleDurationRecorderUploadResult(goal_handle, upload_client.getState(), upload_client.getResult());
+        HandleDurationRecorderUploadResult(goal_handle, upload_client.getState());//, upload_client.getResult());
       }
     );
   }
