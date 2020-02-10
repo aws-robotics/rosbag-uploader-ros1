@@ -166,6 +166,7 @@ public:
   //MOCK_METHOD1(sendGoal, actionlib::ClientGoalHandle<file_uploader_msgs::UploadFilesAction>(file_uploader_msgs::UploadFilesGoal));
   MOCK_METHOD1(sendGoal,  void(file_uploader_msgs::UploadFilesGoal));
   MOCK_METHOD0(waitForResult, void());
+  MOCK_METHOD1(waitForResult, bool(ros::Duration));
   MOCK_CONST_METHOD0(waitForServer, void());
   MOCK_CONST_METHOD0(getState, actionlib::SimpleClientGoalState());
 };
@@ -199,12 +200,17 @@ public:
     boost::filesystem::create_directories(write_directory);
     duration_recorder_options.write_directory = write_directory;
     path = boost::filesystem::path(write_directory);
+    duration_recorder_options.upload_timeout_s = -1;
   }
 
   void TearDown() override
   {
     // Delete all files in the write directory to clean up
-    boost::filesystem::remove_all(path);
+    try {
+      boost::filesystem::remove_all(path);
+    } catch (std::exception& e) {
+      AWS_LOGSTREAM_INFO(__func__, "Caught exception: " << e.what());
+    }
   }
   
   std::string createRosbagAtTime(ros::Time time)
