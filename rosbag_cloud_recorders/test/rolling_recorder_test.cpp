@@ -191,6 +191,21 @@ TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(invalid_file_names));
 }
 
+TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
+{
+  GivenRollingRecorder();
+  RollingRecorderStatus status;
+  file_uploader_msgs::UploadFilesGoal upload_goal;
+  upload_goal.files = GivenOldRosBags(3);
+  status.current_upload_goal = upload_goal;
+  // Update the status to include the files and expect them to be protected from deletion.
+  rolling_recorder_->UpdateStatus(status);
+  EXPECT_TRUE(FilesToDeleteContainsNoneOf(upload_goal.files));
+  // Reset the status and expect the files to now be included in the result.
+  rolling_recorder_->UpdateStatus();
+  EXPECT_TRUE(FilesToDeleteContainsAllOf(upload_goal.files));
+}
+
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

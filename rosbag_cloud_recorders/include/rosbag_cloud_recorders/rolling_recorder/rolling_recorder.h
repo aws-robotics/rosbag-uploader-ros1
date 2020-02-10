@@ -37,6 +37,10 @@ using RollingRecorderActionServer = actionlib::ActionServer<recorder_msgs::Rolli
 using GoalHandle = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>::GoalHandle;
 using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploader_msgs::UploadFilesAction>;
 
+struct RollingRecorderStatus {
+  file_uploader_msgs::UploadFilesGoal current_upload_goal;
+};
+
 /**
  * Rolling recorder is a node that responds to actions to record rosbag files
  */
@@ -53,6 +57,11 @@ public:
    */
   std::vector<std::string> GetRosBagsToDelete() const;
 
+  /**
+   * Used by the callback handler to communicate information back to the recorder.
+   */
+  void UpdateStatus(RollingRecorderStatus status = RollingRecorderStatus());
+
 private:
   void StartOldRosBagsPeriodicRemoval();
   file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
@@ -65,6 +74,7 @@ private:
   ros::Duration bag_rollover_time_;
   std::string write_directory_;
   Utils::PeriodicFileDeleter periodic_file_deleter_;
+  RollingRecorderStatus status_;
 };
 
 }  // namespace Rosbag
