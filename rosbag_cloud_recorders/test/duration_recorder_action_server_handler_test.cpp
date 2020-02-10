@@ -194,9 +194,9 @@ public:
     rosbag_recorder = std::make_unique<MockRosbagRecorder>();
     // Setup for fake bags
     wordexp_t wordexp_result;
-    // Make sure this directory gets created
     wordexp("~/.ros/dr_handler_test_dir/", &wordexp_result, 0);
     write_directory = *(wordexp_result.we_wordv);
+    boost::filesystem::create_directories(write_directory);
     duration_recorder_options.write_directory = write_directory;
     path = boost::filesystem::path(write_directory);
   }
@@ -204,7 +204,7 @@ public:
   void TearDown() override
   {
     // Delete all files in the write directory to clean up
-    //boost::filesystem::remove_all(path);
+    boost::filesystem::remove_all(path);
   }
   
   std::string createRosbagAtTime(ros::Time time)
