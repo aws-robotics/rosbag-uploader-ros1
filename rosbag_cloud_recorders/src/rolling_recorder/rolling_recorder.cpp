@@ -16,8 +16,6 @@
 #include <string>
 #include <vector>
 
-#include <actionlib/server/action_server.h>
-#include <actionlib_msgs/GoalID.h>
 #include <boost/filesystem.hpp>
 #include <ros/ros.h>
 
@@ -34,22 +32,20 @@ namespace Aws
 {
 namespace Rosbag
 {
-
 RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time,
   ros::Duration max_record_time, std::string write_directory) :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false),
-  rosbag_uploader_action_client_(std::make_unique<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
+  rosbag_uploader_action_client_(std::make_shared<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
   max_duration_(std::move(max_record_time)),
   bag_rollover_time_(std::move(bag_rollover_time)),
   write_directory_(std::move(write_directory)),
-  periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, bag_rollover_time.toSec())
+  periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, bag_rollover_time.toSec()),
+  action_server_busy_(false)
 {
   action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
-    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::RollingRecorderRosbagUpload(goal_handle, write_directory_, bag_rollover_time_);
-  });
-  action_server_.registerCancelCallback([](RollingRecorderActionServer::GoalHandle goal_handle) {
-    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle>::CancelRollingRecorderRosbagUpload(goal_handle);
+    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(goal_handle,
+      write_directory_, rosbag_uploader_action_client_, action_server_busy_, bag_rollover_time_);
   });
   action_server_.start();
   periodic_file_deleter_.Start();

@@ -16,9 +16,7 @@
 
 #include <string>
 #include <vector>
-
-#include <actionlib/server/action_server.h>
-#include <actionlib/client/simple_action_client.h>
+#include <atomic>
 #include <ros/ros.h>
 
 #include <recorder_msgs/RollingRecorderAction.h>
@@ -26,6 +24,7 @@
 #include <file_uploader_msgs/UploadFilesGoal.h>
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 #include <actionlib/client/simple_action_client.h>
+#include <actionlib/server/action_server.h>
 #include <rosbag_cloud_recorders/utils/periodic_file_deleter.h>
 
 namespace Aws
@@ -34,7 +33,6 @@ namespace Rosbag
 {
 
 using RollingRecorderActionServer = actionlib::ActionServer<recorder_msgs::RollingRecorderAction>;
-using GoalHandle = actionlib::ActionServer<file_uploader_msgs::UploadFilesAction>::GoalHandle;
 using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploader_msgs::UploadFilesAction>;
 
 struct RollingRecorderStatus {
@@ -64,17 +62,17 @@ public:
 
 private:
   void StartOldRosBagsPeriodicRemoval();
-  file_uploader_msgs::UploadFilesGoal ConstructRosBagUploadGoal() const;
-  RecorderErrorCode SendRosBagUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal);
 
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
-  std::unique_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
+  std::shared_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
   ros::Duration max_duration_;
   ros::Duration bag_rollover_time_;
   std::string write_directory_;
   Utils::PeriodicFileDeleter periodic_file_deleter_;
   RollingRecorderStatus status_;
+  std::atomic<bool> action_server_busy_;
+
 };
 
 }  // namespace Rosbag
