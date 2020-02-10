@@ -80,6 +80,8 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     ${S3_UPLOADER_LIB_TARGET}
+    ${aws_common_LIBRARIES}
+    ${catkin_LIBRARIES}
 )
 
 #############
