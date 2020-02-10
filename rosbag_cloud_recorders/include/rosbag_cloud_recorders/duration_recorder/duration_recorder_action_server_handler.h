@@ -39,12 +39,12 @@ using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::Dura
 
 
 
-template<typename GoalHandle_T, typename UploadClient_T>
+template<typename GoalHandleT, typename UploadClientT>
 class DurationRecorderActionServerHandler
 {
 public:
   static void HandleDurationRecorderUploadResult(
-    GoalHandle_T goal_handle,
+    GoalHandleT goal_handle,
     const actionlib::SimpleClientGoalState& end_state)//,
     //file_uploader_msgs::UploadFilesResultConstPtr /*upload_result*/)
   {
@@ -64,8 +64,8 @@ public:
   static void DurationRecorderStart(
     Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder,
     const DurationRecorderOptions& duration_recorder_options,
-    UploadClient_T& upload_client,
-    GoalHandle_T& goal_handle)
+    UploadClientT& upload_client,
+    GoalHandleT& goal_handle)
   {
     // Used for logging in lambda function
     static auto current_function = __func__;
@@ -120,7 +120,7 @@ public:
     );
   }
 
-  static void CancelDurationRecorder(GoalHandle_T& goal_handle)
+  static void CancelDurationRecorder(GoalHandleT& goal_handle)
   {
     goal_handle.setCanceled();
   }

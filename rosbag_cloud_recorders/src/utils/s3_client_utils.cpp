@@ -24,7 +24,6 @@
 #include <rosbag_cloud_recorders/utils/s3_client_utils.h>
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
-constexpr uint32_t kTimeOutInSeconds = 30;
 namespace Aws
 {
 namespace Rosbag
@@ -37,26 +36,9 @@ file_uploader_msgs::UploadFilesGoal ConstructRosBagUploaderGoal(std::string dest
   AWS_LOG_INFO(__func__, "Constructing Uploader Goal.");
   file_uploader_msgs::UploadFilesGoal file_uploader_goal;
   file_uploader_goal.files = ros_bags_to_upload;
-  file_uploader_goal.upload_location = destination;
+  file_uploader_goal.upload_location = std::move(destination);
   return file_uploader_goal;
 }
-
-/*
-RecorderErrorCode SendRosBagUploaderGoal(const file_uploader_msgs::UploadFilesGoal & goal,
-  std::unique_ptr<T_simple_action_client> & rosbag_uploader_action_client,
-  int & result_code)
-{
-  rosbag_uploader_action_client->sendGoal(goal);
-  bool finished_before_timeout = rosbag_uploader_action_client->waitForResult(ros::Duration(kTimeOutInSeconds));
-  if (!finished_before_timeout) {
-    AWS_LOG_WARN(__func__, "Uploading rosbags to S3 did not finish before the time out.");
-    return UPLOADING_TIMED_OUT;
-  }
-
-  AWS_LOG_INFO(__func__, "Uploading rosbags to S3 finished with an code: %d",rosbag_uploader_action_client->getResult()->result_code);
-  result_code = rosbag_uploader_action_client->getResult()->result_code;
-  return SUCCESS;
-}*/
 
 }  // namespace Utils
 }  // namespace Rosbag
