@@ -21,6 +21,8 @@
 #include <boost/filesystem.hpp>
 #include <ros/ros.h>
 #include <std_msgs/String.h>
+
+#include <rosbag/bag.h>
 #include <recorder_msgs/RollingRecorderGoal.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder_action_server_handler.h>
 #include <aws_common/fs_utils/wordexp_ros.h>
@@ -29,6 +31,7 @@
 using namespace Aws::Rosbag;
 
 using ::testing::_;
+using ::testing::Return;
 using ::testing::UnorderedElementsAre;
 
 class MockRollingRecorderGoalHandle
@@ -38,11 +41,11 @@ public:
   MockRollingRecorderGoalHandle(const MockRollingRecorderGoalHandle& copy) {
       (void) copy;
   };
-  MOCK_METHOD0(setRejected, void());
+
   MOCK_METHOD0(setAccepted, void());
-  MOCK_METHOD0(setAborted, void());
-  MOCK_METHOD0(setSucceeded, void());
   MOCK_METHOD0(setCanceled, void());
+
+  MOCK_METHOD2(setRejected, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
   MOCK_METHOD2(setAborted, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
   MOCK_METHOD2(setSucceeded, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
 
@@ -50,12 +53,22 @@ public:
   MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::RollingRecorderFeedback &));
 };
 
+class MockUploadFilesActionSimpleClient : public UploadFilesActionSimpleClient
+{
+public:
+  MockUploadFilesActionSimpleClient() : UploadFilesActionSimpleClient("/s3_file_uploader/UploadFiles", true) {};
+  MOCK_METHOD0(isServerConnected, bool());
+  MOCK_METHOD1(waitForServer, void(const ros::Duration&));
+};
+
 class RollingRecorderActionServerHandlerTests: public ::testing::Test
 {
 protected:
   std::shared_ptr<MockRollingRecorderGoalHandle> goal_handle;
   std::shared_ptr<recorder_msgs::RollingRecorderGoal> goal;
+  std::atomic<bool> action_server_busy;
   std::string write_directory;
+  std::shared_ptr<MockUploadFilesActionSimpleClient> rosbag_uploader_action_client;
   ros::Duration bag_rollover_time;
   boost::filesystem::path path;
 
@@ -63,6 +76,8 @@ public:
   RollingRecorderActionServerHandlerTests():
     goal_handle(std::make_shared<MockRollingRecorderGoalHandle>()),
     goal(new recorder_msgs::RollingRecorderGoal()),
+    action_server_busy(false),
+    rosbag_uploader_action_client(std::make_shared<MockUploadFilesActionSimpleClient>()),
     bag_rollover_time(ros::Duration(10, 0))
   {
     wordexp_t wordexp_result;
@@ -78,14 +93,15 @@ public:
     boost::filesystem::create_directories(path);
   }
 
-  void TearDown() override
-  {
+  void TearDown() override {
+    goal->destination = "";
+    action_server_busy = false;
     // Delete all files in the write directory for cleaning up
     boost::filesystem::remove_all(path);
   }
 
   void assertGoalIsRejected() {
-    EXPECT_CALL(*goal_handle, setRejected());
+    EXPECT_CALL(*goal_handle, setRejected(_, _));
   }
 
   void assertGoalIsAccepted() {
@@ -103,27 +119,43 @@ public:
   void assertGoalIsAborted() {
     EXPECT_CALL(*goal_handle, setAborted(_, _));
   }
-
 };
 
-TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderRosbagUpload)
+TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderRosbagUpload_ActionServerIsBusy)
 {
+  // Test when action server is processing a goal
+  action_server_busy = true;
+
   assertGoalIsRejected();
 
-  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::RollingRecorderRosbagUpload(*goal_handle, write_directory, bag_rollover_time);
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockUploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(*goal_handle,
+    write_directory, rosbag_uploader_action_client, action_server_busy, bag_rollover_time);
 }
 
-TEST_F(RollingRecorderActionServerHandlerTests, TestCancelRollingRecorderRosbagUpload)
-{
-  assertGoalIsCanceled();
-
-  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::CancelRollingRecorderRosbagUpload(*goal_handle);
-}
+//TODO(abbyxu): uuncomment once GetRosbagsToUpload is integrated
+// TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderRosbagUpload_UploaderActionServerIsUnavailable)
+// {
+//   EXPECT_CALL(*goal_handle, getGoal())
+//       .WillOnce(Return(goal));
+//   EXPECT_CALL(*rosbag_uploader_action_client, isServerConnected())
+//       .WillOnce(Return(false));
+//
+//   std::vector<std::string> bag_filenames;
+//   bag_filenames.emplace_back("test_UploaderActionServerIsUnavailable.bag");
+//   createRosbagInWriteDirectory(bag_filenames);
+//   goal->destination = write_directory;  //  Inorder to run this test, make sure destination does not contain any bag files
+//
+//   assertGoalIsAborted();
+//
+//   Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockUploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(*goal_handle,
+//     write_directory, rosbag_uploader_action_client, action_server_busy);
+// }
 
 int main(int argc, char ** argv)
 {
-    ros::Time::init();
-    ::testing::InitGoogleTest(&argc, argv);
-    auto result = RUN_ALL_TESTS();
-    return result;
+  ros::init(argc, argv, "test_rosbag_rolling_recorder");
+  ros::Time::init();
+  ::testing::InitGoogleTest(&argc, argv);
+  auto result = RUN_ALL_TESTS();
+  return result;
 }
