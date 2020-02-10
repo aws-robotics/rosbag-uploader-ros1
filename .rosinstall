@@ -3,3 +3,7 @@
     uri: https://github.com/aws-robotics/utils-common.git
     local-name: ./deps/utils-common
     version: master
+- git:
+    uri: https://github.com/aws-robotics/utils-ros1.git
+    local-name: ./deps/utils-ros1
+    version: master
