@@ -101,7 +101,7 @@ class MockServerGoalHandle
     MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<recorder_msgs::DurationRecorderGoal>());
     MOCK_METHOD2(setSucceeded, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
     MOCK_METHOD2(setAborted, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
-
+    MOCK_METHOD2(setRejected, void(const recorder_msgs::DurationRecorderResult&, const std::string &));
     MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::DurationRecorderFeedback &));
   };
 
@@ -142,6 +142,11 @@ public:
   void setAborted(const recorder_msgs::DurationRecorderResult & result, const std::string & msg)
   {
     goal_handle_impl->setAborted(result, msg);
+  }
+
+  void setRejected(const recorder_msgs::DurationRecorderResult & result, const std::string & msg)
+  {
+    goal_handle_impl->setRejected(result, msg);
   }
 
   void publishFeedback(recorder_msgs::DurationRecorderFeedback & feedback)
@@ -225,6 +230,18 @@ public:
     EXPECT_CALL(*server_goal_handle, getGoal()).WillRepeatedly(Return(goal));
   }
 
+  void givenDurationRecorderGoalWithInvalidDuration()
+  {
+    duration = ros::Duration(-1);
+    givenDurationRecorderGoal();
+  }
+
+  void givenDurationRecorderGoalWithInvalidTopics()
+  {
+    topics_to_record = {};
+    givenDurationRecorderGoal();
+  }
+
   void givenRecorderActive()
   {
     EXPECT_CALL(*rosbag_recorder, IsActive()).WillRepeatedly(Return(true));
@@ -278,7 +295,7 @@ public:
 
   void assertGoalIsRejected()
   {
-    EXPECT_CALL(*server_goal_handle, setRejected());
+    EXPECT_CALL(*server_goal_handle, setRejected(_, _));
   }
   
   void assertGoalIsAccepted()
@@ -359,6 +376,24 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderFailed)
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
   
   assertRecorderRunWithExpectedOptions();
+}
+
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderInvalidDurationGoalFails)
+{
+  givenRecorderNotActive();
+  givenDurationRecorderGoalWithInvalidDuration();
+  assertGoalIsRejected();
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
+}
+
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderInvalidTopicGoalFails)
+{
+  givenRecorderNotActive();
+  givenDurationRecorderGoalWithInvalidTopics();
+  assertGoalIsRejected();
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlreadyActive)

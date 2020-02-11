@@ -14,9 +14,11 @@
  */
 #pragma once
 
+#include <sstream>
 #include <thread>
 
 #include <ros/ros.h>
+#include <ros/duration.h>
 
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
@@ -112,6 +114,27 @@ private:
     HandleDurationRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished);
   }
 
+  static bool ValidateGoal(GoalHandleT& goal_handle)
+  {
+    const auto & goal = goal_handle.getGoal();
+    std::stringstream msg;
+    recorder_msgs::DurationRecorderResult result;
+    result.result.result = recorder_msgs::RecorderResult::INVALID_INPUT;
+    if (goal->duration < ros::Duration(0) || goal->duration > ros::DURATION_MAX) {      
+      msg << "Goal rejected. Invalid record duration given: " << goal->duration;
+      AWS_LOG_INFO(__func__, msg.str().c_str());
+      goal_handle.setRejected(result, msg.str()); 
+      return false;
+    }
+    if (goal->topics_to_record.empty()) {
+      msg << "Invalid list of topics to record. No topics given.";
+      AWS_LOG_INFO(__func__, msg.str().c_str());
+      goal_handle.setRejected(result, msg.str());
+      return false;
+    }
+    return true;
+  }
+
 public:
   static void DurationRecorderStart(
     Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder,
@@ -125,15 +148,21 @@ public:
 
     AWS_LOG_INFO(__func__, "Goal received");
     if (rosbag_recorder.IsActive()) {
-      AWS_LOG_INFO(__func__, "Rejecting goal since recorder already active");
-      goal_handle.setRejected();
+      std::string msg = "Rejecting goal since recorder already active";
+      AWS_LOG_INFO(__func__, msg.c_str());
+      goal_handle.setRejected(recorder_msgs::DurationRecorderResult(), msg);
       return;
     }
+
+    if (!ValidateGoal(goal_handle)) {
+      // Goal was invalid and rejected
+      return;
+    }
+
     AWS_LOG_INFO(__func__, "Accepted new goal");
     goal_handle.setAccepted();
     const auto & goal = goal_handle.getGoal();
     Utils::RecorderOptions options;
-    // TODO(prasadra): handle invalid input.
     options.record_all = false;
     options.max_duration = goal->duration;
     options.topics = goal->topics_to_record;
