@@ -86,7 +86,7 @@ public:
             return time_of_goal_received < rosbag.getBeginTime();
           }
       );
-    auto goal = Utils::ConstructRosBagUploaderGoal(destination, ros_bags_to_upload);
+    auto goal = Utils::ConstructRosBagUploaderGoal(std::move(destination), ros_bags_to_upload);
     upload_client.sendGoal(goal);
     bool upload_finished = true;
     if (duration_recorder_options.upload_timeout_s > 0) {

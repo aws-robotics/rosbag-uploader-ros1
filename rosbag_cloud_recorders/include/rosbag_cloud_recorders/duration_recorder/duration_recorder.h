@@ -33,7 +33,7 @@ namespace Rosbag {
 struct DurationRecorderOptions
 {
   std::string write_directory;
-  double upload_timeout_s;
+  double upload_timeout_s {0};
 };
 
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
