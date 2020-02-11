@@ -1,9 +1,9 @@
 # This is only needed until aws_common 2.2.0 gets released.
 - git:
     uri: https://github.com/aws-robotics/utils-common.git
-    local-name: ./deps/utils-common
+    local-name: utils-common
     version: master
 - git:
     uri: https://github.com/aws-robotics/utils-ros1.git
-    local-name: ./deps/utils-ros1
+    local-name: utils-ros1
     version: master
