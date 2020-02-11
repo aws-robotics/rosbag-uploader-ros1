@@ -42,7 +42,20 @@ using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::Dura
 template<typename GoalHandleT, typename UploadClientT>
 class DurationRecorderActionServerHandler
 {
-public:
+private:
+  static void PublishFeedback(
+    GoalHandleT goal_handle,
+    ros::Time time_of_goal_received,
+    int stage)
+  {
+    recorder_msgs::DurationRecorderFeedback feedback;
+    feedback.started = time_of_goal_received;
+    recorder_msgs::RecorderStatus recording_status;
+    recording_status.stage = stage;
+    feedback.status = recording_status;
+    goal_handle.publishFeedback(feedback);
+  }
+
   // Receives the result from the upload goal and updates the DurationRecorder goal handle
   static void HandleDurationRecorderUploadResult(
     GoalHandleT goal_handle,
@@ -97,6 +110,7 @@ public:
     HandleDurationRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished);
   }
 
+public:
   static void DurationRecorderStart(
     Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder,
     const DurationRecorderOptions& duration_recorder_options,
@@ -126,12 +140,7 @@ public:
       options,
       [goal_handle]() mutable
       {
-        recorder_msgs::DurationRecorderFeedback feedback;
-        feedback.started = time_of_goal_received;
-        recorder_msgs::RecorderStatus recording_status;
-        recording_status.stage = recorder_msgs::RecorderStatus::RECORDING;
-        feedback.status = recording_status;
-        goal_handle.publishFeedback(feedback);
+        PublishFeedback(goal_handle, time_of_goal_received, recorder_msgs::RecorderStatus::RECORDING);
       },
       [goal_handle, duration_recorder_options, &upload_client](int exit_code) mutable
       {
