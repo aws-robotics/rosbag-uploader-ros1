@@ -65,15 +65,15 @@ private:
     recorder_msgs::DurationRecorderResult result;
     std::string msg;
     if (!upload_finished) {
-      msg = "Upload timed out.";
-      result.result.result = recorder_msgs::RecorderResult::DEPENDENCY_FAILURE;
+      msg = "File Uploader timed out.";
+      result.result.result = recorder_msgs::RecorderResult::UPLOADER_TIMEOUT;
       goal_handle.setAborted(result, msg);
       AWS_LOG_WARN(__func__, msg.c_str());
       return;
     }
     if (end_state != actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) {
       msg = "Upload failed with message: " + end_state.getText();
-      result.result.result = recorder_msgs::RecorderResult::UPLOAD_TIMEOUT;
+      result.result.result = recorder_msgs::RecorderResult::DEPENDENCY_FAILURE;
       goal_handle.setAborted(result, msg);
       AWS_LOG_ERROR(__func__, msg.c_str());
     } else {
@@ -121,7 +121,7 @@ public:
   {
     // Used for logging in lambda function
     static auto current_function = __func__;
-    static ros::Time time_of_goal_received = ros::Time::now();
+    ros::Time time_of_goal_received = ros::Time::now();
 
     AWS_LOG_INFO(__func__, "Goal received");
     if (rosbag_recorder.IsActive()) {
@@ -140,11 +140,11 @@ public:
     options.prefix = duration_recorder_options.write_directory;
     rosbag_recorder.Run(
       options,
-      [goal_handle]() mutable
+      [goal_handle, time_of_goal_received]() mutable
       {
         PublishFeedback(goal_handle, time_of_goal_received, recorder_msgs::RecorderStatus::RECORDING);
       },
-      [goal_handle, duration_recorder_options, &upload_client](int exit_code) mutable
+      [goal_handle, duration_recorder_options, time_of_goal_received, &upload_client](int exit_code) mutable
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {
