@@ -16,6 +16,7 @@ env:
     - ROS_DISTRO="melodic" PRERELEASE=true UPSTREAM_WORKSPACE=file ROSINSTALL_FILENAME=".rosinstall"
 install:
   - if [ "$PRERELEASE" == "true" ]; then git clone https://github.com/aws-robotics/utils-common utils-common && git clone https://github.com/aws-robotics/utils-ros1 utils-ros1; fi
+  - if [ "$PRERELEASE" == "true" ] && [ -f $ROS_DISTRO.ignored ]; then cat $ROS_DISTRO.ignored | xargs rm -rf ./{}; fi
   - git clone https://github.com/ros-industrial/industrial_ci.git .ros_ci
 script:
   - .ros_ci/travis.sh
