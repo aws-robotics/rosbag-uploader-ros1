@@ -105,6 +105,7 @@ public:
   {
     // Used for logging in lambda function
     static auto current_function = __func__;
+    static ros::Time time_of_goal_received = ros::Time::now();
 
     AWS_LOG_INFO(__func__, "Goal received");
     if (rosbag_recorder.IsActive()) {
@@ -114,7 +115,6 @@ public:
     }
     AWS_LOG_INFO(__func__, "Accepted new goal");
     goal_handle.setAccepted();
-    static ros::Time time_of_goal_received = ros::Time::now();
     const auto & goal = goal_handle.getGoal();
     Utils::RecorderOptions options;
     // TODO(prasadra): handle invalid input.
