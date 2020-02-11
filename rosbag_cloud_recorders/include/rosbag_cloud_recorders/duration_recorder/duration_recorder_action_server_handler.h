@@ -96,6 +96,8 @@ private:
     std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(duration_recorder_options.write_directory,
           [time_of_goal_received](rosbag::View& rosbag) -> bool
           {
+            // Select bags that were recorded during this duration recorder goal.
+            // Older bags may be left over from previous runs of the recorder.
             return time_of_goal_received < rosbag.getBeginTime();
           }
       );
