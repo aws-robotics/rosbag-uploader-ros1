@@ -66,7 +66,8 @@ int main(int argc, char* argv[])
     write_dir_input = "~/.ros/dr_rosbag_uploader/";
   }
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kUploadTimeoutParameter), duration_recorder_options.upload_timeout_s)) {
-    duration_recorder_options.upload_timeout_s = -1;
+    // Default to 60 min timeout
+    duration_recorder_options.upload_timeout_s = 3600;
   }
 
   
