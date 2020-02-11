@@ -27,6 +27,7 @@
 
 constexpr char kNodeName[] = "rosbag_duration_recorder";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
+constexpr char kUploadTimeoutParameter[] = "upload_timeout_s";
 
 bool ExpandAndCreateDir(const std::string& dir, std::string& expanded_dir)
 {
@@ -55,6 +56,8 @@ int main(int argc, char* argv[])
   Aws::Utils::Logging::InitializeAWSLogging(
         Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
 
+  Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
+
   std::string write_dir_input;
   std::string write_dir;
 
@@ -62,8 +65,12 @@ int main(int argc, char* argv[])
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_dir_input)) {
     write_dir_input = "~/.ros/dr_rosbag_uploader/";
   }
+  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kUploadTimeoutParameter), duration_recorder_options.upload_timeout_s)) {
+    // Default to 60 min timeout
+    duration_recorder_options.upload_timeout_s = 3600;
+  }
 
-  Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
+  
   int result_code = 1;
   if (ExpandAndCreateDir(write_dir_input, write_dir)) {
     duration_recorder_options.write_directory = write_dir;

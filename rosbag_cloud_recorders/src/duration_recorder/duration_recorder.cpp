@@ -14,20 +14,24 @@
  */
 
 #include <actionlib/server/action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <actionlib_msgs/GoalID.h>
 #include <ros/ros.h>
-#include <rosbag_cloud_recorders/utils/recorder.h>
 
 #include <recorder_msgs/DurationRecorderAction.h>
-#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
-#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
+#include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder_action_server_handler.h>
+#include <rosbag_cloud_recorders/utils/recorder.h>
+#include <rosbag_cloud_recorders/recorder_common_error_codes.h>
+
 
 namespace Aws
 {
 namespace Rosbag
 {
+
+using S3FileUploaderActionClient = actionlib::ActionClient<file_uploader_msgs::UploadFilesAction>;
 
 DurationRecorder::DurationRecorder(): DurationRecorder(DurationRecorderOptions())
 {}
@@ -36,18 +40,19 @@ DurationRecorder::DurationRecorder(DurationRecorderOptions duration_recorder_opt
   duration_recorder_options_(std::move(duration_recorder_options)),
   node_handle_("~"),
   action_server_(node_handle_, "RosbagDurationRecord", false),
+  upload_client_("/s3_file_uploader/UploadFiles", true),
   rosbag_recorder_(std::make_unique<Utils::RosbagRecorder<Utils::Recorder>>())
 {
   action_server_.registerGoalCallback(
-    [this](DurationRecorderActionServer::GoalHandle goal_handle) {
-      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::DurationRecorderStart(
-        *rosbag_recorder_, duration_recorder_options_, goal_handle);
+    [&](DurationRecorderActionServer::GoalHandle goal_handle) {
+      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle, S3FileUploaderSimpleActionClient>::DurationRecorderStart(
+        *rosbag_recorder_, duration_recorder_options_, upload_client_, goal_handle);
     }
   );
 
   action_server_.registerCancelCallback(
     [](DurationRecorderActionServer::GoalHandle goal_handle) {
-      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle>::CancelDurationRecorder(goal_handle);
+      DurationRecorderActionServerHandler<DurationRecorderActionServer::GoalHandle, S3FileUploaderSimpleActionClient>::CancelDurationRecorder(goal_handle);
     }
   );
   action_server_.start();

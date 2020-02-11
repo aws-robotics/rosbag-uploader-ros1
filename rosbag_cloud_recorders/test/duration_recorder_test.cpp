@@ -29,7 +29,7 @@ using namespace Aws::Rosbag;
 
 using DurationRecorderActionClient = actionlib::ActionClient<recorder_msgs::DurationRecorderAction>;
 
-class DurationRecorderNodeFixture : public ::testing::Test
+class DurationRecorderNodeTest : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -43,7 +43,7 @@ protected:
   std::shared_ptr<Aws::Rosbag::DurationRecorder> duration_recorder_;
 };
 
-TEST_F(DurationRecorderNodeFixture, TestActionReceivedbyActionServer)
+TEST_F(DurationRecorderNodeTest, TestActionReceivedbyActionServer)
 {
   ros::AsyncSpinner executor(0);
   executor.start();

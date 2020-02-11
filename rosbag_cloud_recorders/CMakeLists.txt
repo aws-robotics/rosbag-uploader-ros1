@@ -67,6 +67,7 @@ add_library(${PROJECT_NAME}_lib
     src/utils/file_utils.cpp
     src/utils/periodic_file_deleter.cpp
     src/utils/recorder.cpp
+    src/utils/s3_client_utils.cpp
 )
 target_include_directories(${PROJECT_NAME}_lib PUBLIC include ${catkin_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_lib
