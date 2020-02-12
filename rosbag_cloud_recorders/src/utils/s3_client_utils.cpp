@@ -31,7 +31,8 @@ namespace Rosbag
 namespace Utils
 {
 
-file_uploader_msgs::UploadFilesGoal ConstructRosBagUploaderGoal(std::string destination, std::vector<std::string> & ros_bags_to_upload)
+file_uploader_msgs::UploadFilesGoal ConstructRosBagUploaderGoal(std::string destination,
+  std::vector<std::string> & ros_bags_to_upload)
 {
   AWS_LOG_INFO(__func__, "Constructing Uploader Goal.");
   file_uploader_msgs::UploadFilesGoal file_uploader_goal;

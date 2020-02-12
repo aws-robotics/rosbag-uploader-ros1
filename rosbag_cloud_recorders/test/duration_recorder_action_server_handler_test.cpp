@@ -56,7 +56,7 @@ class MockRosbagRecorder : public Utils::RosbagRecorder<Utils::Recorder>
 public:
   MockRosbagRecorder(): Utils::RosbagRecorder<Utils::Recorder>() {};
   ~MockRosbagRecorder() {};
-  
+
   MOCK_CONST_METHOD0(IsActive, bool());
   Utils::RosbagRecorderRunResult Run(
     const Utils::RecorderOptions& recorder_options,
@@ -68,11 +68,11 @@ public:
     post_record(rosbag_recorder_exit_code_);
     return Utils::RosbagRecorderRunResult::STARTED;
   }
-  
+
   Utils::RecorderOptions getOptions() {
     return options_;
   }
-  
+
   void SetRosbagRecorderExitCode(int exit_code) {
     rosbag_recorder_exit_code_ = exit_code;
   }
@@ -163,9 +163,10 @@ class MockS3UploadClient
 {
 public:
   MOCK_METHOD1(sendGoal,  void(file_uploader_msgs::UploadFilesGoal));
-  MOCK_METHOD0(waitForResult, void());
+  MOCK_METHOD0(waitForResult, bool());
   MOCK_METHOD1(waitForResult, bool(ros::Duration));
   MOCK_CONST_METHOD0(waitForServer, void());
+  MOCK_CONST_METHOD0(isServerConnected, bool());
   MOCK_CONST_METHOD0(getState, actionlib::SimpleClientGoalState());
 };
 
@@ -208,7 +209,7 @@ public:
       AWS_LOGSTREAM_INFO(__func__, "Caught exception: " << e.what());
     }
   }
-  
+
   std::string createRosbagAtTime(ros::Time time)
   {
     static int bag_count = 0;
@@ -246,13 +247,13 @@ public:
   {
     EXPECT_CALL(*rosbag_recorder, IsActive()).WillRepeatedly(Return(true));
   }
-  
+
   void givenRecorderRanSuccessfully()
   {
     createRosbagAtTime(ros::Time::now());
     rosbag_recorder->SetRosbagRecorderExitCode(0);
   }
-  
+
   void givenRecorderRanUnSuccessfully()
   {
     rosbag_recorder->SetRosbagRecorderExitCode(1);
@@ -265,13 +266,14 @@ public:
 
   void givenUploadReturns(actionlib::SimpleClientGoalState state)
   {
-    EXPECT_CALL(s3_upload_client, waitForResult());
+    EXPECT_CALL(s3_upload_client, waitForResult()).WillRepeatedly(Return(true));
     EXPECT_CALL(s3_upload_client, getState()).WillRepeatedly(Return(state));
   }
 
   void givenUploadSucceeds()
   {
     givenUploadReturns(actionlib::SimpleClientGoalState(actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED));
+    EXPECT_CALL(s3_upload_client, waitForResult(_)).WillRepeatedly(Return(true));
   }
 
   void givenUploadFails()
@@ -297,7 +299,7 @@ public:
   {
     EXPECT_CALL(*server_goal_handle, setRejected(_, _));
   }
-  
+
   void assertGoalIsAccepted()
   {
     EXPECT_CALL(*server_goal_handle, setAccepted());
@@ -307,23 +309,23 @@ public:
   {
     EXPECT_CALL(*server_goal_handle, setCanceled());
   }
-  
+
   void assertGoalIsSuccess()
   {
     EXPECT_CALL(*server_goal_handle, setSucceeded(_, _));
   }
-  
+
   void assertGoalIsAborted()
   {
     EXPECT_CALL(*server_goal_handle, setAborted(_, _));
   }
-  
+
   void assertPublishFeedback()
   {
     recorder_msgs::DurationRecorderFeedback feedback;
     EXPECT_CALL(*server_goal_handle, publishFeedback(FeedbackHasStatus(recorder_msgs::RecorderStatus::RECORDING)));
   }
-  
+
   void assertRecorderRunWithExpectedOptions()
   {
     auto options = rosbag_recorder->getOptions();
@@ -347,7 +349,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartSuccee
   assertGoalIsSuccess();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
-  
+
   assertRecorderRunWithExpectedOptions();
 }
 
@@ -363,7 +365,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderRecordSucce
   assertGoalIsAborted();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
-  
+
   assertRecorderRunWithExpectedOptions();
 }
 
@@ -377,7 +379,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderFailed)
   assertGoalIsAborted();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
-  
+
   assertRecorderRunWithExpectedOptions();
 }
 
