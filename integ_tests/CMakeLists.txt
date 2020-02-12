@@ -19,6 +19,7 @@ install(PROGRAMS
         tests/test_s3_file_uploader_wrong_region.py
         tests/test_rolling_recorder_custom_topic.py
         tests/test_rolling_recorder_default_topics.py
+        tests/test_rolling_recorder_upload.py
         tests/s3_client.py
         tests/s3_file_uploader_test_base.py
         scripts/setup_test_bucket.sh

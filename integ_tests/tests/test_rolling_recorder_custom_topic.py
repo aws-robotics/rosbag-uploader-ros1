@@ -32,14 +32,13 @@ NAME = 'rolling_recorder_custom_topic'
 class TestRollingRecorderCustomTopic(RollingRecorderTestBase):
     def test_record_custom_topic(self):
         # Get the custom topic we specified in the test file
-        self.topics_to_record = rospy.get_param("~topics_to_record")
+        self.topic_to_record = rospy.get_param("~topic_to_record")
 
         # Wait for rolling recorder node to start
         self.wait_for_rolling_recorder_nodes()
 
         # Create publishers 
-        test_topic = self.topics_to_record.split(' ')[0]
-        self.test_publisher = rospy.Publisher(test_topic, String, queue_size=10)
+        self.test_publisher = rospy.Publisher(self.topic_to_record, String, queue_size=10)
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
         # Find start time of active file
@@ -63,8 +62,9 @@ class TestRollingRecorderCustomTopic(RollingRecorderTestBase):
         # Wait for current bag to finish recording and roll over
         bag_finish_time_remaining = bag_finish_time - time.time()
         rospy.loginfo("Bag finish time remaining after publish: %f" % bag_finish_time_remaining)
-        # Add 0.3s as it takes some time for bag rotation to occur
-        time.sleep(bag_finish_time_remaining + 0.3) 
+
+        # Add 0.5s as it takes some time for bag rotation to occur
+        time.sleep(bag_finish_time_remaining + 0.5) 
         
         # Check that the data is inside the latest rosbag
         latest_bag = self.get_latest_bag_by_regex("*.bag")

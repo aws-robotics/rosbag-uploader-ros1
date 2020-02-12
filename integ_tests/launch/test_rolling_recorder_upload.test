@@ -3,13 +3,19 @@
     <arg name="test_topic" default="/test_topic" />
     <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
 
+    <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
+        <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/config.yaml"/>
+    </include>
+
+    <param name="/s3_file_uploader/s3_bucket" command="$(find rosbag_uploader_ros1_integration_tests)/setup_test_bucket.sh"/>
+
     <include file="$(find rosbag_cloud_recorders)/launch/rolling_recorder.launch">
         <arg name="bag_rollover_time" value="$(arg bag_rollover_time)" />
         <arg name="topics_to_record" value="$(arg test_topic)" />
         <arg name="write_directory" value="$(arg write_directory)" />
     </include>
 
-    <test test-name="TestRollingRecorderCustomTopic" pkg="rosbag_uploader_ros1_integration_tests" type="test_rolling_recorder_custom_topic.py">
+    <test test-name="TestRollingRecorderUpload" pkg="rosbag_uploader_ros1_integration_tests" type="test_rolling_recorder_upload.py">
         <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
         <param name="topic_to_record" value="$(arg test_topic)" />
         <param name="write_directory" value="$(arg write_directory)" />
