@@ -599,7 +599,7 @@ void Recorder::DoCheckMaster(ros::TimerEvent const& e, ros::NodeHandle& node_han
     if (ros::master::getTopics(topics)) {
         for (ros::master::TopicInfo const& t : topics) {
             if (ShouldSubscribeToTopic(t.name)) {
-                shared_ptr<ros::Subscriber> sub = Subscribe(nh_, t.name);
+                shared_ptr<ros::Subscriber> sub = Subscribe(node_handle, t.name);
                 currently_recording_.insert(t.name);
                 subscribers_.push_back(sub);
             }
@@ -637,7 +637,7 @@ void Recorder::DoCheckMaster(ros::TimerEvent const& e, ros::NodeHandle& node_han
             {
               if (ShouldSubscribeToTopic(resp2[2][i][0], true))
               {
-                shared_ptr<ros::Subscriber> sub = Subscribe(nh_, resp2[2][i][0]);
+                shared_ptr<ros::Subscriber> sub = Subscribe(node_handle, resp2[2][i][0]);
                 currently_recording_.insert(resp2[2][i][0]);
                 subscribers_.push_back(sub);
               }
