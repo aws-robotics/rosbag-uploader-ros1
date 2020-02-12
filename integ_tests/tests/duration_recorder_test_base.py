@@ -35,7 +35,7 @@ class DurationRecorderTestBase(unittest.TestCase):
 
     def setUp(self):
         self.action_client = None
-        self.rosbag_directory = '/tmp/'
+        self.rosbag_directory = rospy.get_param('~write_directory')
 
     def _create_duration_recorder_action_client(self):
         self.action_client = actionlib.SimpleActionClient(ACTION, DurationRecorderAction)
