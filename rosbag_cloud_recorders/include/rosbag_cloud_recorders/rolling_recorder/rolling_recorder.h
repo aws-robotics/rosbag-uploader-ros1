@@ -74,7 +74,7 @@ private:
 
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
-  std::shared_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
+  UploadFilesActionSimpleClient rosbag_uploader_action_client_;
   RollingRecorderOptions rolling_recorder_options_;
   Utils::PeriodicFileDeleter periodic_file_deleter_;
   RollingRecorderStatus status_;
