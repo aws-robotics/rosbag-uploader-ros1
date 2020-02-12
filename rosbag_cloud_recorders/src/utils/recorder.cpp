@@ -142,7 +142,9 @@ int Recorder::Run() {
     // Subscribe to each topic
     if (!options_.regex) {
         for (string const& topic : options_.topics) {
-            Subscribe(nh_, topic);
+            shared_ptr<ros::Subscriber> sub = Subscribe(nh_, topic);
+            currently_recording_.insert(topic);
+            subscribers_.push_back(sub);
         }
     }
 
@@ -191,6 +193,10 @@ int Recorder::Run() {
 
     record_thread.join();
     queue_condition_.notify_all();
+
+    subscribers_.clear();
+    currently_recording_.clear();
+    queue_.reset();
 
     return exit_code_;
 }
