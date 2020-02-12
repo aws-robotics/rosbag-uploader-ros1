@@ -45,90 +45,20 @@ template<typename GoalHandleT, typename UploadClientT>
 class DurationRecorderActionServerHandler
 {
 private:
-  static void PublishFeedback(
-    GoalHandleT& goal_handle,
-    ros::Time time_of_goal_received,
-    int stage)
-  {
-    recorder_msgs::DurationRecorderFeedback feedback;
-    feedback.started = time_of_goal_received;
-    recorder_msgs::RecorderStatus recording_status;
-    recording_status.stage = stage;
-    feedback.status = recording_status;
-    goal_handle.publishFeedback(feedback);
-  }
-
-  // Receives the result from the upload goal and updates the DurationRecorder goal handle
-  static void HandleDurationRecorderUploadResult(
-    GoalHandleT& goal_handle,
-    const actionlib::SimpleClientGoalState& end_state,
-    bool upload_finished)
-  {
-    recorder_msgs::DurationRecorderResult result;
-    std::string msg;
-    if (!upload_finished) {
-      msg = "File Uploader timed out.";
-      result.result.result = recorder_msgs::RecorderResult::UPLOADER_TIMEOUT;
-      goal_handle.setAborted(result, msg);
-      AWS_LOG_WARN(__func__, msg.c_str());
-      return;
-    }
-    if (end_state != actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) {
-      msg = "Upload failed with message: " + end_state.getText();
-      result.result.result = recorder_msgs::RecorderResult::DEPENDENCY_FAILURE;
-      goal_handle.setAborted(result, msg);
-      AWS_LOG_ERROR(__func__, msg.c_str());
-    } else {
-      result.result.result = recorder_msgs::RecorderResult::SUCCESS;
-      msg = "Upload Succeeded";
-      goal_handle.setSucceeded(result, msg);
-      AWS_LOG_INFO(__func__, msg.c_str());
-    }
-  }
-
-  // Uploads rosbag files from write_directory that were started 
-  // after the duration recorder goal was received
-  static void UploadFiles(
-    GoalHandleT& goal_handle,
-    const DurationRecorderOptions& duration_recorder_options,
-    ros::Time time_of_goal_received,
-    UploadClientT& upload_client)
-  {
-    AWS_LOG_INFO(__func__, "Recording finished");
-    std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(duration_recorder_options.write_directory,
-          [time_of_goal_received](rosbag::View& rosbag) -> bool
-          {
-            // Select bags that were recorded during this duration recorder goal.
-            // Older bags may be left over from previous runs of the recorder.
-            return time_of_goal_received < rosbag.getBeginTime();
-          }
-      );
-    auto goal = Utils::ConstructRosBagUploaderGoal(goal_handle.getGoal()->destination, ros_bags_to_upload);
-    upload_client.sendGoal(goal);
-    bool upload_finished = true;
-    if (duration_recorder_options.upload_timeout_s > 0) {
-      upload_finished = upload_client.waitForResult(ros::Duration(duration_recorder_options.upload_timeout_s, 0));
-    } else {
-      upload_client.waitForResult();
-    }
-    HandleDurationRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished);
-  }
-
   static bool ValidateGoal(GoalHandleT& goal_handle)
   {
     const auto & goal = goal_handle.getGoal();
     std::stringstream msg;
     recorder_msgs::DurationRecorderResult result;
     result.result.result = recorder_msgs::RecorderResult::INVALID_INPUT;
-    if (goal->duration <= ros::Duration(0) || goal->duration > ros::DURATION_MAX) {      
+    if (goal->duration <= ros::Duration(0) || goal->duration > ros::DURATION_MAX) {
       msg << "Goal rejected. Invalid record duration given: " << goal->duration;
       AWS_LOG_INFO(__func__, msg.str().c_str());
-      goal_handle.setRejected(result, msg.str()); 
+      goal_handle.setRejected(result, msg.str());
       return false;
     }
     return true;
   }
-
 public:
   static void DurationRecorderStart(
     Utils::RosbagRecorder<Utils::Recorder>& rosbag_recorder,
@@ -165,24 +95,38 @@ public:
       options.topics = goal->topics_to_record;
     }
     options.prefix = duration_recorder_options.write_directory;
+
     rosbag_recorder.Run(
       options,
       [goal_handle, time_of_goal_received]() mutable
       {
-        PublishFeedback(goal_handle, time_of_goal_received, recorder_msgs::RecorderStatus::RECORDING);
+        recorder_msgs::DurationRecorderFeedback recorder_feedback;
+        recorder_msgs::RecorderStatus recording_status;
+        Utils::GenerateFeedback(
+          recorder_msgs::RecorderStatus::RECORDING,
+          time_of_goal_received,
+          recorder_feedback,
+          recording_status);
+        goal_handle.publishFeedback(recorder_feedback);
       },
       [goal_handle, duration_recorder_options, time_of_goal_received, &upload_client](int exit_code) mutable
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {
           AWS_LOG_INFO(current_function, "Recorder finished with non zero exit code, aborting goal");
-          goal_handle.setAborted(result, "Rosbag recorder encountered errors");
+          goal_handle.setAborted(result, "Rosbag recorder encountered errors.");
           return;
         }
-        UploadFiles(goal_handle,
-          duration_recorder_options,
-          time_of_goal_received,
-          upload_client);
+        std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(duration_recorder_options.write_directory,
+          [time_of_goal_received](rosbag::View& rosbag) -> bool
+          {
+            // Select bags that were recorded during this duration recorder goal.
+            // Older bags may be left over from previous runs of the recorder.
+            return time_of_goal_received < rosbag.getBeginTime();
+          }
+        );
+        bool upload_finished = Utils::UploadFiles(goal_handle, duration_recorder_options.upload_timeout_s, upload_client, ros_bags_to_upload);
+        Utils::HandleRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished, result);
       }
     );
   }
