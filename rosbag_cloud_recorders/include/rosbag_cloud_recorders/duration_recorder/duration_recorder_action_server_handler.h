@@ -57,6 +57,12 @@ private:
       goal_handle.setRejected(result, msg.str());
       return false;
     }
+    if (goal->topics_to_record.empty()) {
+      msg << "Invalid list of topics to record. No topics given.";
+      AWS_LOG_INFO(__func__, msg.str().c_str());
+      goal_handle.setRejected(result, msg.str());
+      return false;
+    }
     return true;
   }
 public:

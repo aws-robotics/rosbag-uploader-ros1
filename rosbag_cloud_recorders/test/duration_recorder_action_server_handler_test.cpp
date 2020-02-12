@@ -237,7 +237,7 @@ public:
     givenDurationRecorderGoal();
   }
 
-  void givenDurationRecorderGoalWithEmptyTopics()
+ void givenDurationRecorderGoalWithInvalidTopics()
   {
     topics_to_record = {};
     givenDurationRecorderGoal();
@@ -392,16 +392,11 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderInvalidDura
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
 }
 
-TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderEmptyTopicsRecordsAll)
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderInvalidTopicGoalFails)
 {
   givenRecorderNotActive();
-  givenDurationRecorderGoalWithEmptyTopics();
-  givenRecorderRanSuccessfully();
-  givenUploadSucceeds();
-  assertGoalIsAccepted();
-  assertUploadGoalIsSent();
-  assertPublishFeedback();
-  assertGoalIsSuccess();
+  givenDurationRecorderGoalWithInvalidTopics();
+  assertGoalIsRejected();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
 }
