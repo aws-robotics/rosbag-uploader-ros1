@@ -120,16 +120,10 @@ private:
     std::stringstream msg;
     recorder_msgs::DurationRecorderResult result;
     result.result.result = recorder_msgs::RecorderResult::INVALID_INPUT;
-    if (goal->duration < ros::Duration(0) || goal->duration > ros::DURATION_MAX) {      
+    if (goal->duration <= ros::Duration(0) || goal->duration > ros::DURATION_MAX) {      
       msg << "Goal rejected. Invalid record duration given: " << goal->duration;
       AWS_LOG_INFO(__func__, msg.str().c_str());
       goal_handle.setRejected(result, msg.str()); 
-      return false;
-    }
-    if (goal->topics_to_record.empty()) {
-      msg << "Invalid list of topics to record. No topics given.";
-      AWS_LOG_INFO(__func__, msg.str().c_str());
-      goal_handle.setRejected(result, msg.str());
       return false;
     }
     return true;
@@ -165,7 +159,11 @@ public:
     Utils::RecorderOptions options;
     options.record_all = false;
     options.max_duration = goal->duration;
-    options.topics = goal->topics_to_record;
+    if (goal->topics_to_record.empty()) {
+      options.record_all=true;
+    } else {
+      options.topics = goal->topics_to_record;
+    }
     options.prefix = duration_recorder_options.write_directory;
     rosbag_recorder.Run(
       options,
