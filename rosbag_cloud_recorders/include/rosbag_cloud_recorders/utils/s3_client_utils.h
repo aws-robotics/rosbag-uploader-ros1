@@ -47,12 +47,6 @@ bool UploadFiles(
   return upload_finished;
 }
 
-template<typename UploadClientT>
-bool UploaderSeverConnected(const double server_time_out, UploadClientT& upload_client)
-{
-  return upload_client.waitForServer(ros::Duration(server_time_out));
-}
-
 template<typename RecorderResultT>
 void GenerateResult(uint stage, std::string message, RecorderResultT& recorder_result)
 {
