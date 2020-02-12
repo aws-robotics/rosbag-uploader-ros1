@@ -57,7 +57,7 @@ class DurationRecorderTestBase(unittest.TestCase):
         latest_bags = self.get_latest_bags_by_regex("*.bag", total_bags)
         for bag_path in latest_bags:
             bag_create_time = os.path.getctime(bag_path)
-            self.assertTrue(bag_create_time > start_time)
+            self.assertGreater(bag_create_time, start_time)
 
     def get_latest_bag_by_regex(self, regex_pattern):
         return get_latest_bag_by_regex(self.rosbag_directory, regex_pattern)
