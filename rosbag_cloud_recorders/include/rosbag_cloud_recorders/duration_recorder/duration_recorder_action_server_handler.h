@@ -83,8 +83,6 @@ public:
       return;
     }
 
-    AWS_LOG_INFO(__func__, "Accepted new goal");
-    goal_handle.setAccepted();
     const auto & goal = goal_handle.getGoal();
     Utils::RecorderOptions options;
     options.record_all = false;
@@ -96,7 +94,7 @@ public:
     }
     options.prefix = duration_recorder_options.write_directory;
 
-    rosbag_recorder.Run(
+    auto run_result = rosbag_recorder.Run(
       options,
       [goal_handle, time_of_goal_received]() mutable
       {
@@ -129,6 +127,12 @@ public:
         Utils::HandleRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished, result);
       }
     );
+
+    if (Utils::RosbagRecorderRunResult::SKIPPED == run_result) {
+      recorder_msgs::DurationRecorderResult result;
+      result.result.result = recorder_msgs::RecorderResult::INTERNAL_ERROR;
+      goal_handle.setRejected(result, "Rejecting result, DurationRecorder already handling goal.");
+    }
   }
 
   static void CancelDurationRecorder(GoalHandleT& goal_handle)
