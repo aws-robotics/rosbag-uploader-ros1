@@ -36,7 +36,7 @@ RollingRecorder::RollingRecorder(RollingRecorderOptions rolling_recorder_options
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false),
   rosbag_uploader_action_client_("/s3_file_uploader/UploadFiles", true),
-  rolling_recorder_options_(rolling_recorder_options),
+  rolling_recorder_options_(std::move(rolling_recorder_options)),
   periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, rolling_recorder_options_.bag_rollover_time.toSec()),
   action_server_busy_(false)
 {
