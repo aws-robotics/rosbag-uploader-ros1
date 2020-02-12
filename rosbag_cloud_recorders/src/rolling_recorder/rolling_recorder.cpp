@@ -32,20 +32,17 @@ namespace Aws
 {
 namespace Rosbag
 {
-RollingRecorder::RollingRecorder(ros::Duration bag_rollover_time,
-  ros::Duration max_record_time, std::string write_directory) :
+RollingRecorder::RollingRecorder(RollingRecorderOptions rolling_recorder_options) :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false),
   rosbag_uploader_action_client_(std::make_shared<UploadFilesActionSimpleClient>("/s3_file_uploader/UploadFiles", true)),
-  max_duration_(std::move(max_record_time)),
-  bag_rollover_time_(std::move(bag_rollover_time)),
-  write_directory_(std::move(write_directory)),
-  periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, bag_rollover_time.toSec()),
+  rolling_recorder_options_(rolling_recorder_options),
+  periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, rolling_recorder_options_.bag_rollover_time.toSec()),
   action_server_busy_(false)
 {
   action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
     RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(goal_handle,
-      write_directory_, rosbag_uploader_action_client_, action_server_busy_, bag_rollover_time_);
+      rolling_recorder_options_, rosbag_uploader_action_client_, action_server_busy_);
   });
   action_server_.start();
   periodic_file_deleter_.Start();
@@ -58,7 +55,7 @@ void RollingRecorder::UpdateStatus(RollingRecorderStatus status) {
 std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
 {
   AWS_LOG_DEBUG(__func__, "Getting ros bags to delete");
-  boost::filesystem::path dir_path(write_directory_);
+  boost::filesystem::path dir_path(rolling_recorder_options_.write_directory);
   std::vector<std::string> delete_files;
   for (boost::filesystem::directory_iterator itr(dir_path);
        itr != boost::filesystem::directory_iterator(); ++itr) {
@@ -75,7 +72,7 @@ std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
     AWS_LOGSTREAM_DEBUG(__func__, "Checking path: " << file_path);
     auto bag_start_time = Utils::GetRosBagStartTime(file_path);
     AWS_LOGSTREAM_DEBUG(__func__, "Bag start time is: "<< bag_start_time);
-    if (bag_start_time != ros::Time(0) && ros::Time::now() - bag_start_time > max_duration_) {
+    if (bag_start_time != ros::Time(0) && ros::Time::now() - bag_start_time > rolling_recorder_options_.max_record_time) {
       AWS_LOGSTREAM_DEBUG(__func__, "Marking file for deletion: " << file_path);
       delete_files.emplace_back(file_path);
     }

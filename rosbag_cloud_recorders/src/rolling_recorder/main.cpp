@@ -1,3 +1,65 @@
+// /*
+//  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//  *
+//  * Licensed under the Apache License, Version 2.0 (the "License").
+//  * You may not use this file except in compliance with the License.
+//  * A copy of the License is located at
+//  *
+//  *  http://aws.amazon.com/apache2.0
+//  *
+//  * or in the "license" file accompanying this file. This file is distributed
+//  * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+//  * express or implied. See the License for the specific language governing
+//  * permissions and limitations under the License.
+//  */
+// #include <string>
+//
+// #include <ros/ros.h>
+// #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
+// #include <aws/core/utils/logging/LogMacros.h>
+// #include <aws_common/fs_utils/wordexp_ros.h>
+// #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
+// #include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
+//
+// constexpr char kBagRolloverTimeParameter[] = "bag_rollover_time";
+// constexpr char kMaxRecordTimeParameter[] = "max_record_time";
+// constexpr char kWriteDirectoryParameter[] = "write_directory";
+// constexpr char kNodeName[] = "rosbag_rolling_recorder";
+// constexpr char kUploadTimeoutParameter[] = "upload_timeout_s";
+//
+// int main(int argc, char* argv[])
+// {
+//   ros::init(argc, argv, kNodeName);
+//   Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
+//
+//   Aws::Rosbag::RollingRecorderOptions rolling_recorder_options;
+//
+//   auto parameter_reader = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
+//   if (Aws::AwsError::AWS_ERR_OK = parameter_reader->ReadParam(Aws::Client::ParameterPath(kBagRolloverTimeParameter), bag_rollover_time_input)) {
+//     rolling_recorder_options.bag_rollover_time = ros::Duration(30);
+//   }
+//   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kMaxRecordTimeParameter), max_record_time_input)) {
+//     rolling_recorder_options.max_record_time = ros::Duration(300);
+//   }
+//   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), rolling_recorder_options.write_directory)) {
+//     rolling_recorder_options.write_directory = "~/.ros/rosbag_uploader";
+//   }
+//   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kUploadTimeoutParameter), rolling_recorder_options.upload_timeout_s)) {
+//     // Default to 60 min timeout
+//     rolling_recorder_options.upload_timeout_s = 3600;
+//   }
+//   wordexp_t wordexp_result;
+//   wordexp_ros(write_dir.c_str(), &wordexp_result, 0);
+//   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
+//   Aws::Rosbag::RollingRecorder rolling_recorder(rolling_recorder_options);
+//   Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, *(wordexp_result.we_wordv));
+//   ros::waitForShutdown();
+//   AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
+//   Aws::Utils::Logging::ShutdownAWSLogging();
+//   return 0;
+// }
+
+
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -24,35 +86,55 @@
 constexpr char kBagRolloverTimeParameter[] = "bag_rollover_time";
 constexpr char kMaxRecordTimeParameter[] = "max_record_time";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
+constexpr char kNodeName[] = "rosbag_rolling_recorder";
+constexpr char kUploadTimeoutParameter[] = "upload_timeout_s";
+constexpr char kWriteDirectoryDefault[] = "~/.ros/rr_rosbag_uploader/";
+constexpr uint32_t kTimeOutDefaultInSeconds = 3600;
+constexpr uint32_t kBagRolloverTimeDefaultInSeconds = 30;
+constexpr uint32_t kMaxRecordTimeDefaultInSeconds = 300;
 
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "rosbag_rolling_recorder");
-  Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>("RosbagRollingRecord"));
+  ros::init(argc, argv, kNodeName);
+  Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
 
-  int bag_rollover_time_input;
-  int max_record_time_input;
+  Aws::Rosbag::RollingRecorderOptions rolling_recorder_options;
   std::string write_directory_input;
-
-  ros::Duration bag_rollover_time(30);
-  ros::Duration max_record_time(300);
-  std::string write_dir("~/.ros/rosbag_uploader");
+  int max_record_time_input;
+  int bag_rollover_time_input;
 
   auto parameter_reader = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
+  // Set bag_rollover_time
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kBagRolloverTimeParameter), bag_rollover_time_input)) {
-    bag_rollover_time = ros::Duration(bag_rollover_time_input);
-  }
-  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMaxRecordTimeParameter), max_record_time_input)) {
-    max_record_time = ros::Duration(max_record_time_input);
-  }
-  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_directory_input)) {
-    write_dir = write_directory_input;
+    rolling_recorder_options.bag_rollover_time = ros::Duration(bag_rollover_time_input);
+  } else {
+    rolling_recorder_options.bag_rollover_time = ros::Duration(kBagRolloverTimeDefaultInSeconds);
   }
 
+  // Set max_record_time
+  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMaxRecordTimeParameter), max_record_time_input)) {
+    rolling_recorder_options.max_record_time = ros::Duration(max_record_time_input);
+  } else {
+    rolling_recorder_options.max_record_time = ros::Duration(kMaxRecordTimeDefaultInSeconds);
+  }
+
+  // Set operation time out in seconds
+  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kUploadTimeoutParameter), rolling_recorder_options.upload_timeout_s)) {
+    rolling_recorder_options.upload_timeout_s = kTimeOutDefaultInSeconds;
+  }
+
+  // Set write_directory
+  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_directory_input)) {
+    write_directory_input = kWriteDirectoryDefault;
+  }
+
+
   wordexp_t wordexp_result;
-  wordexp_ros(write_dir.c_str(), &wordexp_result, 0);
+  wordexp_ros(write_directory_input.c_str(), &wordexp_result, 0);
+  rolling_recorder_options.write_directory = *(wordexp_result.we_wordv);
+
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
-  Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, *(wordexp_result.we_wordv));
+  Aws::Rosbag::RollingRecorder rolling_recorder(rolling_recorder_options);
   ros::waitForShutdown();
   AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
   Aws::Utils::Logging::ShutdownAWSLogging();
