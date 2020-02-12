@@ -35,6 +35,15 @@ namespace Rosbag
 using RollingRecorderActionServer = actionlib::ActionServer<recorder_msgs::RollingRecorderAction>;
 using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploader_msgs::UploadFilesAction>;
 
+// Contains option for deleting the rosbag after upload
+struct RollingRecorderOptions
+{
+  std::string write_directory;
+  double upload_timeout_s {0};
+  ros::Duration max_record_time;
+  ros::Duration bag_rollover_time;
+};
+
 struct RollingRecorderStatus {
   file_uploader_msgs::UploadFilesGoal current_upload_goal;
 };
@@ -45,7 +54,7 @@ struct RollingRecorderStatus {
 class RollingRecorder
 {
 public:
-  explicit RollingRecorder(ros::Duration bag_rollover_time, ros::Duration max_record_time, std::string write_directory);
+  explicit RollingRecorder(RollingRecorderOptions rolling_recorder_options);
 
   virtual ~RollingRecorder() = default;
 
@@ -66,9 +75,7 @@ private:
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
   std::shared_ptr<UploadFilesActionSimpleClient> rosbag_uploader_action_client_;
-  ros::Duration max_duration_;
-  ros::Duration bag_rollover_time_;
-  std::string write_directory_;
+  RollingRecorderOptions rolling_recorder_options_;
   Utils::PeriodicFileDeleter periodic_file_deleter_;
   RollingRecorderStatus status_;
   std::atomic<bool> action_server_busy_;

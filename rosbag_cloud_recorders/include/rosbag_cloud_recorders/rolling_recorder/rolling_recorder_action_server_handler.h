@@ -30,8 +30,6 @@
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
 #include <actionlib/client/simple_action_client.h>
 
-constexpr uint32_t kTimeOutInSeconds = 30;
-
 namespace Aws{
 namespace Rosbag{
 
@@ -40,8 +38,8 @@ class RollingRecorderActionServerHandler
 {
 public:
   static void RollingRecorderRosbagUpload(GoalHandleT& goal_handle,
-    const std::string& write_directory, std::shared_ptr<SimpleActionClientT>& rosbag_uploader_action_client,
-    std::atomic<bool>& action_server_busy, ros::Duration& /*bag_rollover_time*/)
+    const RollingRecorderOptions& rolling_recorder_options, std::shared_ptr<SimpleActionClientT>& rosbag_uploader_action_client,
+    std::atomic<bool>& action_server_busy)
   {
     AWS_LOG_INFO(__func__, "A new goal has been recieved by the goal action server");
     std::string log_message;
@@ -49,10 +47,10 @@ public:
 
     //  Check if action server is currently processing another goal
     if (std::atomic_compare_exchange_strong(&action_server_busy, &expected_action_server_state, true)) {
-      ProcessRollingRecorderGoal(goal_handle, write_directory, rosbag_uploader_action_client, log_message);
+      ProcessRollingRecorderGoal(goal_handle, rolling_recorder_options, rosbag_uploader_action_client, log_message);
       action_server_busy = false;  // Done processing goal, setting action server status to not busy
     } else {
-      log_message = "Rejecting new goal due to rolling recorder action recorder is processing a goal.";
+      log_message = "Rejecting new goal. Rolling recorder is already processing a goal.";
       AWS_LOG_WARN(__func__, log_message.c_str());
       goal_handle.setRejected(GenerateResult(recorder_msgs::RecorderResult::INVALID_INPUT, log_message), log_message);
     }
@@ -60,11 +58,11 @@ public:
 
 private:
   static void ProcessRollingRecorderGoal(GoalHandleT& goal_handle,
-    const std::string& write_directory, std::shared_ptr<SimpleActionClientT>& rosbag_uploader_action_client, std::string & log_message)
+    const RollingRecorderOptions& rolling_recorder_options, std::shared_ptr<SimpleActionClientT>& rosbag_uploader_action_client, std::string & log_message)
   {
     ros::Time time_of_goal_received = ros::Time::now();
     //  Attempt to connect S3 uploader action server
-    rosbag_uploader_action_client->waitForServer(ros::Duration(kTimeOutInSeconds));
+    rosbag_uploader_action_client->waitForServer(ros::Duration(rolling_recorder_options.upload_timeout_s));
     if (!rosbag_uploader_action_client->isServerConnected()) {
       log_message = "Not able to connect to file uploader action server, rosbags uploading failed to complete.";
       AWS_LOG_WARN(__func__, log_message.c_str());
@@ -81,7 +79,7 @@ private:
 
     int return_code;
     //  Get list of rosbags to upload
-    std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(write_directory,
+    std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(rolling_recorder_options.write_directory,
       [time_of_goal_received](rosbag::View& rosbag) -> bool
       {
         return time_of_goal_received >= rosbag.getBeginTime();
@@ -91,7 +89,7 @@ private:
     //  Send acquired list of rosbags to s3 file uploader and have uploader uploads these files
     file_uploader_msgs::UploadFilesGoal file_uploader_goal = ConstructRosBagUploaderGoal(goal_handle.getGoal()->destination, ros_bags_to_upload);
     RecorderErrorCode upload_status;
-    upload_status = SendRosBagUploaderGoal(file_uploader_goal, rosbag_uploader_action_client, return_code);
+    upload_status = SendRosBagUploaderGoal(file_uploader_goal, rosbag_uploader_action_client, return_code, rolling_recorder_options.upload_timeout_s);
 
     //  Check if operation is successful
     if (UPLOADING_TIMED_OUT == upload_status) {
@@ -123,10 +121,10 @@ private:
     return file_uploader_goal;
   }
 
-  static RecorderErrorCode SendRosBagUploaderGoal(const file_uploader_msgs::UploadFilesGoal & goal, std::shared_ptr<SimpleActionClientT> & rosbag_uploader_action_client, int & result_code)
+  static RecorderErrorCode SendRosBagUploaderGoal(const file_uploader_msgs::UploadFilesGoal & goal, std::shared_ptr<SimpleActionClientT> & rosbag_uploader_action_client, int & result_code, const double time_out_in_seconds)
   {
     rosbag_uploader_action_client->sendGoal(goal);
-    bool finished_before_timeout = rosbag_uploader_action_client->waitForResult(ros::Duration(kTimeOutInSeconds));
+    bool finished_before_timeout = rosbag_uploader_action_client->waitForResult(ros::Duration(time_out_in_seconds));
     if (!finished_before_timeout) {
       AWS_LOG_WARN(__func__, "Uploading rosbags to S3 did not finish before the time out.");
       return UPLOADING_TIMED_OUT;
@@ -156,12 +154,7 @@ private:
     record_rosbag_action_feedback.status = recording_status;
     return record_rosbag_action_feedback;
   }
-  // Guards action_server_busy
-  static std::mutex mutex_;
 };
-
-template<typename GoalHandleT, typename SimpleActionClientT>
-std::mutex  RollingRecorderActionServerHandler<GoalHandleT, SimpleActionClientT>::mutex_;
 
 }  // namespace Rosbag
 }  // namespace Aws

@@ -61,35 +61,33 @@ protected:
   ros::NodeHandle nh;
   RollingRecorderActionClient action_client;
   RollingRecorderActionClient::GoalHandle goal_handle;
-  ros::Duration bag_rollover_time;
-  ros::Duration max_record_time;
-  std::string write_directory;
   std::shared_ptr<RollingRecorder> rolling_recorder_;
-
+  RollingRecorderOptions rolling_recorder_options_;
 public:
   RollingRecorderTest():
     executor(0),
     nh("~"),
-    action_client(nh, "RosbagRollingRecord"),
-    bag_rollover_time(5),
-    max_record_time(10)
+    action_client(nh, "RosbagRollingRecord")
   {
-    executor.start();
     char dir_template[] = "/tmp/rolling_recorder_testXXXXXX";
     mkdtemp(dir_template);
-    write_directory = std::string(dir_template) + "/";
+    rolling_recorder_options_.bag_rollover_time = ros::Duration(5);
+    rolling_recorder_options_.max_record_time = ros::Duration(10);
+    rolling_recorder_options_.upload_timeout_s = 3600;
+    rolling_recorder_options_.write_directory= std::string(dir_template) + "/";
+    executor.start();
   }
 
   void TearDown() override
   {
     // Delete all files in the write directory to clean up
-    boost::filesystem::path path(write_directory);
+    boost::filesystem::path path(rolling_recorder_options_.write_directory);
     boost::filesystem::remove_all(path);
   }
 
   void GivenRollingRecorder()
   {
-    rolling_recorder_ = std::make_shared<RollingRecorder>(bag_rollover_time, max_record_time, write_directory);
+    rolling_recorder_ = std::make_shared<RollingRecorder>(rolling_recorder_options_);
   }
 
   std::string GetFileNameForTimeStamp(const ros::Time& time)
@@ -106,7 +104,7 @@ public:
 
   std::string CreateRosBagFileStartingAtTime(const ros::Time& time, std::string suffix)
   {
-    std::string file_name = write_directory + GetFileNameForTimeStamp(time) + suffix;
+    std::string file_name = rolling_recorder_options_.write_directory + GetFileNameForTimeStamp(time) + suffix;
     std::fstream file;
     file.open(file_name, std::ios::out);
     file.close();
@@ -118,7 +116,7 @@ public:
     std::vector<std::string> rosbags;
     for (int i = 0; i < num_bags; ++i) {
       std::string suffix = "_" + std::to_string(i) + ".bag";
-      rosbags.emplace_back(CreateRosBagFileStartingAtTime(ros::Time::now() - max_record_time - ros::Duration(1000), suffix));
+      rosbags.emplace_back(CreateRosBagFileStartingAtTime(ros::Time::now() - rolling_recorder_options_.max_record_time - ros::Duration(1000), suffix));
     }
     return rosbags;
   }
@@ -138,7 +136,7 @@ public:
     std::vector<std::string> rosbags;
     for (int i = 0; i < num_bags; ++i) {
       std::string suffix = "_" + std::to_string(i) + ".bag";
-      std::string file_name = write_directory + "myInvalidBagWithoutADate" + suffix;
+      std::string file_name = rolling_recorder_options_.write_directory + "myInvalidBagWithoutADate" + suffix;
       std::fstream file;
       file.open(file_name, std::ios::out);
       file.close();
@@ -175,8 +173,10 @@ TEST_F(RollingRecorderTest, TestConstructor)
   ros::Duration max_record_time(5);
   ros::Duration bag_rollover_time(5);
 
+  rolling_recorder_options_.max_record_time = max_record_time;
+  rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
   {
-    Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_directory);
+    Aws::Rosbag::RollingRecorder rolling_recorder(rolling_recorder_options_);
   }
 }
 
