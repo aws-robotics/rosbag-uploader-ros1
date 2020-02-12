@@ -32,9 +32,7 @@ enum RecorderErrorCode
   // The local rosgbag file was not found
   FILE_NOT_FOUND,
   // Fail to remove local rosgbag file
-  FILE_REMOVAL_FAILED,
-  // Sending rosbags to S3 timed out
-  UPLOADING_TIMED_OUT
+  FILE_REMOVAL_FAILED
 };
 
 }  // namespace Rosbag
