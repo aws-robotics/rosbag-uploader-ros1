@@ -142,7 +142,9 @@ int Recorder::Run() {
     // Subscribe to each topic
     if (!options_.regex) {
         for (string const& topic : options_.topics) {
-            Subscribe(nh_, topic);
+            shared_ptr<ros::Subscriber> sub = Subscribe(nh_, topic);
+            currently_recording_.insert(topic);
+            subscribers_.push_back(sub);
         }
     }
 
@@ -176,8 +178,6 @@ int Recorder::Run() {
         record_thread = boost::thread(boost::bind(&Recorder::DoRecord, this));
     }
 
-
-
     ros::Timer check_master_timer;
     if (options_.record_all || options_.regex || (options_.node != std::string("")))
     {
@@ -191,6 +191,11 @@ int Recorder::Run() {
 
     record_thread.join();
     queue_condition_.notify_all();
+
+    check_master_timer.stop();
+    subscribers_.clear();
+    currently_recording_.clear();
+    queue_.reset();
 
     return exit_code_;
 }
@@ -211,9 +216,6 @@ shared_ptr<ros::Subscriber> Recorder::Subscribe(ros::NodeHandle & nh, string con
             boost::bind(&Recorder::DoQueue, this, _1, topic, sub.get(), count));
     ops.transport_hints = options_.transport_hints;
     *sub = nh.subscribe(ops);
-
-    currently_recording_.insert(topic);
-    subscribers_.push_back(sub);
 
     return sub;
 }
@@ -598,7 +600,9 @@ void Recorder::DoCheckMaster(ros::TimerEvent const& e, ros::NodeHandle& node_han
     if (ros::master::getTopics(topics)) {
         for (ros::master::TopicInfo const& t : topics) {
             if (ShouldSubscribeToTopic(t.name)) {
-                Subscribe(node_handle, t.name);
+                shared_ptr<ros::Subscriber> sub = Subscribe(node_handle, t.name);
+                currently_recording_.insert(t.name);
+                subscribers_.push_back(sub);
             }
         }
     }
@@ -634,7 +638,9 @@ void Recorder::DoCheckMaster(ros::TimerEvent const& e, ros::NodeHandle& node_han
             {
               if (ShouldSubscribeToTopic(resp2[2][i][0], true))
               {
-                Subscribe(node_handle, resp2[2][i][0]);
+                shared_ptr<ros::Subscriber> sub = Subscribe(node_handle, resp2[2][i][0]);
+                currently_recording_.insert(resp2[2][i][0]);
+                subscribers_.push_back(sub);
               }
             }
           } else {

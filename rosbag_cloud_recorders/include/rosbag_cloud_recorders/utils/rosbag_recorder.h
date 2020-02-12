@@ -77,8 +77,11 @@ public:
       barrier_ = std::async(std::launch::async, [recorder_options, pre_record, post_record]
         {
           pre_record();
-          T rosbag_recorder(recorder_options);
-          int exit_code = rosbag_recorder.Run();
+          int exit_code;
+          {
+            T rosbag_recorder(recorder_options);
+            exit_code = rosbag_recorder.Run();
+          }
           if (exit_code != 0) {
             AWS_LOG_ERROR(function_name, "RosbagRecorder encountered an error");
           }
