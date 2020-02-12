@@ -67,23 +67,24 @@ protected:
   std::shared_ptr<MockRollingRecorderGoalHandle> goal_handle;
   std::shared_ptr<recorder_msgs::RollingRecorderGoal> goal;
   std::atomic<bool> action_server_busy;
-  std::string write_directory;
   std::shared_ptr<MockUploadFilesActionSimpleClient> rosbag_uploader_action_client;
-  ros::Duration bag_rollover_time;
   boost::filesystem::path path;
+  RollingRecorderOptions rolling_recorder_options;
 
 public:
   RollingRecorderActionServerHandlerTests():
     goal_handle(std::make_shared<MockRollingRecorderGoalHandle>()),
     goal(new recorder_msgs::RollingRecorderGoal()),
     action_server_busy(false),
-    rosbag_uploader_action_client(std::make_shared<MockUploadFilesActionSimpleClient>()),
-    bag_rollover_time(ros::Duration(10, 0))
+    rosbag_uploader_action_client(std::make_shared<MockUploadFilesActionSimpleClient>())
   {
     wordexp_t wordexp_result;
     wordexp("~/.ros/rr_handler_test_dir/", &wordexp_result, 0);
-    write_directory = *(wordexp_result.we_wordv);
-    path = boost::filesystem::path(write_directory);
+    rolling_recorder_options.write_directory = *(wordexp_result.we_wordv);
+    rolling_recorder_options.upload_timeout_s = 3600;
+    rolling_recorder_options.bag_rollover_time = ros::Duration(10);
+    rolling_recorder_options.max_record_time = ros::Duration(100);
+    path = boost::filesystem::path(rolling_recorder_options.write_directory);
   }
 
   void SetUp() override
@@ -94,8 +95,6 @@ public:
   }
 
   void TearDown() override {
-    goal->destination = "";
-    action_server_busy = false;
     // Delete all files in the write directory for cleaning up
     boost::filesystem::remove_all(path);
   }
@@ -129,7 +128,7 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderRosbagUpload_
   assertGoalIsRejected();
 
   Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockUploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(*goal_handle,
-    write_directory, rosbag_uploader_action_client, action_server_busy, bag_rollover_time);
+   rolling_recorder_options, rosbag_uploader_action_client, action_server_busy);
 }
 
 //TODO(abbyxu): uuncomment once GetRosbagsToUpload is integrated
