@@ -13,15 +13,18 @@
 # permissions and limitations under the License.
 
 from functools import partial
+import os
 import random
 import string
 import sys
 import threading
+import tempfile
 import time
 
 import rosbag
 import rospy
 import rostest
+from s3_client import S3Client
 
 from std_msgs.msg import String
 from recorder_msgs.msg import DurationRecorderResult, DurationRecorderGoal
@@ -93,6 +96,20 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
             if topic == topic_name:
                 total_topic_messages += 1
         self.assertEquals(total_topic_messages, total_test_messages)
+
+        # Ensure that the rosbag uploaded to S3 contains all the test messages
+        s3_region = rospy.get_param('/s3_file_uploader/aws_client_configuration/region')
+        s3_client = S3Client(s3_region)
+        s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
+        s3_key = os.path.basename(latest_bag)
+        with tempfile.NamedTemporaryFile() as f:
+            s3_client.download_file(s3_bucket_name, s3_key, f.name)
+            total_topic_messages = 0
+            bag = rosbag.Bag(f.name)
+            for topic, msg, _ in bag.read_messages():
+                if topic == topic_name:
+                    total_topic_messages += 1
+            self.assertEquals(total_topic_messages, total_test_messages)
     
     def publish_periodic_data_to_topic(self, topic, interval, total_messages):
         publisher = rospy.Publisher(topic, String, queue_size=total_messages)
