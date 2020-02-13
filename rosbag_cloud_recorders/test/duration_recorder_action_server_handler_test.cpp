@@ -223,7 +223,7 @@ public:
   {
     static int bag_count = 0;
     rosbag::Bag bag;
-    std::string bag_name = write_directory + "test_bag_" + std::to_string(bag_count);
+    std::string bag_name = write_directory + "test_bag_" + std::to_string(bag_count) + ".bag";
     bag.open(bag_name, rosbag::bagmode::Write);
     std_msgs::String str;
     str.data = std::string("foo");

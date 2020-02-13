@@ -79,14 +79,22 @@ private:
       recording_status);
     goal_handle.publishFeedback(recorder_feedback);
 
-    std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(rolling_recorder_options.write_directory,
+    std::vector<std::string> rosbags_to_upload = Utils::GetRosbagsToUpload(rolling_recorder_options.write_directory,
       [time_of_goal_received](rosbag::View& rosbag) -> bool
       {
         return time_of_goal_received >= rosbag.getBeginTime();
       }
     );
 
-    bool upload_finished = Utils::UploadFiles(goal_handle, rolling_recorder_options.upload_timeout_s, rosbag_uploader_action_client, ros_bags_to_upload);
+    if (rosbags_to_upload.empty()) {
+      std::string msg = "No rosbags found to upload.";
+      Utils::GenerateResult(recorder_msgs::RecorderResult::SUCCESS, msg, result);
+      AWS_LOG_INFO(__func__, msg.c_str());
+      goal_handle.setSucceeded(result, msg);
+      return;
+    }
+
+    bool upload_finished = Utils::UploadFiles(goal_handle, rolling_recorder_options.upload_timeout_s, rosbag_uploader_action_client, rosbags_to_upload);
     Utils::HandleRecorderUploadResult(goal_handle, rosbag_uploader_action_client.getState(), upload_finished, result);
   }
 };

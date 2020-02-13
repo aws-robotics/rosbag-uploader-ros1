@@ -51,7 +51,7 @@ public:
   GetRosbagToUploadTests()
   {
     wordexp_t wordexp_result;
-    wordexp("~/.ros/rr_handler_test_dir/", &wordexp_result, 0);
+    wordexp("~/.ros/file_utils_test_dir/", &wordexp_result, 0);
     write_directory = *(wordexp_result.we_wordv);
     path = boost::filesystem::path(write_directory);
   }

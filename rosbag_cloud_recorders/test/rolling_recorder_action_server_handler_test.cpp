@@ -25,6 +25,7 @@
 #include <rosbag/bag.h>
 #include <recorder_msgs/RollingRecorderGoal.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder_action_server_handler.h>
+#include <rosbag_cloud_recorders/utils/file_utils.h>
 #include <aws_common/fs_utils/wordexp_ros.h>
 #include <wordexp.h>
 
@@ -126,7 +127,6 @@ class RollingRecorderActionServerHandlerTests: public ::testing::Test
 {
 protected:
   MockRollingRecorderGoalHandle goal_handle;
-  //std::shared_ptr<recorder_msgs::RollingRecorderGoal> goal;
   boost::shared_ptr<recorder_msgs::RollingRecorderGoal> goal;
   std::atomic<bool> action_server_busy;
   MockS3UploadClient s3_upload_client;
@@ -142,7 +142,7 @@ public:
     wordexp("~/.ros/rr_handler_test_dir/", &wordexp_result, 0);
     rolling_recorder_options.write_directory = *(wordexp_result.we_wordv);
     rolling_recorder_options.upload_timeout_s = 3600;
-    rolling_recorder_options.bag_rollover_time = ros::Duration(10);
+    rolling_recorder_options.bag_rollover_time = ros::Duration(15);
     rolling_recorder_options.max_record_time = ros::Duration(100);
     path = boost::filesystem::path(rolling_recorder_options.write_directory);
   }
@@ -167,7 +167,7 @@ public:
   {
     static int bag_count = 0;
     rosbag::Bag bag;
-    std::string bag_name = rolling_recorder_options.write_directory + "test_bag_" + std::to_string(bag_count);
+    std::string bag_name = rolling_recorder_options.write_directory + "test_bag_" + std::to_string(bag_count) + ".bag";
     bag.open(bag_name, rosbag::bagmode::Write);
     std_msgs::String str;
     str.data = std::string("foo");
@@ -194,6 +194,8 @@ public:
 
   void givenRecorderIsRunning()
   {
+    createRosbagAtTime(ros::Time::now()-rolling_recorder_options.bag_rollover_time);
+    createRosbagAtTime(ros::Time::now()-rolling_recorder_options.bag_rollover_time);
     createRosbagAtTime(ros::Time::now()-rolling_recorder_options.bag_rollover_time);
   }
 
@@ -225,6 +227,10 @@ public:
   void assertUploadGoalIsSent()
   {
     EXPECT_CALL(s3_upload_client, sendGoal(_));
+  }
+  void assertUploadGoalIsNotSent()
+  {
+    EXPECT_CALL(s3_upload_client, sendGoal(_)).Times(0);
   }
 
   void assertGoalIsRejected()
@@ -268,6 +274,27 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderActionSucceed
   assertGoalIsAccepted();
   assertPublishFeedback();
   assertUploadGoalIsSent();
+  assertGoalIsSuccess();
+  ASSERT_FALSE(Utils::GetRosbagsToUpload(rolling_recorder_options.write_directory,
+      [](rosbag::View& rosbag) -> bool
+      {
+        return ros::Time::now() >= rosbag.getBeginTime();
+      }
+    ).empty());
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
+    goal_handle,
+    rolling_recorder_options,
+    s3_upload_client,
+    action_server_busy);
+}
+
+TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderSucceedsDoesntUploadWithNoFiles)
+{
+  givenActionServerAvailable();
+  givenRollingRecorderGoal();
+  assertGoalIsAccepted();
+  assertPublishFeedback();
+  assertUploadGoalIsNotSent();
   assertGoalIsSuccess();
   Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
     goal_handle,
