@@ -18,6 +18,7 @@ from botocore.exceptions import ClientError
 class S3Client(object):
     def __init__(self, region_name):
         self.s3_client = boto3.client('s3', region_name=region_name)
+        self.s3_resource = boto3.resource('s3', region_name=region_name)
         self.s3_region = region_name
 
     def create_bucket(self, bucket_name):
@@ -33,6 +34,10 @@ class S3Client(object):
         self.s3_client.delete_bucket(
           Bucket=bucket_name
         )
+
+    def delete_all_objects(self, bucket_name):
+        bucket = self.s3_resource.Bucket(bucket_name)
+        bucket.objects.all().delete()
 
     def delete_objects(self, bucket_name, keys):
         objects_to_delete = []

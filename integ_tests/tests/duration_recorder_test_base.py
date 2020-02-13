@@ -20,6 +20,8 @@ import actionlib
 import rospy
 import rostest
 
+from s3_client import S3Client
+
 from file_helpers import get_latest_bag_by_regex, get_latest_bags_by_regex
 from recorder_msgs.msg import DurationRecorderAction, DurationRecorderGoal
 
@@ -32,6 +34,19 @@ class DurationRecorderTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rospy.init_node(TEST_NODE_NAME, log_level=rospy.DEBUG)
+        s3_region = rospy.get_param('/s3_file_uploader/aws_client_configuration/region')
+        s3 = S3Client(s3_region)
+        s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
+        s3.create_bucket(s3_bucket_name)
+        s3.wait_for_bucket_create(s3_bucket_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        s3_region = rospy.get_param('/s3_file_uploader/aws_client_configuration/region')
+        s3 = S3Client(s3_region)
+        s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
+        s3.delete_all_objects(s3_bucket_name)
+        s3.delete_bucket(s3_bucket_name)
 
     def setUp(self):
         self.action_client = None
@@ -50,7 +65,8 @@ class DurationRecorderTestBase(unittest.TestCase):
             topics_to_record=topics
         )
         self.action_client.send_goal(goal)
-        self.action_client.wait_for_result(rospy.Duration.from_sec(10.0))
+        res = self.action_client.wait_for_result(rospy.Duration.from_sec(30.0))
+        self.assertTrue(res, 'Timed out waiting for result after sending Duration Recorder Goal')
         return self.action_client.get_result()
 
     def check_rosbags_were_recorded(self, start_time, total_bags):
