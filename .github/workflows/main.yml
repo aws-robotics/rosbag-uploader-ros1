@@ -51,6 +51,7 @@ jobs:
       with:
         integ-test-package-name: 'rosbag_uploader_ros1_integration_tests'
         integ-test-launch-files: | 
+          test_duration_recorder_general.test
           test_periodic_file_deleter.test
           test_rolling_recorder_custom_topic.test
           test_rolling_recorder_default_topics.test

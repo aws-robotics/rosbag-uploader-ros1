@@ -16,6 +16,7 @@
 #include <ros/ros.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/system/error_code.hpp>
 
 #include <aws/core/utils/logging/AWSLogging.h>
 #include <aws/core/utils/logging/LogMacros.h>
@@ -42,7 +43,8 @@ bool ExpandAndCreateDir(const std::string& dir, std::string& expanded_dir)
   }
   if (!boost::filesystem::exists(expanded_dir)) {
     AWS_LOGSTREAM_INFO(__func__, "Provided write directory " << expanded_dir << " doesn't exist, creating.");
-    if (!boost::filesystem::create_directories(expanded_dir)) {
+    boost::filesystem::create_directories(expanded_dir);
+    if (!boost::filesystem::exists(expanded_dir)) {
       AWS_LOGSTREAM_ERROR(__func__, "Failed to create write directory " << expanded_dir);
       return false;
     }

@@ -12,6 +12,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+import glob
+import os
 import random
 import string
 import tempfile
@@ -34,3 +36,12 @@ def create_large_temp_file(file_size_in_mb):
         temp_file.seek(file_size_in_mb * 1024 * 1024 - 1)
         temp_file.write(b'0')
     return temp_file.name
+
+def get_latest_bag_by_regex(directory, regex_pattern):
+    return get_latest_bags_by_regex(directory, regex_pattern, 1)[0]
+
+def get_latest_bags_by_regex(directory, regex_pattern, count):
+    files = glob.iglob(os.path.join(directory, regex_pattern))
+    paths = [os.path.join(directory, filename) for filename in files]
+    paths.sort(key=os.path.getctime, reverse=True)
+    return paths[:count]
