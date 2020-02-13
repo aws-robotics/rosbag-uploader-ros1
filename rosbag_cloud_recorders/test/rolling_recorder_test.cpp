@@ -24,6 +24,7 @@
 
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/terminal_state.h>
+#include <actionlib/client/comm_state.h>
 #include <aws/core/Aws.h>
 
 #include <ros/ros.h>
@@ -178,6 +179,28 @@ TEST_F(RollingRecorderTest, TestConstructor)
   {
     Aws::Rosbag::RollingRecorder rolling_recorder(rolling_recorder_options_);
   }
+}
+
+TEST_F(RollingRecorderTest, TestActionReceived)
+{
+  GivenRollingRecorder();
+  ros::AsyncSpinner executor(0);
+  executor.start();
+  bool message_received = false;
+  // Wait 10 seconds for server to start
+  ASSERT_TRUE(action_client.waitForActionServerToStart(ros::Duration(10, 0)));
+  auto transition_call_back = [&message_received](RollingRecorderActionClient::GoalHandle goal_handle){
+    if (goal_handle.getCommState().state_ == actionlib::CommState::StateEnum::DONE) {
+      EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
+      message_received = true;
+    }
+  };
+  recorder_msgs::RollingRecorderGoal goal;
+  auto gh = action_client.sendGoal(goal, transition_call_back);
+  ros::Duration(1,0).sleep();
+  ASSERT_TRUE(message_received);
+  gh.cancel();
+  executor.stop();
 }
 
 TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
