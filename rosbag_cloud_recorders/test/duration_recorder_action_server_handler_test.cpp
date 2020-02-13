@@ -54,7 +54,10 @@ MATCHER_P(FeedbackHasStatus, expected_status, "") {
 class MockRosbagRecorder : public Utils::RosbagRecorder<Utils::Recorder>
 {
 public:
-  MockRosbagRecorder(): Utils::RosbagRecorder<Utils::Recorder>() {};
+  MockRosbagRecorder(): Utils::RosbagRecorder<Utils::Recorder>()
+  {
+    return_code_ = Utils::RosbagRecorderRunResult::STARTED;
+  };
   ~MockRosbagRecorder() {};
 
   MOCK_CONST_METHOD0(IsActive, bool());
@@ -64,9 +67,11 @@ public:
     const std::function<void(int)>& post_record
   ) {
     options_ = recorder_options;
-    pre_record();
-    post_record(rosbag_recorder_exit_code_);
-    return Utils::RosbagRecorderRunResult::STARTED;
+    if (return_code_ != Utils::RosbagRecorderRunResult::SKIPPED){
+      pre_record();
+      post_record(rosbag_recorder_exit_code_);
+    }
+    return return_code_;
   }
 
   Utils::RecorderOptions getOptions() {
@@ -76,7 +81,11 @@ public:
   void SetRosbagRecorderExitCode(int exit_code) {
     rosbag_recorder_exit_code_ = exit_code;
   }
+  void SetRosbagRecorderReturnCode(Utils::RosbagRecorderRunResult return_code) {
+    return_code_ = return_code;
+  }
 private:
+  Utils::RosbagRecorderRunResult return_code_;
   Utils::RecorderOptions options_;
   int rosbag_recorder_exit_code_;
 };
@@ -248,6 +257,11 @@ public:
     EXPECT_CALL(*rosbag_recorder, IsActive()).WillRepeatedly(Return(true));
   }
 
+  void givenRecorderBecomesActive()
+  {
+    rosbag_recorder->SetRosbagRecorderReturnCode(Utils::RosbagRecorderRunResult::SKIPPED);
+  }
+  
   void givenRecorderRanSuccessfully()
   {
     createRosbagAtTime(ros::Time::now());
@@ -409,6 +423,18 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderEmptyTopics
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlreadyActive)
 {
   givenRecorderActive();
+  assertGoalIsRejected();
+
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
+}
+
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartRecorderBecomesActive)
+{
+  // Test the case where two goals come through in quick succession. Assert that the second goal is rejected.
+  givenRecorderNotActive();
+  givenDurationRecorderGoal();
+  givenRecorderBecomesActive();
   assertGoalIsRejected();
 
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
