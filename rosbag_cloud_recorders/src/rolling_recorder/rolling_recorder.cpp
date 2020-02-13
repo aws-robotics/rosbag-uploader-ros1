@@ -32,24 +32,20 @@ namespace Aws
 {
 namespace Rosbag
 {
-RollingRecorder::RollingRecorder(RollingRecorderOptions rolling_recorder_options) :
+RollingRecorder::RollingRecorder() :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false),
   rosbag_uploader_action_client_("/s3_file_uploader/UploadFiles", true),
-  rolling_recorder_options_(std::move(rolling_recorder_options)),
   periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, rolling_recorder_options_.bag_rollover_time.toSec()),
-  action_server_busy_(false)
-{
-  InitializeRollingRecorder();
-  action_server_.start();
-  periodic_file_deleter_.Start();
-}
+  action_server_busy_(false) {}
 
 bool RollingRecorder::ValidInputParam(Aws::Rosbag::RollingRecorderOptions rolling_recorder_options) {
   return (rolling_recorder_options.bag_rollover_time.toSec() > 0) && (rolling_recorder_options.max_record_time.toSec() > 0) && (rolling_recorder_options.bag_rollover_time.toSec() <= rolling_recorder_options.max_record_time.toSec());
 }
 
-void RollingRecorder::InitializeRollingRecorder() {
+void RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options) {
+  rolling_recorder_options_ = std::move(rolling_recorder_options);
+
   if (!ValidInputParam(rolling_recorder_options_)) {
     AWS_LOG_ERROR(__func__, "Failed to start rolling recorder due to bag_rollover_time and max_record_time are invalid.");
     ros::shutdown();
@@ -58,6 +54,8 @@ void RollingRecorder::InitializeRollingRecorder() {
     RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(goal_handle,
       rolling_recorder_options_, rosbag_uploader_action_client_, action_server_busy_);
   });
+  action_server_.start();
+  periodic_file_deleter_.Start();
 }
 
 void RollingRecorder::UpdateStatus(RollingRecorderStatus status) {

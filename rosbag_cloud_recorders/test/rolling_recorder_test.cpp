@@ -67,7 +67,8 @@ public:
   RollingRecorderTest():
     executor(0),
     nh("~"),
-    action_client(nh, "RosbagRollingRecord")
+    action_client(nh, "RosbagRollingRecord"),
+    rolling_recorder_(std::make_shared<RollingRecorder>())
   {
     char dir_template[] = "/tmp/rolling_recorder_testXXXXXX";
     mkdtemp(dir_template);
@@ -85,9 +86,9 @@ public:
     boost::filesystem::remove_all(path);
   }
 
-  void GivenRollingRecorder()
+  void GivenRollingRecorderInitialized()
   {
-    rolling_recorder_ = std::make_shared<RollingRecorder>(rolling_recorder_options_);
+    rolling_recorder_->InitializeRollingRecorder(rolling_recorder_options_);
   }
 
   std::string GetFileNameForTimeStamp(const ros::Time& time)
@@ -176,7 +177,7 @@ TEST_F(RollingRecorderTest, TestConstructorWithValidParamInput)
   rolling_recorder_options_.max_record_time = max_record_time;
   rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
   {
-    Aws::Rosbag::RollingRecorder rolling_recorder(rolling_recorder_options_);
+    Aws::Rosbag::RollingRecorder rolling_recorder;
   }
 }
 
@@ -213,9 +214,29 @@ TEST_F(RollingRecorderTest, TestInvalidParamInput)
   }
 }
 
+TEST_F(RollingRecorderTest, TestActionReceived)
+{
+  GivenRollingRecorderInitialized();
+
+  bool message_received = false;
+  // Wait 10 seconds for server to start
+  ASSERT_TRUE(action_client.waitForActionServerToStart(ros::Duration(10, 0)));
+  auto transition_call_back = [&message_received](RollingRecorderActionClient::GoalHandle goal_handle){
+    if (goal_handle.getCommState().state_ == actionlib::CommState::StateEnum::DONE) {
+      EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
+      message_received = true;
+    }
+  };
+  recorder_msgs::RollingRecorderGoal goal;
+  auto gh = action_client.sendGoal(goal, transition_call_back);
+  
+  ros::Duration(1,0).sleep();
+  ASSERT_TRUE(message_received);
+}
+
 TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
 {
-  GivenRollingRecorder();
+  GivenRollingRecorderInitialized();
   auto old_file_names = GivenOldRosBags(3);
   auto recent_file_names = GivenRecentRosBags(3);
   auto invalid_file_names = GivenInvalidFileNames(3);
@@ -226,7 +247,7 @@ TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
 
 TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
 {
-  GivenRollingRecorder();
+  GivenRollingRecorderInitialized();
   RollingRecorderStatus status;
   file_uploader_msgs::UploadFilesGoal upload_goal;
   upload_goal.files = GivenOldRosBags(3);
