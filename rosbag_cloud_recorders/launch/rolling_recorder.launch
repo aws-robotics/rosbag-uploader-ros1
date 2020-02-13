@@ -43,7 +43,7 @@
       <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
       <param name="max_record_time" value="$(arg max_record_time)" />
       <param name="write_directory" value="$(arg write_directory)" />
-      <param name="upload_timeout" value="$(arg upload_timeout_s)"/>
+      <param name="upload_timeout" value="$(arg upload_timeout)"/>
     </node>
 
 </launch>
