@@ -69,9 +69,14 @@ public:
    */
   void UpdateStatus(RollingRecorderStatus status = RollingRecorderStatus());
 
+  /**
+   * To determine whether to start the rolling recorder action server based on whether the rolling recorder options are valid
+   */
+  bool ValidInputParam(Aws::Rosbag::RollingRecorderOptions rolling_recorder_options);
+
 private:
   void StartOldRosBagsPeriodicRemoval();
-
+  
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
   UploadFilesActionSimpleClient rosbag_uploader_action_client_;
