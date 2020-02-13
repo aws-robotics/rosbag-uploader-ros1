@@ -43,9 +43,9 @@ bool ExpandAndCreateDir(const std::string& dir, std::string& expanded_dir)
   }
   if (!boost::filesystem::exists(expanded_dir)) {
     AWS_LOGSTREAM_INFO(__func__, "Provided write directory " << expanded_dir << " doesn't exist, creating.");
-    boost::system::error_code ec;
-    if (!boost::filesystem::create_directories(expanded_dir, ec)) {
-      AWS_LOGSTREAM_ERROR(__func__, "Failed to create write directory " << expanded_dir << "with error " << ec.value());
+    boost::filesystem::create_directories(expanded_dir);
+    if (!boost::filesystem::exists(expanded_dir)) {
+      AWS_LOGSTREAM_ERROR(__func__, "Failed to create write directory " << expanded_dir);
       return false;
     }
   }
