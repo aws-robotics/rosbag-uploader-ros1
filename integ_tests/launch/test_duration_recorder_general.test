@@ -11,7 +11,7 @@
         <arg name="write_directory" value="$(arg write_directory)" />
     </include>
 
-    <test test-name="TestDurationRecorder" pkg="rosbag_uploader_ros1_integration_tests" type="test_duration_recorder_general.py" time-limit="300">
+    <test test-name="TestDurationRecorder" pkg="rosbag_uploader_ros1_integration_tests" type="test_duration_recorder_general.py" time-limit="600">
         <param name="write_directory" value="$(arg write_directory)" />
     </test>
 </launch>
