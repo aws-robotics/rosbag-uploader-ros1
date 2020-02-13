@@ -27,7 +27,7 @@
 
 constexpr char kNodeName[] = "rosbag_duration_recorder";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
-constexpr char kUploadTimeoutParameter[] = "upload_timeout_s";
+constexpr char kUploadTimeoutParameter[] = "upload_timeout";
 
 bool ExpandAndCreateDir(const std::string& dir, std::string& expanded_dir)
 {
