@@ -67,8 +67,10 @@ public:
     const std::function<void(int)>& post_record
   ) {
     options_ = recorder_options;
-    pre_record();
-    post_record(rosbag_recorder_exit_code_);
+    if (return_code_ != Utils::RosbagRecorderRunResult::SKIPPED){
+      pre_record();
+      post_record(rosbag_recorder_exit_code_);
+    }
     return return_code_;
   }
 
