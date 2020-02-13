@@ -73,7 +73,7 @@ private:
     recorder_msgs::RollingRecorderFeedback recorder_feedback;
     recorder_msgs::RecorderStatus recording_status;
     Utils::GenerateFeedback(
-      recorder_msgs::RecorderStatus::RECORDING,
+      recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
       time_of_goal_received,
       recorder_feedback,
       recording_status);
@@ -93,7 +93,6 @@ private:
       goal_handle.setSucceeded(result, msg);
       return;
     }
-
     bool upload_finished = Utils::UploadFiles(goal_handle, rolling_recorder_options.upload_timeout_s, rosbag_uploader_action_client, rosbags_to_upload);
     Utils::HandleRecorderUploadResult(goal_handle, rosbag_uploader_action_client.getState(), upload_finished, result);
   }
