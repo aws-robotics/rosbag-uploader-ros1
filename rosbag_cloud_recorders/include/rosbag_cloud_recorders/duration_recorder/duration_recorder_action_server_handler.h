@@ -98,6 +98,8 @@ public:
       options,
       [goal_handle, time_of_goal_received]() mutable
       {
+        goal_handle.setAccepted();
+        AWS_LOG_INFO(current_function, "Goal accpeted");
         recorder_msgs::DurationRecorderFeedback recorder_feedback;
         recorder_msgs::RecorderStatus recording_status;
         Utils::GenerateFeedback(
