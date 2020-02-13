@@ -76,7 +76,7 @@ public:
 
 private:
   void StartOldRosBagsPeriodicRemoval();
-  
+  void InitializeRollingRecorder();
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
   UploadFilesActionSimpleClient rosbag_uploader_action_client_;
