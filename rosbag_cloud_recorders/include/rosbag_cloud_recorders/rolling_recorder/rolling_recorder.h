@@ -54,7 +54,7 @@ struct RollingRecorderStatus {
 class RollingRecorder
 {
 public:
-  explicit RollingRecorder(RollingRecorderOptions rolling_recorder_options);
+  explicit RollingRecorder();
 
   virtual ~RollingRecorder() = default;
 
@@ -72,7 +72,12 @@ public:
   /**
    * To determine whether to start the rolling recorder action server based on whether the rolling recorder options are valid
    */
-  bool ValidInputParam(Aws::Rosbag::RollingRecorderOptions rolling_recorder_options);
+  bool ValidInputParam(RollingRecorderOptions rolling_recorder_options);
+
+  /**
+   * Initialize the rolling recorder action server
+   */
+  void InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options);
 
 private:
   void StartOldRosBagsPeriodicRemoval();
