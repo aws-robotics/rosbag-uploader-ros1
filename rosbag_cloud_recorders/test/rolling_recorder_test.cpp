@@ -58,7 +58,7 @@ class RollingRecorderTest : public ::testing::Test
 {
 protected:
   recorder_msgs::RollingRecorderGoal goal;
-  ros::AsyncSpinner executor;
+  //ros::AsyncSpinner executor;
   ros::NodeHandle nh;
   RollingRecorderActionClient action_client;
   RollingRecorderActionClient::GoalHandle goal_handle;
@@ -66,7 +66,7 @@ protected:
   RollingRecorderOptions rolling_recorder_options_;
 public:
   RollingRecorderTest():
-    executor(2),
+    //executor(2),
     nh("~"),
     action_client(nh, "RosbagRollingRecord"),
     rolling_recorder_(std::make_shared<RollingRecorder>())
@@ -77,12 +77,12 @@ public:
     rolling_recorder_options_.max_record_time = ros::Duration(10);
     rolling_recorder_options_.upload_timeout_s = 3600;
     rolling_recorder_options_.write_directory= std::string(dir_template) + "/";
-    executor.start();
+    //executor.start();
   }
 
   void TearDown() override
   {
-    executor.stop();
+    //executor.stop();
     // Delete all files in the write directory to clean up
     boost::filesystem::path path(rolling_recorder_options_.write_directory);
     try {
@@ -189,6 +189,8 @@ TEST_F(RollingRecorderTest, TestConstructorWithValidParamInput)
 
 TEST_F(RollingRecorderTest, TestActionReceived)
 {
+  ros::AsyncSpinner executor(2);
+  executor.start();
   GivenRollingRecorder();
   bool message_received = false;
   // Wait 10 seconds for server to start
@@ -203,6 +205,7 @@ TEST_F(RollingRecorderTest, TestActionReceived)
   auto gh = action_client.sendGoal(goal, transition_call_back);
   ros::Duration(1,0).sleep();
   ASSERT_TRUE(message_received);
+  executor.stop();
 }
 
 TEST_F(RollingRecorderTest, TestInvalidParamInput)
