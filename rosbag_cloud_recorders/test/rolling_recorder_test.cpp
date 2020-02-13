@@ -82,6 +82,7 @@ public:
 
   void TearDown() override
   {
+    executor.stop();
     // Delete all files in the write directory to clean up
     boost::filesystem::path path(rolling_recorder_options_.write_directory);
     try {
