@@ -98,7 +98,7 @@ public:
   std::string GetFileNameForTimeStamp(const ros::Time& time)
   {
     std::stringstream file_name;
-    boost::posix_time::time_facet *const f=
+    boost::posix_time::time_facet *const f =
         new boost::posix_time::time_facet("%Y-%m-%d-%H-%M-%S");
     boost::posix_time::ptime pt = time.toBoost();
     boost::posix_time::ptime local_pt = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(pt);

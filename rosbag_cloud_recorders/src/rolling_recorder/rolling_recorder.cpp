@@ -66,13 +66,12 @@ bool RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_r
     return false;
   }
   action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
-    auto this_recorder = std::shared_ptr<RollingRecorder>(this);
     auto request = RollingRecorderRosbagUploadRequest<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>{
       .goal_handle = goal_handle,
       .rolling_recorder_options = rolling_recorder_options_,
       .rosbag_uploader_action_client = rosbag_uploader_action_client_,
       .action_server_busy = action_server_busy_,
-      .recorder = this_recorder
+      .recorder = shared_from_this()
     };
     RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(request);
   });

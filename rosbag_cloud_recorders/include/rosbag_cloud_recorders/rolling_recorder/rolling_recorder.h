@@ -51,7 +51,7 @@ struct RollingRecorderStatus {
 /**
  * Rolling recorder is a node that responds to actions to record rosbag files
  */
-class RollingRecorder
+class RollingRecorder : public std::enable_shared_from_this<RollingRecorder>
 {
 public:
   explicit RollingRecorder();
