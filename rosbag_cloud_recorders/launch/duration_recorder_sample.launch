@@ -1,0 +1,18 @@
+<launch>
+    <!-- Directory where rosbags will be written.
+         Defaults to ~/.ros/dr_rosbag_uploader/ -->
+    <arg name="write_directory" default="~/.ros/dr_rosbag_uploader/" />
+    <!-- Time in seconds to wait for uploader node. Timeouts < 0 are treated as infinite -->
+    <arg name="upload_timeout" default="3600" />
+    <arg name="s3_bucket"/>
+
+    <node name="duration_recorder" pkg="rosbag_cloud_recorders" type="duration_recorder" output="screen">
+      <param name="write_directory" value="$(arg write_directory)"/>
+      <param name="upload_timeout" value="$(arg upload_timeout)"/>
+    </node>
+
+    <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
+      <arg name="s3_bucket" value="$(arg s3_bucket)"/>
+    </include>
+
+</launch>
