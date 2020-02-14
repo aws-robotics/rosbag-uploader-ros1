@@ -24,7 +24,6 @@
 
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/terminal_state.h>
-#include <actionlib/client/comm_state.h>
 #include <aws/core/Aws.h>
 
 #include <ros/ros.h>
@@ -58,6 +57,7 @@ class RollingRecorderTest : public ::testing::Test
 {
 protected:
   recorder_msgs::RollingRecorderGoal goal;
+  ros::AsyncSpinner executor;
   ros::NodeHandle nh;
   RollingRecorderActionClient action_client;
   RollingRecorderActionClient::GoalHandle goal_handle;
@@ -65,6 +65,7 @@ protected:
   RollingRecorderOptions rolling_recorder_options_;
 public:
   RollingRecorderTest():
+    executor(0),
     nh("~"),
     action_client(nh, "RosbagRollingRecord"),
     rolling_recorder_(std::make_shared<RollingRecorder>())
@@ -74,7 +75,8 @@ public:
     rolling_recorder_options_.bag_rollover_time = ros::Duration(5);
     rolling_recorder_options_.max_record_time = ros::Duration(10);
     rolling_recorder_options_.upload_timeout_s = 3600;
-    rolling_recorder_options_.write_directory= std::string(dir_template) + "/";
+    rolling_recorder_options_.write_directory = std::string(dir_template) + "/";
+    executor.start();
   }
 
   void TearDown() override
