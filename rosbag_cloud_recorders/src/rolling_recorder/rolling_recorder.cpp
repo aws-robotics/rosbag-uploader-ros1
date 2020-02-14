@@ -51,8 +51,15 @@ void RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_r
     ros::shutdown();
   }
   action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
-    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(goal_handle,
-      rolling_recorder_options_, rosbag_uploader_action_client_, action_server_busy_);
+    auto this_recorder = std::shared_ptr<RollingRecorder>(this);
+    auto request = RollingRecorderRosbagUploadRequest<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>{
+      .goal_handle = goal_handle,
+      .rolling_recorder_options = rolling_recorder_options_,
+      .rosbag_uploader_action_client = rosbag_uploader_action_client_,
+      .action_server_busy = action_server_busy_,
+      .recorder = this_recorder
+    };
+    RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(request);
   });
   action_server_.start();
   periodic_file_deleter_.Start();

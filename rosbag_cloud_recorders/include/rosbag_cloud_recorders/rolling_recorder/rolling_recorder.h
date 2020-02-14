@@ -67,7 +67,7 @@ public:
   /**
    * Used by the callback handler to communicate information back to the recorder.
    */
-  void UpdateStatus(RollingRecorderStatus status = RollingRecorderStatus());
+  virtual void UpdateStatus(RollingRecorderStatus status = RollingRecorderStatus());
 
   /**
    * To determine whether to start the rolling recorder action server based on whether the rolling recorder options are valid
