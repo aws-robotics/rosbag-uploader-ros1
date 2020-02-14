@@ -77,7 +77,7 @@ public:
   /**
    * Initialize the rolling recorder action server
    */
-  void InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options);
+  bool InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options);
 
 private:
   void StartOldRosBagsPeriodicRemoval();

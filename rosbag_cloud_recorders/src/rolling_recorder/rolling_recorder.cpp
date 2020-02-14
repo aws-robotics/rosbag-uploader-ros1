@@ -40,15 +40,30 @@ RollingRecorder::RollingRecorder() :
   action_server_busy_(false) {}
 
 bool RollingRecorder::ValidInputParam(Aws::Rosbag::RollingRecorderOptions rolling_recorder_options) {
-  return (rolling_recorder_options.bag_rollover_time.toSec() > 0) && (rolling_recorder_options.max_record_time.toSec() > 0) && (rolling_recorder_options.bag_rollover_time.toSec() <= rolling_recorder_options.max_record_time.toSec());
+  if (rolling_recorder_options.bag_rollover_time.toSec() <= 0) {
+    AWS_LOG_ERROR(__func__, "bag_rollover_time must be a positive integer.");
+    return false;
+  }
+  if (rolling_recorder_options.max_record_time.toSec() <= 0) {
+    AWS_LOG_ERROR(__func__, "max_record_time must be a positive integer.");
+    return false;
+  }
+  if (rolling_recorder_options.bag_rollover_time.toSec() > rolling_recorder_options.max_record_time.toSec()) {
+    AWS_LOG_ERROR(__func__, "bag_rollover_time cannot be greater than max_record_time.");
+    return false;
+  }
+  if (rolling_recorder_options.upload_timeout_s <= 0) {
+    AWS_LOG_ERROR(__func__, "upload_timeout_s must be a positive number.");
+    return false;
+  }
+  return true;
 }
 
-void RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options) {
+bool RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options) {
   rolling_recorder_options_ = std::move(rolling_recorder_options);
 
   if (!ValidInputParam(rolling_recorder_options_)) {
-    AWS_LOG_ERROR(__func__, "Failed to start rolling recorder due to bag_rollover_time and max_record_time are invalid.");
-    ros::shutdown();
+    return false;
   }
   action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
     auto this_recorder = std::shared_ptr<RollingRecorder>(this);
@@ -63,6 +78,7 @@ void RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_r
   });
   action_server_.start();
   periodic_file_deleter_.Start();
+  return true;
 }
 
 void RollingRecorder::UpdateStatus(RollingRecorderStatus status) {
