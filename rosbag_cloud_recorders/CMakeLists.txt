@@ -134,20 +134,47 @@ if(CATKIN_ENABLE_TESTING)
     target_link_libraries(test_rolling_recorder
       ${GMOCK_BOTH_LIBRARIES}
     )
+
+    add_rostest_gmock(
+      test_duration_recorder
+      test/test_duration_recorder.test
+      test/duration_recorder_test.cpp
+    )
+    target_include_directories(test_duration_recorder PRIVATE
+      ${GMOCK_INCLUDE_DIRS}
+    )
+    target_link_libraries(test_duration_recorder
+      ${GMOCK_BOTH_LIBRARIES}
+    )
   else()
     include_directories(/usr/include/gmock /usr/src/gmock)
-    add_library(test_rolling_recorder_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
+    add_library(${PROJECT_NAME}_libgmock SHARED /usr/src/gmock/src/gmock-all.cc)
     add_rostest_gtest(test_rolling_recorder
       test/test_rolling_recorder.test
       test/rolling_recorder_test.cpp
     )
     target_link_libraries(test_rolling_recorder
-      test_rolling_recorder_libgmock
+      ${PROJECT_NAME}_libgmock
+    )
+
+    add_rostest_gtest(test_duration_recorder
+      test/test_duration_recorder.test
+      test/duration_recorder_test.cpp
+    )
+    target_link_libraries(test_duration_recorder
+      ${PROJECT_NAME}_libgmock
     )
   endif()
 
   target_include_directories(test_rolling_recorder PRIVATE ${TEST_INCLUDE_DIRS})
   target_link_libraries(test_rolling_recorder
+    ${PROJECT_NAME}_lib
+    ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
+  )
+
+  target_include_directories(test_duration_recorder PRIVATE ${TEST_INCLUDE_DIRS})
+  target_link_libraries(test_duration_recorder
     ${PROJECT_NAME}_lib
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
