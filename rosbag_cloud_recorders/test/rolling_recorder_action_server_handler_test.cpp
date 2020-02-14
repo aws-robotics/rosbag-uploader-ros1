@@ -42,7 +42,7 @@ using ::testing::Field;
 
 class MockRollingRecorder : public RollingRecorder {
 public:
-  MockRollingRecorder(RollingRecorderOptions options) : RollingRecorder(options) {}
+  MockRollingRecorder() : RollingRecorder() {}
   MOCK_METHOD1(UpdateStatus, void(RollingRecorderStatus status));
 };
 
@@ -165,7 +165,7 @@ public:
     boost::filesystem::remove_all(path);
     boost::filesystem::create_directories(path);
 
-    rolling_recorder = std::make_shared<MockRollingRecorder>(rolling_recorder_options);
+    rolling_recorder = std::make_shared<MockRollingRecorder>();
     request = new RollingRecorderRosbagUploadRequest<MockRollingRecorderGoalHandle, MockS3UploadClient>{
       .goal_handle = goal_handle,
       .rolling_recorder_options = rolling_recorder_options,

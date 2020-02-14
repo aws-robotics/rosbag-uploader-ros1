@@ -183,27 +183,6 @@ TEST_F(RollingRecorderTest, TestConstructorWithValidParamInput)
   }
 }
 
-TEST_F(RollingRecorderTest, TestActionReceived)
-{
-  ros::AsyncSpinner executor(2);
-  executor.start();
-  GivenRollingRecorder();
-  bool message_received = false;
-  // Wait 10 seconds for server to start
-  ASSERT_TRUE(action_client.waitForActionServerToStart(ros::Duration(10, 0)));
-  auto transition_call_back = [&message_received](RollingRecorderActionClient::GoalHandle goal_handle){
-    if (goal_handle.getCommState().state_ == actionlib::CommState::StateEnum::DONE) {
-      EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
-      message_received = true;
-    }
-  };
-  recorder_msgs::RollingRecorderGoal goal;
-  auto gh = action_client.sendGoal(goal, transition_call_back);
-  ros::Duration(1,0).sleep();
-  ASSERT_TRUE(message_received);
-  executor.stop();
-}
-
 TEST_F(RollingRecorderTest, TestInvalidParamInput)
 {
   // Case: bag_rollover_time > max_record_time
