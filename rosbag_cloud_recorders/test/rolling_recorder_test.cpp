@@ -260,7 +260,7 @@ TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
   rolling_recorder_->UpdateStatus(status);
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(upload_goal.files));
   // Reset the status and expect the files to now be included in the result.
-  rolling_recorder_->UpdateStatus();
+  rolling_recorder_->UpdateStatus(RollingRecorderStatus());
   EXPECT_TRUE(FilesToDeleteContainsAllOf(upload_goal.files));
 }
 
