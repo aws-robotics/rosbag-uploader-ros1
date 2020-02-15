@@ -83,7 +83,11 @@ public:
   {
     // Delete all files in the write directory to clean up
     boost::filesystem::path path(rolling_recorder_options_.write_directory);
-    boost::filesystem::remove_all(path);
+    try {
+      boost::filesystem::remove_all(path);
+    } catch (std::exception& e) {
+      AWS_LOGSTREAM_INFO(__func__, "Caught exception: " << e.what());
+    }
   }
 
   void GivenRollingRecorderInitialized()
