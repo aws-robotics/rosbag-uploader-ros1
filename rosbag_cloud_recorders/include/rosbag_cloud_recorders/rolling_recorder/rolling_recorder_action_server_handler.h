@@ -108,7 +108,7 @@ private:
     bool upload_finished = req.rosbag_uploader_action_client.waitForResult(ros::Duration(req.rolling_recorder_options.upload_timeout_s));
     Utils::HandleRecorderUploadResult(req.goal_handle, req.rosbag_uploader_action_client.getState(), upload_finished, result);
     if (auto recorder = req.recorder.lock()) {
-      recorder->UpdateStatus();
+      recorder->UpdateStatus(RollingRecorderStatus());
     }
   }
 };
