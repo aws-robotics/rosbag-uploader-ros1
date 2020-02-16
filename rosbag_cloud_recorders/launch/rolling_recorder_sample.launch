@@ -3,7 +3,7 @@
          Acceptable values: positive integers
          If not given defaults to 30 seconds
          If an invalid value is given the node will exit and log an error message -->
-    <arg name="bag_rollover_time" default="5" />
+    <arg name="bag_rollover_time" default="30" />
 
     <!-- The length of time recordings are kept. Any rosbag older than this time will be deleted.
          Acceptable values: positive integers

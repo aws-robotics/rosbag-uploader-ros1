@@ -2,7 +2,7 @@
     <!-- Directory where rosbags will be written.
          Defaults to ~/.ros/dr_rosbag_uploader/ -->
     <arg name="write_directory" default="~/.ros/dr_rosbag_uploader/" />
-    <!-- Time in seconds to wait for uploader node. Timeouts < 0 are treated as infinite -->
+    <!-- Time in seconds to wait for uploader node. Timeouts <= 0 are treated as infinite -->
     <arg name="upload_timeout" default="3600" />
     <arg name="s3_bucket"/>
 
