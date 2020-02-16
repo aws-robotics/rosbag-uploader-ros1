@@ -71,7 +71,7 @@ std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
   for (boost::filesystem::directory_iterator itr(dir_path, ec);
        itr != boost::filesystem::directory_iterator(); ++itr) {
     if (ec.value() != 0) {
-      AWS_LOGSTREAM_INFO(__func__, "Getting rosbags to delete errored with message: " << ec.message());
+      AWS_LOGSTREAM_WARN(__func__, "Getting rosbags to delete errored with message: " << ec.message());
       break;
     }
     if (itr->path().extension().string() != ".bag") {
