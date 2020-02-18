@@ -40,8 +40,11 @@ def create_large_temp_file(file_size_in_mb):
 def get_latest_bag_by_regex(directory, regex_pattern):
     return get_latest_bags_by_regex(directory, regex_pattern, 1)[0]
 
-def get_latest_bags_by_regex(directory, regex_pattern, count):
+def get_latest_bags_by_regex(directory, regex_pattern, count=None):
     files = glob.iglob(os.path.join(directory, regex_pattern))
     paths = [os.path.join(directory, filename) for filename in files]
     paths.sort(key=os.path.getctime, reverse=True)
-    return paths[:count]
+    if count is None:
+        return paths
+    else:
+        return paths[:count]

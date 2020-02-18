@@ -49,13 +49,17 @@ class DurationRecorderTestBase(unittest.TestCase):
         s3.delete_bucket(s3_bucket_name)
 
     def setUp(self):
-        self.action_client = None
+        self.action_client = self._create_duration_recorder_action_client()
         self.rosbag_directory = rospy.get_param('~write_directory')
 
+    def tearDown(self):
+        self.delete_all_rosbags()
+
     def _create_duration_recorder_action_client(self):
-        self.action_client = actionlib.SimpleActionClient(ACTION, DurationRecorderAction)
-        res = self.action_client.wait_for_server()
+        action_client = actionlib.SimpleActionClient(ACTION, DurationRecorderAction)
+        res = action_client.wait_for_server()
         self.assertTrue(res, 'Failed to connect to action server')
+        return action_client
 
     def record_for_duration(self, duration=5, topics=None):
         if topics is None:
@@ -71,9 +75,16 @@ class DurationRecorderTestBase(unittest.TestCase):
 
     def check_rosbags_were_recorded(self, start_time, total_bags):
         latest_bags = self.get_latest_bags_by_regex("*.bag", total_bags)
+        total_bags_found = len(latest_bags)
+        self.assertEquals(total_bags_found, total_bags, "Expected %d bags but only found %d" % (total_bags, total_bags_found))
         for bag_path in latest_bags:
             bag_create_time = os.path.getctime(bag_path)
             self.assertGreater(bag_create_time, start_time)
+
+    def delete_all_rosbags(self):
+        all_bags = get_latest_bags_by_regex(self.rosbag_directory, "*.bag")
+        for bag_path in all_bags:
+            os.remove(bag_path)
 
     def get_latest_bag_by_regex(self, regex_pattern):
         return get_latest_bag_by_regex(self.rosbag_directory, regex_pattern)
