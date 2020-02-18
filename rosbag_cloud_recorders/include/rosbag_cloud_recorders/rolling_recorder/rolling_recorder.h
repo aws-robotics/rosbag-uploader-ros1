@@ -51,7 +51,7 @@ struct RollingRecorderStatus {
 /**
  * Rolling recorder is a node that responds to actions to record rosbag files
  */
-class RollingRecorder
+class RollingRecorder : public std::enable_shared_from_this<RollingRecorder>
 {
 public:
   explicit RollingRecorder();
@@ -67,7 +67,7 @@ public:
   /**
    * Used by the callback handler to communicate information back to the recorder.
    */
-  void UpdateStatus(RollingRecorderStatus status = RollingRecorderStatus());
+  virtual void UpdateStatus(RollingRecorderStatus status);
 
   /**
    * To determine whether to start the rolling recorder action server based on whether the rolling recorder options are valid
@@ -77,7 +77,7 @@ public:
   /**
    * Initialize the rolling recorder action server
    */
-  void InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options);
+  bool InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options);
 
 private:
   void StartOldRosBagsPeriodicRemoval();
