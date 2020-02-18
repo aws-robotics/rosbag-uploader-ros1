@@ -75,7 +75,7 @@ public:
     rolling_recorder_options_.bag_rollover_time = ros::Duration(5);
     rolling_recorder_options_.max_record_time = ros::Duration(10);
     rolling_recorder_options_.upload_timeout_s = 3600;
-    rolling_recorder_options_.write_directory= std::string(dir_template) + "/";
+    rolling_recorder_options_.write_directory = std::string(dir_template) + "/";
     executor.start();
   }
 
@@ -98,7 +98,7 @@ public:
   std::string GetFileNameForTimeStamp(const ros::Time& time)
   {
     std::stringstream file_name;
-    boost::posix_time::time_facet *const f=
+    boost::posix_time::time_facet *const f =
         new boost::posix_time::time_facet("%Y-%m-%d-%H-%M-%S");
     boost::posix_time::ptime pt = time.toBoost();
     boost::posix_time::ptime local_pt = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(pt);
@@ -260,7 +260,7 @@ TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
   rolling_recorder_->UpdateStatus(status);
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(upload_goal.files));
   // Reset the status and expect the files to now be included in the result.
-  rolling_recorder_->UpdateStatus();
+  rolling_recorder_->UpdateStatus(RollingRecorderStatus());
   EXPECT_TRUE(FilesToDeleteContainsAllOf(upload_goal.files));
 }
 

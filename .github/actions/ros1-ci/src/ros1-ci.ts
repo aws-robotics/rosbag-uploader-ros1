@@ -188,6 +188,7 @@ async function test() {
     let colconArgs: any = []
     if (PACKAGES_TO_SKIP_TESTS.length) {
       colconArgs = [
+        "--event-handlers", "console_direct+",
         "--packages-skip",
       ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
     }

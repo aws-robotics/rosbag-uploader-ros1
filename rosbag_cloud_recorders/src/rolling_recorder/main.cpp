@@ -73,10 +73,14 @@ int main(int argc, char* argv[])
 
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
   Aws::Rosbag::RollingRecorder rolling_recorder;
-  rolling_recorder.InitializeRollingRecorder(rolling_recorder_options);
-  ros::MultiThreadedSpinner spinner(2);
-  spinner.spin();
-  AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
+  if (!rolling_recorder.InitializeRollingRecorder(rolling_recorder_options)) {
+    AWS_LOG_INFO(__func__, "Failed to initialize rolling recorder. Shutting down.");
+  } else {
+    ros::MultiThreadedSpinner spinner(2);
+    spinner.spin();
+    AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
+  }
+  ros::shutdown();
   Aws::Utils::Logging::ShutdownAWSLogging();
   return 0;
 }

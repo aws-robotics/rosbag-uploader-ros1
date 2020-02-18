@@ -1132,6 +1132,7 @@ function test() {
             let colconArgs = [];
             if (PACKAGES_TO_SKIP_TESTS.length) {
                 colconArgs = [
+                    "--event-handlers", "console_direct+",
                     "--packages-skip",
                 ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
             }
