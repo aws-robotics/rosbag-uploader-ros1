@@ -67,8 +67,13 @@ std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const
   AWS_LOG_DEBUG(__func__, "Getting ros bags to delete");
   boost::filesystem::path dir_path(rolling_recorder_options_.write_directory);
   std::vector<std::string> delete_files;
-  for (boost::filesystem::directory_iterator itr(dir_path);
+  boost::system::error_code ec;
+  for (boost::filesystem::directory_iterator itr(dir_path, ec);
        itr != boost::filesystem::directory_iterator(); ++itr) {
+    if (ec.value() != 0) {
+      AWS_LOGSTREAM_WARN(__func__, "boost::filesystem::directory_iterator errored with message: " << ec.message());
+      break;
+    }
     if (itr->path().extension().string() != ".bag") {
       continue;
     }
