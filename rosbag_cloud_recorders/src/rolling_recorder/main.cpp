@@ -72,8 +72,8 @@ int main(int argc, char* argv[])
   rolling_recorder_options.write_directory = *(wordexp_result.we_wordv);
 
   AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
-  Aws::Rosbag::RollingRecorder rolling_recorder;
-  if (!rolling_recorder.InitializeRollingRecorder(rolling_recorder_options)) {
+  auto rolling_recorder = std::make_shared<Aws::Rosbag::RollingRecorder>();
+  if (!rolling_recorder->InitializeRollingRecorder(rolling_recorder_options)) {
     AWS_LOG_INFO(__func__, "Failed to initialize rolling recorder. Shutting down.");
   } else {
     ros::MultiThreadedSpinner spinner(2);
