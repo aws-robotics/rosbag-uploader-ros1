@@ -36,7 +36,6 @@ RollingRecorder::RollingRecorder() :
   node_handle_("~"),
   action_server_(node_handle_, "RosbagRollingRecord", false),
   rosbag_uploader_action_client_("/s3_file_uploader/UploadFiles", true),
-  periodic_file_deleter_([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, rolling_recorder_options_.bag_rollover_time.toSec()),
   action_server_busy_(false) {}
 
 bool RollingRecorder::ValidInputParam(Aws::Rosbag::RollingRecorderOptions rolling_recorder_options) {
@@ -65,6 +64,7 @@ bool RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_r
   if (!ValidInputParam(rolling_recorder_options_)) {
     return false;
   }
+  periodic_file_deleter_ = std::make_unique<Utils::PeriodicFileDeleter>([this]()->std::vector<std::string>{return this->GetRosBagsToDelete();}, rolling_recorder_options_.bag_rollover_time.toSec());
   action_server_.registerGoalCallback([&](RollingRecorderActionServer::GoalHandle goal_handle) {
     auto request = RollingRecorderRosbagUploadRequest<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>{
       .goal_handle = goal_handle,
@@ -76,7 +76,7 @@ bool RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_r
     RollingRecorderActionServerHandler<RollingRecorderActionServer::GoalHandle, UploadFilesActionSimpleClient>::RollingRecorderRosbagUpload(request);
   });
   action_server_.start();
-  periodic_file_deleter_.Start();
+  periodic_file_deleter_->Start();
   return true;
 }
 

@@ -86,7 +86,7 @@ private:
   RollingRecorderActionServer action_server_;
   UploadFilesActionSimpleClient rosbag_uploader_action_client_;
   RollingRecorderOptions rolling_recorder_options_;
-  Utils::PeriodicFileDeleter periodic_file_deleter_;
+  std::unique_ptr<Utils::PeriodicFileDeleter> periodic_file_deleter_;
   RollingRecorderStatus status_;
   std::atomic<bool> action_server_busy_;
 
