@@ -21,54 +21,142 @@
 #include <boost/filesystem.hpp>
 #include <ros/ros.h>
 #include <std_msgs/String.h>
+
+#include <rosbag/bag.h>
 #include <recorder_msgs/RollingRecorderGoal.h>
 #include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder_action_server_handler.h>
+#include <rosbag_cloud_recorders/utils/file_utils.h>
 #include <aws_common/fs_utils/wordexp_ros.h>
 #include <wordexp.h>
 
 using namespace Aws::Rosbag;
 
 using ::testing::_;
+using ::testing::Return;
 using ::testing::UnorderedElementsAre;
+using ::testing::InSequence;
+using ::testing::ContainerEq;
+using ::testing::IsEmpty;
+using ::testing::UnorderedElementsAreArray;
+using ::testing::Field;
+
+class MockRollingRecorder : public RollingRecorder {
+public:
+  MockRollingRecorder() : RollingRecorder() {}
+  MOCK_METHOD1(UpdateStatus, void(RollingRecorderStatus status));
+};
 
 class MockRollingRecorderGoalHandle
 {
-public:
-  MockRollingRecorderGoalHandle() = default;
-  MockRollingRecorderGoalHandle(const MockRollingRecorderGoalHandle& copy) {
+  class MockRollingRecorderGoalHandleImpl
+  {
+  public:
+    MockRollingRecorderGoalHandleImpl() = default;
+    MockRollingRecorderGoalHandleImpl(const MockRollingRecorderGoalHandleImpl& copy)
+    {
       (void) copy;
-  };
-  MOCK_METHOD0(setRejected, void());
-  MOCK_METHOD0(setAccepted, void());
-  MOCK_METHOD0(setAborted, void());
-  MOCK_METHOD0(setSucceeded, void());
-  MOCK_METHOD0(setCanceled, void());
-  MOCK_METHOD2(setAborted, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
-  MOCK_METHOD2(setSucceeded, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
+    };
+    ~MockRollingRecorderGoalHandleImpl()
+    {
+    };
 
-  MOCK_CONST_METHOD0(getGoal, std::shared_ptr<recorder_msgs::RollingRecorderGoal>());
-  MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::RollingRecorderFeedback &));
+    MOCK_METHOD0(setAccepted, void());
+    MOCK_METHOD0(setRejected, void());
+    MOCK_METHOD0(setCanceled, void());
+    MOCK_CONST_METHOD0(getGoal, boost::shared_ptr<recorder_msgs::RollingRecorderGoal>());
+    MOCK_METHOD2(setSucceeded, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
+    MOCK_METHOD2(setAborted, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
+    MOCK_METHOD2(setRejected, void(const recorder_msgs::RollingRecorderResult&, const std::string &));
+    MOCK_CONST_METHOD1(publishFeedback, void(recorder_msgs::RollingRecorderFeedback &));
+  };
+
+public:
+  MockRollingRecorderGoalHandle() : goal_handle_impl(std::make_shared<MockRollingRecorderGoalHandleImpl>()) {}
+  MockRollingRecorderGoalHandle(const MockRollingRecorderGoalHandle & copy) = default;
+
+  MockRollingRecorderGoalHandleImpl & operator*()
+  {
+    return *goal_handle_impl;
+  }
+
+  void setAccepted()
+  {
+    goal_handle_impl->setAccepted();
+  }
+
+  void setRejected()
+  {
+    goal_handle_impl->setRejected();
+  }
+
+  void setCanceled()
+  {
+    goal_handle_impl->setCanceled();
+  }
+
+  boost::shared_ptr<recorder_msgs::RollingRecorderGoal> getGoal()
+  {
+    return goal_handle_impl->getGoal();
+  }
+
+  void setSucceeded(const recorder_msgs::RollingRecorderResult & result, const std::string & msg)
+  {
+    goal_handle_impl->setSucceeded(result, msg);
+  }
+
+  void setAborted(const recorder_msgs::RollingRecorderResult & result, const std::string & msg)
+  {
+    goal_handle_impl->setAborted(result, msg);
+  }
+
+  void setRejected(const recorder_msgs::RollingRecorderResult & result, const std::string & msg)
+  {
+    goal_handle_impl->setRejected(result, msg);
+  }
+
+  void publishFeedback(recorder_msgs::RollingRecorderFeedback & feedback)
+  {
+    goal_handle_impl->publishFeedback(feedback);
+  }
+
+private:
+  std::shared_ptr<MockRollingRecorderGoalHandleImpl> goal_handle_impl;
+};
+
+class MockS3UploadClient
+{
+public:
+  MOCK_METHOD1(sendGoal,  void(file_uploader_msgs::UploadFilesGoal));
+  MOCK_METHOD0(waitForResult, bool());
+  MOCK_METHOD1(waitForResult, bool(ros::Duration));
+  MOCK_CONST_METHOD0(waitForServer, void());
+  MOCK_CONST_METHOD0(isServerConnected, bool());
+  MOCK_CONST_METHOD0(getState, actionlib::SimpleClientGoalState());
 };
 
 class RollingRecorderActionServerHandlerTests: public ::testing::Test
 {
 protected:
-  std::shared_ptr<MockRollingRecorderGoalHandle> goal_handle;
-  std::shared_ptr<recorder_msgs::RollingRecorderGoal> goal;
-  std::string write_directory;
-  ros::Duration bag_rollover_time;
+  MockRollingRecorderGoalHandle goal_handle;
+  boost::shared_ptr<recorder_msgs::RollingRecorderGoal> goal;
+  std::atomic<bool> action_server_busy;
+  MockS3UploadClient s3_upload_client;
   boost::filesystem::path path;
-
+  RollingRecorderOptions rolling_recorder_options;
+  RollingRecorderRosbagUploadRequest<MockRollingRecorderGoalHandle, MockS3UploadClient> * request;
+  std::shared_ptr<MockRollingRecorder> rolling_recorder;
 public:
   RollingRecorderActionServerHandlerTests():
-    goal_handle(std::make_shared<MockRollingRecorderGoalHandle>()),
     goal(new recorder_msgs::RollingRecorderGoal()),
-    bag_rollover_time(ros::Duration(10, 0))
+    action_server_busy(false)
   {
     wordexp_t wordexp_result;
     wordexp("~/.ros/rr_handler_test_dir/", &wordexp_result, 0);
-    write_directory = *(wordexp_result.we_wordv);
-    path = boost::filesystem::path(write_directory);
+    rolling_recorder_options.write_directory = *(wordexp_result.we_wordv);
+    rolling_recorder_options.upload_timeout_s = 3600;
+    rolling_recorder_options.bag_rollover_time = ros::Duration(15);
+    rolling_recorder_options.max_record_time = ros::Duration(100);
+    path = boost::filesystem::path(rolling_recorder_options.write_directory);
   }
 
   void SetUp() override
@@ -76,54 +164,218 @@ public:
     // Delete all files in the write directory for start testing
     boost::filesystem::remove_all(path);
     boost::filesystem::create_directories(path);
+
+    rolling_recorder = std::make_shared<MockRollingRecorder>();
+    request = new RollingRecorderRosbagUploadRequest<MockRollingRecorderGoalHandle, MockS3UploadClient>{
+      .goal_handle = goal_handle,
+      .rolling_recorder_options = rolling_recorder_options,
+      .rosbag_uploader_action_client = s3_upload_client,
+      .action_server_busy = action_server_busy,
+      .recorder = rolling_recorder
+    };
   }
 
-  void TearDown() override
+  void TearDown() override {
+    // Delete all files in the write directory to clean up
+    try {
+      boost::filesystem::remove_all(path);
+    } catch (std::exception& e) {
+      AWS_LOGSTREAM_INFO(__func__, "Caught exception: " << e.what());
+    }
+    delete request;
+  }
+
+  std::string createRosbagAtTime(ros::Time time)
   {
-    // Delete all files in the write directory for cleaning up
-    boost::filesystem::remove_all(path);
+    static int bag_count = 0;
+    rosbag::Bag bag;
+    std::string bag_name = rolling_recorder_options.write_directory + "test_bag_" + std::to_string(bag_count) + ".bag";
+    bag.open(bag_name, rosbag::bagmode::Write);
+    std_msgs::String str;
+    str.data = std::string("foo");
+    bag_count++;
+    bag.write("topic", time, str);
+    bag.close();
+    return bag_name;
   }
 
-  void assertGoalIsRejected() {
-    EXPECT_CALL(*goal_handle, setRejected());
+  void givenRollingRecorderGoal()
+  {
+    EXPECT_CALL(*goal_handle, getGoal()).WillRepeatedly(Return(goal));
   }
 
-  void assertGoalIsAccepted() {
+  void givenActionServerBusy()
+  {
+    action_server_busy = true;
+  }
+
+  void givenActionServerAvailable()
+  {
+    action_server_busy = false;
+  }
+
+  std::vector<std::string> givenRecorderIsRunning()
+  {
+    std::vector<std::string> bags;
+    bags.push_back(createRosbagAtTime(ros::Time::now()-rolling_recorder_options.bag_rollover_time));
+    bags.push_back(createRosbagAtTime(ros::Time::now()-rolling_recorder_options.bag_rollover_time));
+    bags.push_back(createRosbagAtTime(ros::Time::now()-rolling_recorder_options.bag_rollover_time));
+    return bags;
+  }
+
+  void givenUploadReturns(actionlib::SimpleClientGoalState state)
+  {
+    EXPECT_CALL(s3_upload_client, waitForResult(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(s3_upload_client, getState()).WillRepeatedly(Return(state));
+  }
+
+  void givenUploadSucceeds()
+  {
+    givenUploadReturns(actionlib::SimpleClientGoalState(actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED));
+  }
+
+  void givenUploadFails()
+  {
+    givenUploadReturns(actionlib::SimpleClientGoalState(actionlib::SimpleClientGoalState::StateEnum::ABORTED));
+  }
+
+  void givenUploadTimesOut()
+  {
+    // Choose finite wait so that timeout can occur.
+    // Note that the test won't wait for this time.
+    rolling_recorder_options.upload_timeout_s = 1;
+    EXPECT_CALL(s3_upload_client, getState()).WillRepeatedly(Return(actionlib::SimpleClientGoalState::StateEnum::ABORTED));
+    EXPECT_CALL(s3_upload_client, waitForResult(_)).WillRepeatedly(Return(false));
+  }
+
+  void assertUploadGoalIsSent()
+  {
+    EXPECT_CALL(s3_upload_client, sendGoal(_));
+  }
+  void assertUploadGoalIsNotSent()
+  {
+    EXPECT_CALL(s3_upload_client, sendGoal(_)).Times(0);
+  }
+
+  void assertGoalIsRejected()
+  {
+    EXPECT_CALL(*goal_handle, setRejected(_, _));
+  }
+
+  void assertGoalIsAccepted()
+  {
     EXPECT_CALL(*goal_handle, setAccepted());
   }
 
-  void assertGoalIsSuccess() {
+  void assertGoalIsSuccess()
+  {
     EXPECT_CALL(*goal_handle, setSucceeded(_, _));
   }
 
-  void assertGoalIsCanceled() {
+  void assertGoalIsCanceled()
+  {
     EXPECT_CALL(*goal_handle, setCanceled());
   }
 
-  void assertGoalIsAborted() {
+  void assertGoalIsAborted()
+  {
     EXPECT_CALL(*goal_handle, setAborted(_, _));
+  }
+
+  void assertPublishFeedback()
+  {
+    EXPECT_CALL(*goal_handle, publishFeedback(_));
+  }
+
+  void assertStatusUpdatedCorrectly(const std::vector<std::string> & bags)
+  {
+    InSequence s;
+    EXPECT_CALL(*rolling_recorder, UpdateStatus(Field(&RollingRecorderStatus::current_upload_goal, Field(&file_uploader_msgs::UploadFilesGoal::files, UnorderedElementsAreArray(bags)))));
+    EXPECT_CALL(*rolling_recorder, UpdateStatus(Field(&RollingRecorderStatus::current_upload_goal, Field(&file_uploader_msgs::UploadFilesGoal::files, IsEmpty()))));
   }
 
 };
 
-TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderRosbagUpload)
+TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderActionSucceeds)
 {
-  assertGoalIsRejected();
+  givenActionServerAvailable();
+  givenUploadSucceeds();
+  auto bags = givenRecorderIsRunning();
+  givenRollingRecorderGoal();
+  assertGoalIsAccepted();
+  assertPublishFeedback();
+  assertUploadGoalIsSent();
+  assertGoalIsSuccess();
+  assertStatusUpdatedCorrectly(bags);
 
-  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::RollingRecorderRosbagUpload(*goal_handle, write_directory, bag_rollover_time);
+  ASSERT_FALSE(Utils::GetRosbagsToUpload(rolling_recorder_options.write_directory,
+      [](rosbag::View& rosbag) -> bool
+      {
+        return ros::Time::now() >= rosbag.getBeginTime();
+      }
+    ).empty());
+
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
+    *request);
 }
 
-TEST_F(RollingRecorderActionServerHandlerTests, TestCancelRollingRecorderRosbagUpload)
+TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderSucceedsDoesntUploadWithNoFiles)
 {
-  assertGoalIsCanceled();
+  givenActionServerAvailable();
+  givenRollingRecorderGoal();
+  assertGoalIsAccepted();
+  assertPublishFeedback();
+  assertUploadGoalIsNotSent();
+  assertGoalIsSuccess();
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
+    *request);
+}
 
-  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle>::CancelRollingRecorderRosbagUpload(*goal_handle);
+TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderUploadFails)
+{
+  givenActionServerAvailable();
+  givenUploadFails();
+  auto bags = givenRecorderIsRunning();
+  givenRollingRecorderGoal();
+  assertGoalIsAccepted();
+  assertPublishFeedback();
+  assertUploadGoalIsSent();
+  assertGoalIsAborted();
+  assertStatusUpdatedCorrectly(bags);
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
+    *request);
+}
+
+TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderUploadTimesOut)
+{
+  givenActionServerAvailable();
+  givenUploadTimesOut();
+  auto bags = givenRecorderIsRunning();
+  givenRollingRecorderGoal();
+  assertGoalIsAccepted();
+  assertPublishFeedback();
+  assertUploadGoalIsSent();
+  assertGoalIsAborted();
+  assertStatusUpdatedCorrectly(bags);
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
+    *request);
+}
+
+TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderActionServerBusy)
+{
+  // Test when action server is processing a goal
+  givenActionServerBusy();
+  assertGoalIsRejected();
+
+  Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
+    *request);
 }
 
 int main(int argc, char ** argv)
 {
-    ros::Time::init();
-    ::testing::InitGoogleTest(&argc, argv);
-    auto result = RUN_ALL_TESTS();
-    return result;
+  ros::init(argc, argv, "test_rosbag_rolling_recorder");
+  ros::Time::init();
+  ::testing::InitGoogleTest(&argc, argv);
+  auto result = RUN_ALL_TESTS();
+  return result;
 }

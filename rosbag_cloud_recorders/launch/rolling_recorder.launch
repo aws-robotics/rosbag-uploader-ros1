@@ -19,6 +19,10 @@
          Defaults to ~/.ros/rosbag_uploader/ -->
     <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
 
+    <!-- Time in seconds for server connection time out and
+         s3 upload action time out -->
+    <arg name="upload_timeout" default="3600" />
+
     <!-- The topics that should be recorded into the rosbag.
          Acceptable values: any list of strings or an empty list.
          e.g. '/topic1 /topic2 /topic3'
@@ -39,6 +43,7 @@
       <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
       <param name="max_record_time" value="$(arg max_record_time)" />
       <param name="write_directory" value="$(arg write_directory)" />
+      <param name="upload_timeout" value="$(arg upload_timeout)"/>
     </node>
 
 </launch>

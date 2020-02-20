@@ -55,6 +55,7 @@ jobs:
           test_periodic_file_deleter.test
           test_rolling_recorder_custom_topic.test
           test_rolling_recorder_default_topics.test
+          test_rolling_recorder_upload.test
           test_s3_file_uploader_general.test
           test_s3_file_uploader_wrong_region.test
         ros-distro: ${{ matrix.distro }}

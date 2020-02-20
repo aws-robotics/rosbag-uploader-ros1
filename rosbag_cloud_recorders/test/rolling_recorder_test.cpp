@@ -61,41 +61,44 @@ protected:
   ros::NodeHandle nh;
   RollingRecorderActionClient action_client;
   RollingRecorderActionClient::GoalHandle goal_handle;
-  ros::Duration bag_rollover_time;
-  ros::Duration max_record_time;
-  std::string write_directory;
   std::shared_ptr<RollingRecorder> rolling_recorder_;
-
+  RollingRecorderOptions rolling_recorder_options_;
 public:
   RollingRecorderTest():
     executor(0),
     nh("~"),
     action_client(nh, "RosbagRollingRecord"),
-    bag_rollover_time(5),
-    max_record_time(10)
+    rolling_recorder_(std::make_shared<RollingRecorder>())
   {
-    executor.start();
     char dir_template[] = "/tmp/rolling_recorder_testXXXXXX";
     mkdtemp(dir_template);
-    write_directory = std::string(dir_template) + "/";
+    rolling_recorder_options_.bag_rollover_time = ros::Duration(5);
+    rolling_recorder_options_.max_record_time = ros::Duration(10);
+    rolling_recorder_options_.upload_timeout_s = 3600;
+    rolling_recorder_options_.write_directory = std::string(dir_template) + "/";
+    executor.start();
   }
 
   void TearDown() override
   {
     // Delete all files in the write directory to clean up
-    boost::filesystem::path path(write_directory);
-    boost::filesystem::remove_all(path);
+    boost::filesystem::path path(rolling_recorder_options_.write_directory);
+    try {
+      boost::filesystem::remove_all(path);
+    } catch (std::exception& e) {
+      AWS_LOGSTREAM_INFO(__func__, "Caught exception: " << e.what());
+    }
   }
 
-  void GivenRollingRecorder()
+  void GivenRollingRecorderInitialized()
   {
-    rolling_recorder_ = std::make_shared<RollingRecorder>(bag_rollover_time, max_record_time, write_directory);
+    rolling_recorder_->InitializeRollingRecorder(rolling_recorder_options_);
   }
 
   std::string GetFileNameForTimeStamp(const ros::Time& time)
   {
     std::stringstream file_name;
-    boost::posix_time::time_facet *const f=
+    boost::posix_time::time_facet *const f =
         new boost::posix_time::time_facet("%Y-%m-%d-%H-%M-%S");
     boost::posix_time::ptime pt = time.toBoost();
     boost::posix_time::ptime local_pt = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(pt);
@@ -106,7 +109,7 @@ public:
 
   std::string CreateRosBagFileStartingAtTime(const ros::Time& time, std::string suffix)
   {
-    std::string file_name = write_directory + GetFileNameForTimeStamp(time) + suffix;
+    std::string file_name = rolling_recorder_options_.write_directory + GetFileNameForTimeStamp(time) + suffix;
     std::fstream file;
     file.open(file_name, std::ios::out);
     file.close();
@@ -118,7 +121,7 @@ public:
     std::vector<std::string> rosbags;
     for (int i = 0; i < num_bags; ++i) {
       std::string suffix = "_" + std::to_string(i) + ".bag";
-      rosbags.emplace_back(CreateRosBagFileStartingAtTime(ros::Time::now() - max_record_time - ros::Duration(1000), suffix));
+      rosbags.emplace_back(CreateRosBagFileStartingAtTime(ros::Time::now() - rolling_recorder_options_.max_record_time - ros::Duration(1000), suffix));
     }
     return rosbags;
   }
@@ -138,7 +141,7 @@ public:
     std::vector<std::string> rosbags;
     for (int i = 0; i < num_bags; ++i) {
       std::string suffix = "_" + std::to_string(i) + ".bag";
-      std::string file_name = write_directory + "myInvalidBagWithoutADate" + suffix;
+      std::string file_name = rolling_recorder_options_.write_directory + "myInvalidBagWithoutADate" + suffix;
       std::fstream file;
       file.open(file_name, std::ios::out);
       file.close();
@@ -170,19 +173,74 @@ public:
   }
 };
 
-TEST_F(RollingRecorderTest, TestConstructor)
+TEST_F(RollingRecorderTest, TestConstructorWithValidParamInput)
 {
   ros::Duration max_record_time(5);
   ros::Duration bag_rollover_time(5);
 
+  rolling_recorder_options_.max_record_time = max_record_time;
+  rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
   {
-    Aws::Rosbag::RollingRecorder rolling_recorder(bag_rollover_time, max_record_time, write_directory);
+    Aws::Rosbag::RollingRecorder rolling_recorder;
   }
+}
+
+TEST_F(RollingRecorderTest, TestInvalidParamInput)
+{
+  // Case: bag_rollover_time > max_record_time
+  {
+    ros::Duration max_record_time(5);
+    ros::Duration bag_rollover_time(6);
+    rolling_recorder_options_.max_record_time = max_record_time;
+    rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
+
+    EXPECT_FALSE(rolling_recorder_->ValidInputParam(rolling_recorder_options_));
+  }
+
+  // Case: bag_rollover_time < 0
+  {
+    ros::Duration max_record_time(-5);
+    ros::Duration bag_rollover_time(6);
+    rolling_recorder_options_.max_record_time = max_record_time;
+    rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
+
+    EXPECT_FALSE(rolling_recorder_->ValidInputParam(rolling_recorder_options_));
+  }
+
+  // Case: bag_rollover_time < 0
+  {
+    ros::Duration max_record_time(5);
+    ros::Duration bag_rollover_time(-6);
+    rolling_recorder_options_.max_record_time = max_record_time;
+    rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
+
+    EXPECT_FALSE(rolling_recorder_->ValidInputParam(rolling_recorder_options_));
+  }
+}
+
+TEST_F(RollingRecorderTest, TestActionReceived)
+{
+  GivenRollingRecorderInitialized();
+
+  bool message_received = false;
+  // Wait 10 seconds for server to start
+  ASSERT_TRUE(action_client.waitForActionServerToStart(ros::Duration(10, 0)));
+  auto transition_call_back = [&message_received](RollingRecorderActionClient::GoalHandle goal_handle){
+    if (goal_handle.getCommState().state_ == actionlib::CommState::StateEnum::DONE) {
+      EXPECT_EQ(goal_handle.getTerminalState().state_, actionlib::TerminalState::StateEnum::SUCCEEDED);
+      message_received = true;
+    }
+  };
+  recorder_msgs::RollingRecorderGoal goal;
+  auto gh = action_client.sendGoal(goal, transition_call_back);
+  
+  ros::Duration(1,0).sleep();
+  ASSERT_TRUE(message_received);
 }
 
 TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
 {
-  GivenRollingRecorder();
+  GivenRollingRecorderInitialized();
   auto old_file_names = GivenOldRosBags(3);
   auto recent_file_names = GivenRecentRosBags(3);
   auto invalid_file_names = GivenInvalidFileNames(3);
@@ -193,7 +251,7 @@ TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
 
 TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
 {
-  GivenRollingRecorder();
+  GivenRollingRecorderInitialized();
   RollingRecorderStatus status;
   file_uploader_msgs::UploadFilesGoal upload_goal;
   upload_goal.files = GivenOldRosBags(3);
@@ -202,7 +260,7 @@ TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
   rolling_recorder_->UpdateStatus(status);
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(upload_goal.files));
   // Reset the status and expect the files to now be included in the result.
-  rolling_recorder_->UpdateStatus();
+  rolling_recorder_->UpdateStatus(RollingRecorderStatus());
   EXPECT_TRUE(FilesToDeleteContainsAllOf(upload_goal.files));
 }
 
