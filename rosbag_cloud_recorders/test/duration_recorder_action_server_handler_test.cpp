@@ -176,6 +176,7 @@ public:
   MOCK_METHOD1(waitForResult, bool(ros::Duration));
   MOCK_CONST_METHOD0(waitForServer, void());
   MOCK_CONST_METHOD0(isServerConnected, bool());
+  MOCK_CONST_METHOD0(getResult, file_uploader_msgs::UploadFilesResultConstPtr());
   MOCK_CONST_METHOD0(getState, actionlib::SimpleClientGoalState());
 };
 
@@ -207,6 +208,7 @@ public:
     duration_recorder_options.write_directory = write_directory;
     path = boost::filesystem::path(write_directory);
     duration_recorder_options.upload_timeout_s = -1;
+    duration_recorder_options.delete_bags_after_upload = false;
   }
 
   void TearDown() override
@@ -304,6 +306,14 @@ public:
     EXPECT_CALL(s3_upload_client, waitForResult(_)).WillRepeatedly(Return(false));
   }
 
+  void givenDeleteBagAfterUpload(boost::shared_ptr<file_uploader_msgs::UploadFilesResult> result)
+  {
+    duration_recorder_options.delete_bags_after_upload = true;
+    file_uploader_msgs::UploadFilesResultConstPtr result_ptr = result;
+    
+    EXPECT_CALL(s3_upload_client, getResult()).WillRepeatedly(Return(result_ptr));
+  }
+
   void assertUploadGoalIsSent()
   {
     EXPECT_CALL(s3_upload_client, sendGoal(_));
@@ -348,7 +358,6 @@ public:
       ASSERT_TRUE(rosbag_recorder->getOptions().record_all);
     }
   }
-
 };
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartSucceeds)
@@ -416,6 +425,24 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderEmptyTopics
   assertUploadGoalIsSent();
   assertPublishFeedback();
   assertGoalIsSuccess();
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
+}
+
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderDeletesFileAfterBagIsUploaded)
+{
+
+  boost::shared_ptr<file_uploader_msgs::UploadFilesResult> result(new file_uploader_msgs::UploadFilesResult);
+  result->files_uploaded = std::vector<std::string>{createRosbagAtTime(ros::Time::now())};
+  givenRecorderNotActive();
+  givenDurationRecorderGoalWithEmptyTopics();
+  givenRecorderRanSuccessfully();
+  givenUploadSucceeds();
+  assertGoalIsAccepted();
+  assertUploadGoalIsSent();
+  assertPublishFeedback();
+  assertGoalIsSuccess();
+  givenDeleteBagAfterUpload(result);
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
 }

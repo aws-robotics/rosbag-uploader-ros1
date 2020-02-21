@@ -127,6 +127,12 @@ public:
         );
         bool upload_finished = Utils::UploadFiles(goal_handle, duration_recorder_options.upload_timeout_s, upload_client, ros_bags_to_upload);
         Utils::HandleRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished, result);
+        
+        if (duration_recorder_options.delete_bags_after_upload) {
+          for (const std::string & bag_file_name : upload_client.getResult()->files_uploaded) {
+            Utils::DeleteFile(bag_file_name);
+          }
+        }
       }
     );
 
