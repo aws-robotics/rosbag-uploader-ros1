@@ -44,18 +44,33 @@ struct RollingRecorderOptions
   ros::Duration bag_rollover_time;
 };
 
-struct RollingRecorderStatus {
-  file_uploader_msgs::UploadFilesGoal current_upload_goal;
+class RollingRecorderStatus {
+public:
+  virtual void SetUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal)
+  {
+    current_upload_goal_ = goal;
+  }
+
+  const file_uploader_msgs::UploadFilesGoal & GetUploadGoal() const
+  {
+    return current_upload_goal_;
+  }
+
+private:
+  file_uploader_msgs::UploadFilesGoal current_upload_goal_;
 };
 
 /**
  * Rolling recorder is a node that responds to actions to record rosbag files
  */
-class RollingRecorder : public std::enable_shared_from_this<RollingRecorder>
+class RollingRecorder
 {
 public:
   explicit RollingRecorder();
-
+  RollingRecorder(const RollingRecorder & other) = delete;
+  RollingRecorder(RollingRecorder && other) = default;
+  RollingRecorder & operator=(const RollingRecorder & other) = delete;
+  RollingRecorder & operator=(RollingRecorder && other) = default;
   virtual ~RollingRecorder() = default;
 
   /**
@@ -67,7 +82,7 @@ public:
   /**
    * Used by the callback handler to communicate information back to the recorder.
    */
-  virtual void UpdateStatus(RollingRecorderStatus status);
+  void UpdateStatus(const RollingRecorderStatus & status);
 
   /**
    * To determine whether to start the rolling recorder action server based on whether the rolling recorder options are valid
@@ -80,16 +95,23 @@ public:
   bool InitializeRollingRecorder(RollingRecorderOptions rolling_recorder_options);
 
 private:
+  struct UploadRequestData {
+    UploadRequestData(const std::string & client_name, bool spin_thread)
+      : rosbag_uploader_action_client_(client_name, spin_thread), action_server_busy_(false) {}
+
+    RollingRecorderOptions rolling_recorder_options_;
+    UploadFilesActionSimpleClient rosbag_uploader_action_client_;
+    std::atomic<bool> action_server_busy_;
+    RollingRecorderStatus recorder_status_;
+  };
+
   void StartOldRosBagsPeriodicRemoval();
   void InitializeRollingRecorder();
+
   ros::NodeHandle node_handle_;
   RollingRecorderActionServer action_server_;
-  UploadFilesActionSimpleClient rosbag_uploader_action_client_;
-  RollingRecorderOptions rolling_recorder_options_;
+  std::shared_ptr<UploadRequestData> upload_request_data_;
   std::unique_ptr<Utils::PeriodicFileDeleter> periodic_file_deleter_;
-  RollingRecorderStatus status_;
-  std::atomic<bool> action_server_busy_;
-
 };
 
 }  // namespace Rosbag

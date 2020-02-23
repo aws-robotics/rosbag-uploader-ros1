@@ -252,10 +252,10 @@ TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
 TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
 {
   GivenRollingRecorderInitialized();
-  RollingRecorderStatus status;
   file_uploader_msgs::UploadFilesGoal upload_goal;
   upload_goal.files = GivenOldRosBags(3);
-  status.current_upload_goal = upload_goal;
+  RollingRecorderStatus status;
+  status.SetUploadGoal(upload_goal);
   // Update the status to include the files and expect them to be protected from deletion.
   rolling_recorder_->UpdateStatus(status);
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(upload_goal.files));
