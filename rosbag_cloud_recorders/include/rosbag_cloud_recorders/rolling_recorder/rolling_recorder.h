@@ -68,9 +68,9 @@ class RollingRecorder
 public:
   explicit RollingRecorder();
   RollingRecorder(const RollingRecorder & other) = delete;
-  RollingRecorder(RollingRecorder && other) = default;
+  RollingRecorder(RollingRecorder && other) = delete;
   RollingRecorder & operator=(const RollingRecorder & other) = delete;
-  RollingRecorder & operator=(RollingRecorder && other) = default;
+  RollingRecorder & operator=(RollingRecorder && other) = delete;
   virtual ~RollingRecorder() = default;
 
   /**
