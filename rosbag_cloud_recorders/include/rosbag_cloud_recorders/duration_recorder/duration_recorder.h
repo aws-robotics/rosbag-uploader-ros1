@@ -34,6 +34,7 @@ struct DurationRecorderOptions
 {
   std::string write_directory;
   double upload_timeout_s {0};
+  bool delete_bags_after_upload {false};
 };
 
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;

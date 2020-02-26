@@ -29,6 +29,7 @@
 constexpr char kNodeName[] = "rosbag_duration_recorder";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
 constexpr char kUploadTimeoutParameter[] = "upload_timeout";
+constexpr char kDeleteBagsAfterUploadParameter[] = "delete_bags_after_upload";
 
 bool ExpandAndCreateDir(const std::string& dir, std::string& expanded_dir)
 {
@@ -71,7 +72,10 @@ int main(int argc, char* argv[])
     // Default to 60 min timeout
     duration_recorder_options.upload_timeout_s = 3600;
   }
-
+  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kDeleteBagsAfterUploadParameter), duration_recorder_options.delete_bags_after_upload)) {
+    // Default to false, i.e. not delete bags after they have been uploaded
+    duration_recorder_options.delete_bags_after_upload = false;
+  }
   
   int result_code = 1;
   if (ExpandAndCreateDir(write_dir_input, write_dir)) {

@@ -176,6 +176,7 @@ public:
   MOCK_METHOD1(waitForResult, bool(ros::Duration));
   MOCK_CONST_METHOD0(waitForServer, void());
   MOCK_CONST_METHOD0(isServerConnected, bool());
+  MOCK_CONST_METHOD0(getResult, file_uploader_msgs::UploadFilesResultConstPtr());
   MOCK_CONST_METHOD0(getState, actionlib::SimpleClientGoalState());
 };
 
@@ -207,6 +208,7 @@ public:
     duration_recorder_options.write_directory = write_directory;
     path = boost::filesystem::path(write_directory);
     duration_recorder_options.upload_timeout_s = -1;
+    duration_recorder_options.delete_bags_after_upload = false;
   }
 
   void TearDown() override
@@ -262,10 +264,11 @@ public:
     rosbag_recorder->SetRosbagRecorderReturnCode(Utils::RosbagRecorderRunResult::SKIPPED);
   }
   
-  void givenRecorderRanSuccessfully()
+  std::string givenRecorderRanSuccessfully()
   {
-    createRosbagAtTime(ros::Time::now());
+    std::string bag_file_name = createRosbagAtTime(ros::Time::now());
     rosbag_recorder->SetRosbagRecorderExitCode(0);
+    return bag_file_name;
   }
 
   void givenRecorderRanUnSuccessfully()
@@ -302,6 +305,14 @@ public:
     duration_recorder_options.upload_timeout_s = 1;
     EXPECT_CALL(s3_upload_client, getState()).WillRepeatedly(Return(actionlib::SimpleClientGoalState::StateEnum::ABORTED));
     EXPECT_CALL(s3_upload_client, waitForResult(_)).WillRepeatedly(Return(false));
+  }
+
+  void givenDeleteBagAfterUpload(boost::shared_ptr<file_uploader_msgs::UploadFilesResult> result)
+  {
+    duration_recorder_options.delete_bags_after_upload = true;
+    file_uploader_msgs::UploadFilesResultConstPtr result_ptr = result;
+    
+    EXPECT_CALL(s3_upload_client, getResult()).WillRepeatedly(Return(result_ptr));
   }
 
   void assertUploadGoalIsSent()
@@ -349,6 +360,15 @@ public:
     }
   }
 
+  void assertBagFileCreated(boost::filesystem::path bag_file_path)
+  {
+    ASSERT_TRUE(boost::filesystem::exists(bag_file_path));
+  } 
+
+  void assertBagFileDeleted(boost::filesystem::path bag_file_path)
+  {
+    ASSERT_FALSE(boost::filesystem::exists(bag_file_path));
+  }
 };
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartSucceeds)
@@ -418,6 +438,28 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderEmptyTopics
   assertGoalIsSuccess();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
+}
+
+TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderDeletesFileAfterBagIsUploaded)
+{
+
+  boost::shared_ptr<file_uploader_msgs::UploadFilesResult> result(new file_uploader_msgs::UploadFilesResult);
+  givenRecorderNotActive();
+  givenDurationRecorderGoalWithEmptyTopics();
+  std::string bag_file_path = givenRecorderRanSuccessfully();
+  result->files_uploaded = std::vector<std::string>{bag_file_path};
+  givenUploadSucceeds();
+  givenDeleteBagAfterUpload(result);
+  assertGoalIsAccepted();
+  assertUploadGoalIsSent();
+  assertPublishFeedback();
+  assertGoalIsSuccess();
+  assertBagFileCreated(boost::filesystem::path(bag_file_path));
+
+  DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
+    *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
+
+  assertBagFileDeleted(boost::filesystem::path(bag_file_path));
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlreadyActive)
