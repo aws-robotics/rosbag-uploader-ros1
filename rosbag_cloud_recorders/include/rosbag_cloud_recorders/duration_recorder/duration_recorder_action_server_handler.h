@@ -130,6 +130,7 @@ public:
         
         if (duration_recorder_options.delete_bags_after_upload) {
           for (const std::string & bag_file_name : upload_client.getResult()->files_uploaded) {
+            AWS_LOG_INFO(__func__, "Bag file named: %s was uploaded to S3 and is now being deleted locally.", bag_file_name);
             Utils::DeleteFile(bag_file_name);
           }
         }
