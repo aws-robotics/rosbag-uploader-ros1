@@ -61,14 +61,13 @@ protected:
   ros::NodeHandle nh;
   RollingRecorderActionClient action_client;
   RollingRecorderActionClient::GoalHandle goal_handle;
-  std::shared_ptr<RollingRecorder> rolling_recorder_;
+  RollingRecorder rolling_recorder_;
   RollingRecorderOptions rolling_recorder_options_;
 public:
   RollingRecorderTest():
     executor(0),
     nh("~"),
-    action_client(nh, "RosbagRollingRecord"),
-    rolling_recorder_(std::make_shared<RollingRecorder>())
+    action_client(nh, "RosbagRollingRecord")
   {
     char dir_template[] = "/tmp/rolling_recorder_testXXXXXX";
     mkdtemp(dir_template);
@@ -92,7 +91,7 @@ public:
 
   void GivenRollingRecorderInitialized()
   {
-    rolling_recorder_->InitializeRollingRecorder(rolling_recorder_options_);
+    rolling_recorder_.InitializeRollingRecorder(rolling_recorder_options_);
   }
 
   std::string GetFileNameForTimeStamp(const ros::Time& time)
@@ -152,7 +151,7 @@ public:
 
   bool AllFilesInFilesToDeleteHaveCountComparison(const std::vector<std::string>& bags, boost::function<bool(int)> comparator)
   {
-    auto files_to_delete = rolling_recorder_->GetRosBagsToDelete();
+    auto files_to_delete = rolling_recorder_.GetRosBagsToDelete();
     std::unordered_set<std::string> files_set(files_to_delete.begin(), files_to_delete.end());
     for (const auto& bag: bags) {
       if (!comparator(files_set.count(bag))) {
@@ -194,7 +193,7 @@ TEST_F(RollingRecorderTest, TestInvalidParamInput)
     rolling_recorder_options_.max_record_time = max_record_time;
     rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
 
-    EXPECT_FALSE(rolling_recorder_->ValidInputParam(rolling_recorder_options_));
+    EXPECT_FALSE(rolling_recorder_.ValidInputParam(rolling_recorder_options_));
   }
 
   // Case: bag_rollover_time < 0
@@ -204,7 +203,7 @@ TEST_F(RollingRecorderTest, TestInvalidParamInput)
     rolling_recorder_options_.max_record_time = max_record_time;
     rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
 
-    EXPECT_FALSE(rolling_recorder_->ValidInputParam(rolling_recorder_options_));
+    EXPECT_FALSE(rolling_recorder_.ValidInputParam(rolling_recorder_options_));
   }
 
   // Case: bag_rollover_time < 0
@@ -214,7 +213,7 @@ TEST_F(RollingRecorderTest, TestInvalidParamInput)
     rolling_recorder_options_.max_record_time = max_record_time;
     rolling_recorder_options_.bag_rollover_time = bag_rollover_time;
 
-    EXPECT_FALSE(rolling_recorder_->ValidInputParam(rolling_recorder_options_));
+    EXPECT_FALSE(rolling_recorder_.ValidInputParam(rolling_recorder_options_));
   }
 }
 
@@ -252,15 +251,15 @@ TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
 TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
 {
   GivenRollingRecorderInitialized();
-  RollingRecorderStatus status;
   file_uploader_msgs::UploadFilesGoal upload_goal;
   upload_goal.files = GivenOldRosBags(3);
-  status.current_upload_goal = upload_goal;
+  RollingRecorderStatus status;
+  status.SetUploadGoal(upload_goal);
   // Update the status to include the files and expect them to be protected from deletion.
-  rolling_recorder_->UpdateStatus(status);
+  rolling_recorder_.UpdateStatus(status);
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(upload_goal.files));
   // Reset the status and expect the files to now be included in the result.
-  rolling_recorder_->UpdateStatus(RollingRecorderStatus());
+  rolling_recorder_.UpdateStatus(RollingRecorderStatus());
   EXPECT_TRUE(FilesToDeleteContainsAllOf(upload_goal.files));
 }
 

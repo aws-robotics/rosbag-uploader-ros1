@@ -36,11 +36,11 @@ namespace Rosbag {
 
 template<typename GoalHandleT, typename UploadClientT>
 struct RollingRecorderRosbagUploadRequest {
-  GoalHandleT& goal_handle;
-  const RollingRecorderOptions& rolling_recorder_options;
-  UploadClientT& rosbag_uploader_action_client;
-  std::atomic<bool>& action_server_busy;
-  std::weak_ptr<RollingRecorder> recorder;
+  GoalHandleT & goal_handle;
+  const RollingRecorderOptions & rolling_recorder_options;
+  UploadClientT & rosbag_uploader_action_client;
+  std::atomic<bool> & action_server_busy;
+  RollingRecorderStatus * recorder_status;
 };
 
 template<typename GoalHandleT, typename UploadClientT>
@@ -101,15 +101,11 @@ private:
       return;
     }
     auto goal = Utils::ConstructRosBagUploaderGoal(req.goal_handle.getGoal()->destination, rosbags_to_upload);
-    if (auto recorder = req.recorder.lock()) {
-      recorder->UpdateStatus(RollingRecorderStatus{.current_upload_goal = goal});
-    }
+    req.recorder_status->SetUploadGoal(goal);
     req.rosbag_uploader_action_client.sendGoal(goal);
     bool upload_finished = req.rosbag_uploader_action_client.waitForResult(ros::Duration(req.rolling_recorder_options.upload_timeout_s));
     Utils::HandleRecorderUploadResult(req.goal_handle, req.rosbag_uploader_action_client.getState(), upload_finished, result);
-    if (auto recorder = req.recorder.lock()) {
-      recorder->UpdateStatus(RollingRecorderStatus());
-    }
+    req.recorder_status->SetUploadGoal(file_uploader_msgs::UploadFilesGoal());
   }
 };
 
