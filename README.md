@@ -31,28 +31,32 @@ To build from source you'll need to create a new workspace, clone and checkout t
 
 - Create a ROS workspace and a source directory
 
-        mkdir -p ~/ros-workspace/src
+        mkdir -p ~/ros_ws/src
 
 - Clone the package into the source directory . 
 
-        cd ~/ros-workspace/src
-        git clone https://github.com/aws-robotics/rosbag-uploader-ros1.git
+        unzip rosbag-uploader-ros1-.zip -d ~/ros_ws/src
 
 - Install dependencies
 
-        cd ~/ros-workspace 
+        cd ~/ros_ws/src
+        cp rosbag-uploader-ros1/.rosinstall .
+        rosws update
+        cd ..
         sudo apt-get update && rosdep update
         rosdep install --from-paths src --ignore-src -r -y
 
-_Note: If building the master branch instead of a release branch you may need to also checkout and build the master branches of the packages this package depends on._
+_Note: These packages depend on updates to the aws-common and aws-ros1-common packages which haven't been released to apt yet. If you're running into build failures from aws_ros1_common check if the packages ros-$ROS_DISTRO-aws-ros1-common ros-$ROS_DISTRO-aws-common are installed on your system and if so remove them. E.g. sudo apt-get remove -y ros-$ROS_DISTRO-aws-ros1-common ros-$ROS_DISTRO-aws-common_
 
 - Build the packages
 
-        cd ~/ros-workspace && colcon build
+        cd ~/ros_ws
+        source /opt/ros/$ROS_DISTRO/setup.bash
+        colcon build
 
 - Configure ROS library Path
 
-        source ~/ros-workspace/install/setup.bash
+        source ~/ros_ws/install/setup.bash
 
 ### Running Tests
 - Build with

@@ -74,8 +74,7 @@ The action server can also be invoked via the command line
 
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| result_code | uint16 | The error code returned from S3. The enum list can be found (here)[https://sdk.amazonaws.com/cpp/api/LATEST/_s3_errors_8h_source.html] |
-| files_uploaded | string[] | The list of files that were successfully uploaded. |
+| result | RecorderResult | The result of the upload |
 
 *Note* goals also have a message field that will contain more details on the result of the action
 
@@ -83,8 +82,8 @@ The action server can also be invoked via the command line
 **Feedback**
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| num_uploaded | uint16 | The number of files that have been uploaded from this request so far. |
-| num_remaining | uint16 | The number of files that are remaining in this upload request. |
+| started | time | The time the goal was started |
+| status | RecorderStatus | The current state of the recorder |
 
 
 [AWS Configuration and Credential Files]: https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html

@@ -3,8 +3,6 @@
 string destination
 
 # Duration of time to record for
-# Acceptable values: positive integers
-# If value is invalid goal is rejected
 duration duration
 
 # List of topics to record
