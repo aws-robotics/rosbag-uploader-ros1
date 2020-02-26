@@ -264,10 +264,11 @@ public:
     rosbag_recorder->SetRosbagRecorderReturnCode(Utils::RosbagRecorderRunResult::SKIPPED);
   }
   
-  void givenRecorderRanSuccessfully()
+  std::string givenRecorderRanSuccessfully()
   {
-    createRosbagAtTime(ros::Time::now());
+    std::string bag_file_name = createRosbagAtTime(ros::Time::now());
     rosbag_recorder->SetRosbagRecorderExitCode(0);
+    return bag_file_name;
   }
 
   void givenRecorderRanUnSuccessfully()
@@ -358,6 +359,16 @@ public:
       ASSERT_TRUE(rosbag_recorder->getOptions().record_all);
     }
   }
+
+  void assertBagFileCreated(boost::filesystem::path bag_file_path)
+  {
+    ASSERT_TRUE(boost::filesystem::exists(bag_file_path));
+  } 
+
+  void assertBagFileDeleted(boost::filesystem::path bag_file_path)
+  {
+    ASSERT_FALSE(boost::filesystem::exists(bag_file_path));
+  }
 };
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartSucceeds)
@@ -433,18 +444,22 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderDeletesFile
 {
 
   boost::shared_ptr<file_uploader_msgs::UploadFilesResult> result(new file_uploader_msgs::UploadFilesResult);
-  result->files_uploaded = std::vector<std::string>{createRosbagAtTime(ros::Time::now())};
   givenRecorderNotActive();
   givenDurationRecorderGoalWithEmptyTopics();
-  givenRecorderRanSuccessfully();
+  std::string bag_file_path = givenRecorderRanSuccessfully();
+  result->files_uploaded = std::vector<std::string>{bag_file_path};
   givenUploadSucceeds();
+  givenDeleteBagAfterUpload(result);
   assertGoalIsAccepted();
   assertUploadGoalIsSent();
   assertPublishFeedback();
   assertGoalIsSuccess();
-  givenDeleteBagAfterUpload(result);
+  assertBagFileCreated(boost::filesystem::path(bag_file_path));
+
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
+
+  assertBagFileDeleted(boost::filesystem::path(bag_file_path));
 }
 
 TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartAlreadyActive)
