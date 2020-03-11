@@ -33,17 +33,16 @@ from duration_recorder_test_base import DurationRecorderTestBase
 PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'test_duration_record_general'
 RESULT_CODE_SUCCESS = 0
+RESULT_CODE_SKIPPED = 0
 
 class TestDurationRecorderGeneral(DurationRecorderTestBase):
     def test_record_duration(self):
-        self._create_duration_recorder_action_client()
         start_time = time.time()
         action_result = self.record_for_duration(1)
         self.assertEquals(action_result.result.result, RESULT_CODE_SUCCESS)
         self.check_rosbags_were_recorded(start_time, 1)
 
     def test_record_multiple_times(self):
-        self._create_duration_recorder_action_client()
         start_time = time.time()
         total_recordings = 25
         for _ in range(total_recordings):
@@ -51,8 +50,38 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
             self.assertEquals(action_result.result.result, RESULT_CODE_SUCCESS)
         self.check_rosbags_were_recorded(start_time, total_recordings)
 
+        
+    def test_record_overlapping_times(self):
+        """
+        When attempting to record while it's already recording, ensure it 
+        rejects the request gracefully
+        """
+        primary_goal_action_client = self._create_duration_recorder_action_client()
+        start_time = time.time()
+        record_time = 5
+        total_attempted_recordings = 25
+        time_between_attempts = (record_time / total_attempted_recordings) / 2
+
+        # Start the duration recorder for `record_time` seconds
+        goal = DurationRecorderGoal(
+            duration=rospy.Duration.from_sec(record_time),
+            topics_to_record=['/rosout']
+        )
+        primary_goal_action_client.send_goal(goal)
+
+        # Try to record multiple times while it's already recording using default action client
+        for _ in range(total_attempted_recordings):
+            action_result = self.record_for_duration(1)
+            self.assertEquals(action_result.result.result, RESULT_CODE_SKIPPED)
+            time.sleep(time_between_attempts)
+
+        res = primary_goal_action_client.wait_for_result(rospy.Duration.from_sec(15.0))
+        self.assertTrue(res, 'Timed out waiting for result after sending Duration Recorder Goal')
+
+        # Check only one bag was recorded since the start
+        self.check_rosbags_were_recorded(start_time, 1)
+
     def test_record_specific_topic(self):
-        self._create_duration_recorder_action_client()
         start_time = time.time()
         topic_name = '/my_random_topic_' + create_random_word(8) 
         duration = 5
