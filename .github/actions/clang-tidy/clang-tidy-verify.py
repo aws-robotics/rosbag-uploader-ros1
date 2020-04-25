@@ -96,15 +96,11 @@ def get_compilation_db_paths(curr_dir, visited_dirs, log):
   paths = list()
   for item in os.listdir(curr_dir):
     item_path = os.path.realpath(os.path.join(curr_dir, item))
-    if (os.path.isfile(item_path)):
-      if (item == "compile_commands.json"):
-        # there has been some behavior change in colcon build, resulting in a
-        # compilation database to appear under the build/ directory
-        if (os.path.basename(curr_dir) == "build"):
-          continue
+    if(os.path.isfile(item_path)):
+      if(item == "compile_commands.json"):
         paths.append(item_path)
         log.write(item_path + "\n")
-    elif (os.path.isdir(item_path)):
+    elif(os.path.isdir(item_path)):
       if not(item_path in visited_dirs):
         paths += get_compilation_db_paths(item_path, visited_dirs, log)
 

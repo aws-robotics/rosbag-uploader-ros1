@@ -1090,7 +1090,8 @@ function build() {
                     "--cmake-args",
                     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                     "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
-                    "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
+                    "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'",
+                    "--event-handlers", "compile_commands-"
                 ]);
                 yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
             }
