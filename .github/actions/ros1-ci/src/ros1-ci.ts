@@ -126,7 +126,8 @@ async function build() {
     console.log(`Build step | packages-to-skip-tests: ${PACKAGES_TO_SKIP_TESTS}`);
     let colconUpToCmakeArgs: any = [];
     if (PACKAGES_TO_SKIP_TESTS.length) {
-      colconUpToCmakeArgs = ["--packages-up-to", ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
+      colconUpToCmakeArgs = ["--packages-up-to"].concat(PACKAGES_TO_SKIP_TESTS.split(" "),
+                                                        ["--event-handlers", "compile_commands-"]);
     }
     await exec.exec("colcon", ["build"].concat(colconUpToCmakeArgs), getExecOptions());
 
@@ -167,8 +168,8 @@ async function test() {
       ].concat(
         packagesToTest.split(" "),
         [
-          "--cmake-target",
-          "tests"
+          "--cmake-target", "tests",
+          "--event-handlers", "compile_commands-"
         ]
       )
       await exec.exec("colcon", ["build"].concat(colconCmakeTestArgs), getExecOptions());
