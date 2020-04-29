@@ -1076,7 +1076,7 @@ function build() {
             console.log(`Build step | packages-to-skip-tests: ${PACKAGES_TO_SKIP_TESTS}`);
             let colconUpToCmakeArgs = [];
             if (PACKAGES_TO_SKIP_TESTS.length) {
-                colconUpToCmakeArgs = ["--packages-up-to",].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
+                colconUpToCmakeArgs = ["--packages-up-to"].concat(PACKAGES_TO_SKIP_TESTS.split(" "), ["--event-handlers", "compile_commands-"]);
             }
             yield exec.exec("colcon", ["build"].concat(colconUpToCmakeArgs), getExecOptions());
             let colconCmakeArgs = [];
@@ -1090,7 +1090,8 @@ function build() {
                     "--cmake-args",
                     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                     "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'",
-                    "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'"
+                    "-DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage'",
+                    "--event-handlers", "compile_commands-"
                 ]);
                 yield exec.exec("colcon", ["build"].concat(colconCmakeArgs), getExecOptions());
             }
@@ -1113,8 +1114,8 @@ function test() {
                 const colconCmakeTestArgs = [
                     "--packages-select",
                 ].concat(packagesToTest.split(" "), [
-                    "--cmake-target",
-                    "tests"
+                    "--cmake-target", "tests",
+                    "--event-handlers", "compile_commands-"
                 ]);
                 yield exec.exec("colcon", ["build"].concat(colconCmakeTestArgs), getExecOptions());
             }
@@ -1132,7 +1133,7 @@ function test() {
             let colconArgs = [];
             if (PACKAGES_TO_SKIP_TESTS.length) {
                 colconArgs = [
-                    "--event-handlers", "console_direct+",
+                    "--event-handlers", "console_direct+", "compile_commands-",
                     "--packages-skip",
                 ].concat(PACKAGES_TO_SKIP_TESTS.split(" "));
             }
