@@ -27,7 +27,7 @@ jobs:
     steps:
     - name: Setup Environment # TODO(setup-ros-docker#7): calling chown is necessary for now
       env:
-        ACCESS_TOKEN: ${{ github.token }}
+        ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
       run: |
         sudo chown -R rosbuild:rosbuild "$HOME" .
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
