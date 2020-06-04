@@ -13,25 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distro: ['kinetic', 'melodic']
+        ros_distro: [kinetic, melodic]
+        include:
+        - ros_distro: kinetic
+          ubuntu_distro: xenial
+        - ros_distro: melodic
+          ubuntu_distro: bionic
     container:
-      image: ros:${{ matrix.distro}}-ros-core
+      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-base-latest
     outputs:
       build_result: ${{ steps.build.outcome }}
       test_result: ${{ steps.test.outcome }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - id: build
       name: Build
-      uses: ./.github/actions/ros1-ci/
+      uses: ros-tooling/action-ros-ci@0.0.16
       with:
-        coverage: true
-        language: cpp
-        packages-to-test: "s3_common s3_file_uploader"
-        # (Optional) packages-to-skip-tests: "[PKG_NAME [PKG_NAME ...]]"
-        ros-distro: ${{ matrix.distro }}
-        workspace-dir: ./
+        package-name: rosbag_cloud_recorders s3_common s3_file_uploader
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
