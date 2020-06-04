@@ -25,18 +25,17 @@ jobs:
       build_result: ${{ steps.build.outcome }}
       test_result: ${{ steps.test.outcome }}
     steps:
-    - name: Set Permissions # TODO(setup-ros-docker#7): calling chown is necessary for now
-      run: sudo chown -R rosbuild:rosbuild "$HOME" .
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        path: target
+    - name: Setup Environment # TODO(setup-ros-docker#7): calling chown is necessary for now
+      env:
+        ACCESS_TOKEN: ${{ github.token }}
+      run: |
+        sudo chown -R rosbuild:rosbuild "$HOME" .
+        git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
-      uses: ros-tooling/action-ros-ci@miaofei/private-repos
+      uses: ros-tooling/action-ros-ci@0.0.16
       with:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
-        vcs-repo-file-url: ''
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
