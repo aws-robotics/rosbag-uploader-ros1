@@ -29,10 +29,13 @@ jobs:
       run: sudo chown -R rosbuild:rosbuild "$HOME" .
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        path: target
     - id: build
       name: Build
       uses: ros-tooling/action-ros-ci@miaofei/private-repos
       with:
+        source-ros-binary-installation: ${{ matrix.ros_distro }}
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
