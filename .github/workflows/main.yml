@@ -36,6 +36,7 @@ jobs:
       uses: ros-tooling/action-ros-ci@miaofei/private-repos
       with:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
+        vcs-repo-file-url: ''
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
