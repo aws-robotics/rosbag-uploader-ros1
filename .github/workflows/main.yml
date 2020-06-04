@@ -25,6 +25,8 @@ jobs:
       build_result: ${{ steps.build.outcome }}
       test_result: ${{ steps.test.outcome }}
     steps:
+    - name: Set Permissions # TODO(setup-ros-docker#7): calling chown is necessary for now
+      run: sudo chown -R rosbuild:rosbuild "$HOME" .
     - name: Checkout
       uses: actions/checkout@v2
     - id: build
