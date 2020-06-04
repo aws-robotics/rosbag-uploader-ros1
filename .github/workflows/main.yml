@@ -20,7 +20,7 @@ jobs:
         - ros_distro: melodic
           ubuntu_distro: bionic
     container:
-      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
     outputs:
       build_result: ${{ steps.build.outcome }}
       test_result: ${{ steps.test.outcome }}
