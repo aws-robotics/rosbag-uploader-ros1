@@ -33,9 +33,10 @@ jobs:
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
-      uses: ros-tooling/action-ros-ci@0.0.16
+      uses: ros-tooling/action-ros-ci@945bf64ade1ec7b463fa2e102cbec6992172edf5
       with:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
+        vcs-repo-file-url: ''
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
