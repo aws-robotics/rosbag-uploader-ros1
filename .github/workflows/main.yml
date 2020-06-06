@@ -37,7 +37,7 @@ jobs:
       with:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
         vcs-repo-file-url: ''
-        package-name: rosbag_cloud_recorders s3_common s3_file_uploader
+        package-name: rosbag_cloud_recorders s3_common s3_file_uploader rosbag_uploader_ros1_integration_tests
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
