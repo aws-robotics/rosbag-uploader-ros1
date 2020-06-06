@@ -110,4 +110,9 @@ if(TARGET test_s3_common)
     ${GTEST_LIBRARIES}
     ${PROJECT_NAME}
   )
+
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND $(MAKE) tests
+  )
 endif()
