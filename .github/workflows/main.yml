@@ -61,6 +61,8 @@ jobs:
         workspace-dir: ./ros_ws
     - name: Clang Tidy
       uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/clang-tidy/
+      with:
+        workspace-dir: ./ros_ws
     - name: Post Coverage to Codecov
       uses: codecov/codecov-action@v1
       with:

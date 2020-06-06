@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 
-const ACTION_DIRECTORY = path.join(__dirname, "..");
+const ACTION_DIRECTORY = path.resolve(__dirname, "..");
 
 async function setup() {
   try {
