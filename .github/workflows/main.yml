@@ -46,7 +46,7 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
     - id: test
       name: Integration Tests
-      uses: ./.github/actions/ros1-integ-test/
+      uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
       with:
         integ-test-package-name: 'rosbag_uploader_ros1_integration_tests'
         integ-test-launch-files: |
@@ -57,17 +57,18 @@ jobs:
           test_rolling_recorder_upload.test
           test_s3_file_uploader_general.test
           test_s3_file_uploader_wrong_region.test
-        ros-distro: ${{ matrix.distro }}
+        ros-distro: ${{ matrix.ros_distro }}
+        workspace-dir: ./ros_ws
     - name: Clang Tidy
-      uses: ./.github/actions/clang-tidy/
+      uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/clang-tidy/
     - name: Post Coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: 'coverage/*'
-        flags: '${{ matrix.distro }},ROS_1'
+        file: './ros_ws/coverage/*'
+        flags: '${{ matrix.ros_distro }},ROS_1'
         fail_ci_if_error: true
-        yml: ./.codecov.yml
+        yml: ./ros_ws/.codecov.yml
     - name: Upload Coverage
       uses: actions/upload-artifact@v1
       with:
