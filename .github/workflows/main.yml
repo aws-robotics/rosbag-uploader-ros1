@@ -38,6 +38,8 @@ jobs:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
         vcs-repo-file-url: ''
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader rosbag_uploader_ros1_integration_tests
+        colcon-mixin-name: coverage-gcc
+        colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/5c45b95018788deff62202aaa831ad4c20ebe2c6/index.yaml
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -64,18 +66,14 @@ jobs:
       with:
         workspace-dir: ./ros_ws
     - name: Post Coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v1.0.6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: './ros_ws/coverage/*'
-        flags: '${{ matrix.ros_distro }},ROS_1'
+        file: ros_ws/lcov/total_coverage.info
+        flags: unittests
+        name: codecov-umbrella
+        yml: ./codecov.yml
         fail_ci_if_error: true
-        yml: ./ros_ws/.codecov.yml
-    - name: Upload Coverage
-      uses: actions/upload-artifact@v1
-      with:
-        name: coverage
-        path: coverage/
 
   log_workflow_status_to_cloudwatch:
     name: 'Log Workflow Status to CloudWatch'
