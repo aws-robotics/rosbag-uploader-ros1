@@ -65,22 +65,27 @@ jobs:
     #   uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/clang-tidy/
     #   with:
     #     workspace-dir: ./ros_ws
+    - name: Generate Coverage Report
+      run: |
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info /usr/* /opt/ros/* */install/* --output-file coverage.info
+        lcov --list coverage.info
     - name: Post Coverage to Codecov
       uses: codecov/codecov-action@v1.0.6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ros_ws/lcov/total_coverage.info
+        file: coverage.info
         flags: ${{ matrix.distro }},ROS_1
         fail_ci_if_error: true
     - name: Upload Coverage
       uses: actions/upload-artifact@v2.0.1
       with:
-        name: coverage
-        path: ros_ws/lcov/
+        name: ${{ matrix.distro }}_coverage
+        path: coverage.info
     - name: Upload Compile Commands
       uses: actions/upload-artifact@v2.0.1
       with:
-        name: compile_commands
+        name: ${{ matrix.distro }}_compile_commands
         path: ros_ws/build/compile_commands.json
 
   log_workflow_status_to_cloudwatch:
