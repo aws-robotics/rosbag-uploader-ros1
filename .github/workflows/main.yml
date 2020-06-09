@@ -25,11 +25,13 @@ jobs:
       build_result: ${{ steps.build.outcome }}
       test_result: ${{ steps.test.outcome }}
     steps:
-    - name: Setup Build Environment # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - name: Setup Build Environment 
       env:
         ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
       run: |
+        # TODO(setup-ros-docker#7): calling chown is necessary for now
         sudo chown -R rosbuild:rosbuild "$HOME" .
+        # this gives action-ros-ci access to private repos
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
@@ -61,10 +63,6 @@ jobs:
           test_s3_file_uploader_wrong_region.test
         ros-distro: ${{ matrix.ros_distro }}
         workspace-dir: ./ros_ws
-    # - name: Clang Tidy
-    #   uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/clang-tidy/
-    #   with:
-    #     workspace-dir: ./ros_ws
     - name: Generate Coverage Report
       run: |
         lcov --capture --directory . --output-file coverage.info
@@ -75,17 +73,17 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: coverage.info
-        flags: ${{ matrix.distro }},ROS_1
+        flags: ${{ matrix.ros_distro }},ROS_1
         fail_ci_if_error: true
     - name: Upload Coverage
       uses: actions/upload-artifact@v2.0.1
       with:
-        name: ${{ matrix.distro }}_coverage
+        name: ${{ matrix.ros_distro }}_coverage
         path: coverage.info
     - name: Upload Compile Commands
       uses: actions/upload-artifact@v2.0.1
       with:
-        name: ${{ matrix.distro }}_compile_commands
+        name: ${{ matrix.ros_distro }}_compile_commands
         path: ros_ws/build/compile_commands.json
 
   log_workflow_status_to_cloudwatch:
