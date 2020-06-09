@@ -952,8 +952,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
-// HACK - Figure out how to dynamically pull this
-const ACTION_DIRECTORY = "./.github/actions/clang-tidy/";
+const ACTION_DIRECTORY = path.resolve(__dirname, "..");
 function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         try {

@@ -9,29 +9,39 @@ on:
 
 jobs:
   build_and_test:
-    name: 'Build and Test'
+    name: Build and Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distro: ['kinetic', 'melodic']
+        ros_distro: [kinetic, melodic]
+        include:
+        - ros_distro: kinetic
+          ubuntu_distro: xenial
+        - ros_distro: melodic
+          ubuntu_distro: bionic
     container:
-      image: ros:${{ matrix.distro}}-ros-core
+      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
     outputs:
       build_result: ${{ steps.build.outcome }}
       test_result: ${{ steps.test.outcome }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v1
+    - name: Setup Build Environment 
+      env:
+        ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
+      run: |
+        # TODO(setup-ros-docker#7): calling chown is necessary for now
+        sudo chown -R rosbuild:rosbuild "$HOME" .
+        # this gives action-ros-ci access to private repos
+        git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
-      uses: ./.github/actions/ros1-ci/
+      uses: ros-tooling/action-ros-ci@0.0.17
       with:
-        coverage: true
-        language: cpp
-        packages-to-test: "s3_common s3_file_uploader"
-        # (Optional) packages-to-skip-tests: "[PKG_NAME [PKG_NAME ...]]"
-        ros-distro: ${{ matrix.distro }}
-        workspace-dir: ./
+        source-ros-binary-installation: ${{ matrix.ros_distro }}
+        vcs-repo-file-url: ''
+        package-name: rosbag_cloud_recorders s3_common s3_file_uploader rosbag_uploader_ros1_integration_tests
+        colcon-mixin-name: compile-commands coverage-gcc
+        colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/1ddb69bedfd1f04c2f000e95452f7c24a4d6176b/index.yaml
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -40,9 +50,9 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
     - id: test
       name: Integration Tests
-      uses: ./.github/actions/ros1-integ-test/
+      uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
       with:
-        integ-test-package-name: 'rosbag_uploader_ros1_integration_tests'
+        integ-test-package-name: rosbag_uploader_ros1_integration_tests
         integ-test-launch-files: |
           test_duration_recorder_general.test
           test_periodic_file_deleter.test
@@ -51,34 +61,46 @@ jobs:
           test_rolling_recorder_upload.test
           test_s3_file_uploader_general.test
           test_s3_file_uploader_wrong_region.test
-        ros-distro: ${{ matrix.distro }}
-    - name: Clang Tidy
-      uses: ./.github/actions/clang-tidy/
+        ros-distro: ${{ matrix.ros_distro }}
+        workspace-dir: ./ros_ws
+    - name: Generate Coverage Report
+      run: |
+        # TODO(colcon-lcov-result#18): necessary until there is support for catkin packages
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info /usr/* /opt/ros/* */install/* --output-file coverage.info
+        lcov --list coverage.info
     - name: Post Coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v1.0.6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: 'coverage/*'
-        flags: '${{ matrix.distro }},ROS_1'
+        file: coverage.info
+        flags: ${{ matrix.ros_distro }},ROS_1
         fail_ci_if_error: true
-        yml: ./.codecov.yml
     - name: Upload Coverage
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2.0.1
       with:
-        name: coverage
-        path: coverage/
+        name: ${{ matrix.ros_distro }}_coverage
+        path: coverage.info
+    - name: Upload Compile Commands
+      uses: actions/upload-artifact@v2.0.1
+      with:
+        name: ${{ matrix.ros_distro }}_compile_commands
+        path: ros_ws/build/compile_commands.json
 
   log_workflow_status_to_cloudwatch:
-    name: 'Log Workflow Status to CloudWatch'
+    name: Log Workflow Status to CloudWatch
     runs-on: ubuntu-latest
     container:
       image: ubuntu:bionic
     needs:
       - build_and_test
-    # serves two purposes:
-    # - Don't skip this job if dependent jobs have failed.
-    # - On a fork, we don't have the secrets to authenticate to AWS.
-    if: ${{ ! github.event.repository.fork && ! github.event.pull_request.head.repo.fork }}
+    if: always()  # run even if the dependent jobs have failed to log failures
+    # Allow build reports to fail on pull requests.
+    # When a contribution is made on a fork, the secrets will not be available,
+    # and this step will be failing. This is acceptable.
+    # On the other end, we want to be notified if this happens on merge, or
+    # on schedule.
+    continue-on-error: ${{ github.event_name == 'pull_request'}}
     steps:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -93,5 +115,5 @@ jobs:
     - name: Log Integration Test Status
       uses: ros-tooling/action-cloudwatch-metrics@0.0.4
       with:
-        namespace: 'IntegrationTests'
+        namespace: IntegrationTests
         metric-value: ${{ ! contains(needs.build_and_test.outputs.test_result, 'failure') }}
