@@ -35,7 +35,7 @@ jobs:
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
-      uses: ros-tooling/action-ros-ci@945bf64ade1ec7b463fa2e102cbec6992172edf5
+      uses: ros-tooling/action-ros-ci@0.0.17
       with:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
         vcs-repo-file-url: ''
@@ -65,6 +65,7 @@ jobs:
         workspace-dir: ./ros_ws
     - name: Generate Coverage Report
       run: |
+        # TODO(colcon-lcov-result#18): necessary until there is support for catkin packages
         lcov --capture --directory . --output-file coverage.info
         lcov --remove coverage.info /usr/* /opt/ros/* */install/* --output-file coverage.info
         lcov --list coverage.info
