@@ -73,10 +73,15 @@ jobs:
         flags: ${{ matrix.distro }},ROS_1
         fail_ci_if_error: true
     - name: Upload Coverage
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2.0.1
       with:
         name: coverage
         path: ros_ws/lcov/
+    - name: Upload Compile Commands
+      uses: actions/upload-artifact@v2.0.1
+      with:
+        name: compile_commands
+        path: ros_ws/build/compile_commands.json
 
   log_workflow_status_to_cloudwatch:
     name: Log Workflow Status to CloudWatch
