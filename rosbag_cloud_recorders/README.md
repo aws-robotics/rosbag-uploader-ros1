@@ -1,9 +1,18 @@
 ## Rosbag Cloud Recorders
 
-This package contains two nodes. The RollingRecorder node provides an action interface for uploading the past x minutes of rosbag files. The DurationRecorder provides an action interface to record rosbags for a specified duration. Once that duration is complete the rosbag files are uploaded to S3. For more information on actions see the (actionlib documentation)[http://wiki.ros.org/actionlib]. Examples for using the action servers can be found below. The action servers can only take one request at a time. If the node is currently working on a request it will reject any new requests.
+This package contains two nodes.
+The `rolling_recorder` node provides an action interface for uploading the past *x* minutes of rosbag files.
+The `duration_recorder` node provides an action interface to record rosbags for a specified duration.
+Once that duration is complete the rosbag files are uploaded to S3.
+For more information on actions see the [`actionlib` documentation](http://wiki.ros.org/actionlib).
+Examples for using the action servers can be found below.
+The action servers can only take one request at a time.
+If the node is currently working on a request it will reject any new requests.
 
 ### AWS Credentials
-You will need to create an AWS Account and configure the credentials to be able to communicate with AWS services. You may find [AWS Configuration and Credential Files] helpful.
+
+You will need to create an AWS Account and configure the credentials to be able to communicate with AWS services.
+You may find [AWS Configuration and Credential Files] helpful.
 
 This node will require the following AWS account IAM role permissions:
 - `s3:PutObject`
@@ -11,75 +20,85 @@ for the bucket specified in the config file.
 
 
 ## Usage
+
 ### Resource Setup
-- (Create a bucket)[https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html] in Amazon S3.
+
+- [Create a bucket](https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html) in Amazon S3.
 
 ### Running the nodes
-- Build the rosbag_cloud_recorders package as described in the top level README.
+
+- Build the `rosbag_cloud_recorders` package as described in the top level README.
 - Configure AWS credentials.
-- Launch the DurationRecorder with
+- Launch the `duration_recorder` and `s3_file_uploader` nodes with
 
         roslaunch rosbag_cloud_recorders duration_recorder_sample.launch s3_bucket:=<BUCKET_NAME>
-- OR Launch the RollingRecorder with
+- OR Launch the `rolling_recorder` and `s3_file_uploader` nodes with
 
         roslaunch rosbag_cloud_recorders rolling_recorder_sample.launch s3_bucket:=<BUCKET_NAME>
 
 ### Example Action Client
-A simple example of a client to interact with this node. This can be run with `python examples/recorder_client.py <node_type>` after sourcing the ros workspace where `node_type` can be `rolling_recorder` or `duration_recorder`
 
-## rolling_recorder node
+A simple example of a client to interact with this node is provided.
+After sourcing the ROS workspace, the example client can be run with `python examples/recorder_client.py <node_type>`, where `node_type` can be `rolling_recorder` or `duration_recorder`.
+
+
+## `duration_recorder` node
+
 ### Actions
-**Action Name**: ~/RosbagRollingRecord
+**Action Name**: ~/DurationRecorder
 
 **Goal**
 
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| files | string[] | A list of absolute paths to files to be uploaded. Note that these paths must be accessible from the s3_file_uploader node |
-| upload_location | string | The S3 Key prefix |
+| `destination` | string | The S3 Key prefix of the upload location of the rosbags |
+| `duration` | duration | The duration of time to record the rosbag for |
+| `topics_to_record` | string[] | List of topics to record (If empty, all topics will be recorded) |
 
 **Result**
 
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| result_code | uint16 | The error code returned from S3. The enum list can be found (here)[https://sdk.amazonaws.com/cpp/api/LATEST/_s3_errors_8h_source.html] |
-| files_uploaded | string[] | The list of files that were successfully uploaded. |
+| `result` | uint8 | The return code associated with the goal |
+| `message` | string | A message describing the reason for the result |
 
 *Note* goals also have a message field that will contain more details on the result of the action
-
 
 **Feedback**
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| num_uploaded | uint16 | The number of files that have been uploaded from this request so far. |
-| num_remaining | uint16 | The number of files that are remaining in this upload request. |
+| `started` | time | The time at which the action server started working on the goal |
+| `stage` | uint8 | The stage of operation of the `rolling_recorder` action server |
 
-## duration_recorder node
+
+## `rolling_recorder` node
+
 ### Actions
-**Action Name**: ~/RosbagDurationRecord
+
+**Action Name**: ~/RollingRecorder
 
 **Goal**
 
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| destination | string | The S3 Key prefix for the uploaded rosbags |
-| duration | duration |  How long to record the rosbag for. Must be positive|
-| topics_to_record | string[] | List of topics to record. If empty will record all topics |
+| `destination` | string | The S3 Key prefix of the upload location of the rosbags |
+| `start_time` | time | Specifies that rosbags recorded between this time and `end_time` should be uploaded |
+| `end_time` | time | Specifies that rosbags recorded between `start_time` and this time should be uploaded |
 
 **Result**
 
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| result_code | uint16 | The error code returned from S3. The enum list can be found (here)[https://sdk.amazonaws.com/cpp/api/LATEST/_s3_errors_8h_source.html] |
-| files_uploaded | string[] | The list of files that were successfully uploaded. |
+| `result` | uint8 | The return code associated with the goal |
+| `message` | string | A message describing the reason for the result |
 
 *Note* goals also have a message field that will contain more details on the result of the action
-
 
 **Feedback**
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| num_uploaded | uint16 | The number of files that have been uploaded from this request so far. |
-| num_remaining | uint16 | The number of files that are remaining in this upload request. |
+| `started` | time | The time at which the action server started working on the goal |
+| `stage` | uint8 | The stage of operation of the `rolling_recorder` action server |
+
 
 [AWS Configuration and Credential Files]: https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
