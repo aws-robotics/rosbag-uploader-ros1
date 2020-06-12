@@ -1,5 +1,20 @@
-# The maximum duration of files to save in seconds.
+# The length of each bag file in seconds.
+# Acceptable values: positive integers
+# If not given defaults to 30 seconds
+# If invalid value is given node will exit and log an error message
+# bag_rollover_time: 30
+
+# The length of time recordings are kept. Any rosbag older than this time will be deleted.
 # Acceptable values: positive integers
 # If not given defaults to 300 seconds
 # If invalid value is given node will exit and log an error message
-# max_record_time:
+# max_record_time: 300
+
+# Directory where rosbags will be written.
+# If not given defaults to "~/.ros/rr_rosbag_uploader/"
+# write_directory: "~/.ros/rr_rosbag_uploader/"
+
+# Time in seconds for server connection time out and s3 upload action time out
+# Acceptable values: positive integers
+# If not given defaults to 3600 seconds
+# upload_timeout: 3600

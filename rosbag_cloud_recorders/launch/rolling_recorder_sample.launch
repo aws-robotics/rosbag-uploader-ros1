@@ -11,10 +11,9 @@
          If an invalid value is given the node will exit and log an error message -->
     <arg name="max_record_time" default="300" />
 
-
     <!-- Directory where rosbags will be written.
          Defaults to ~/.ros/rosbag_uploader/ -->
-    <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
+    <arg name="write_directory" default="$(env HOME)/.ros/rr_rosbag_uploader/" />
 
     <!-- Time in seconds for server connection time out and
          s3 upload action time out -->
@@ -32,9 +31,9 @@
 
     <include file="$(find rosbag_cloud_recorders)/launch/rolling_recorder.launch">
       <arg name="bag_rollover_time" value="$(arg bag_rollover_time)"/>
-      <arg name="upload_timeout" value="$(arg upload_timeout)"/>
-      <arg name="write_directory" value="$(arg write_directory)"/>
       <arg name="max_record_time" value="$(arg max_record_time)"/>
+      <arg name="write_directory" value="$(arg write_directory)"/>
+      <arg name="upload_timeout" value="$(arg upload_timeout)"/>
       <arg name="topics_to_record" value="$(arg topics_to_record)"/>
     </include>
 

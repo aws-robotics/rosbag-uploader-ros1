@@ -14,16 +14,17 @@ if recorder_type == 'rolling_recorder':
     action = '/rolling_recorder/RosbagRollingRecord'
     action_type = RollingRecorderAction
     goal = RollingRecorderGoal(destination='rolling_recorder_test/')
-elif recorder_type == 'duration_recorder'
+elif recorder_type == 'duration_recorder':
     action = '/duration_recorder/RosbagDurationRecord'
     action_type = DurationRecorderAction
     goal = DurationRecorderGoal(
+        destination='duration_recorder_test/',
         duration=rospy.Duration.from_sec(record_time),
         topics_to_record=[] # Empty records all topics, or provide a list of topics e.g. ['/rosout']
     )
 else:
     print('Invalid recorder type. Please choose "rolling_recorder" or "duration_recorder"')
-    return -1
+    sys.exit(-1)
 
 rospy.init_node(NODE_NAME, log_level=rospy.DEBUG)
 action_client = actionlib.SimpleActionClient(action, action_type)
