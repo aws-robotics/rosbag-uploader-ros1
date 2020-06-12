@@ -44,6 +44,11 @@ S3Facade::S3Facade(std::unique_ptr<S3Client> s3_client)
 {
 }
 
+void S3Facade::EnableEncryption(const bool enable)
+{
+  enable_encryption_ = enable;
+}
+
 Model::PutObjectOutcome S3Facade::PutObject(
   const std::string & file_path,
   const std::string & bucket,
@@ -64,6 +69,11 @@ Model::PutObjectOutcome S3Facade::PutObject(
   put_object_request.SetBucket(bucket.c_str());
   put_object_request.SetKey(key.c_str());
   put_object_request.SetBody(file_data);
+  if (enable_encryption_) {
+    put_object_request.SetServerSideEncryption(Aws::S3::Model::ServerSideEncryption::AES256);
+  } else {
+    put_object_request.SetServerSideEncryption(Aws::S3::Model::ServerSideEncryption::NOT_SET);
+  }
 
   auto outcome = s3_client_->PutObject(put_object_request);
 
@@ -74,7 +84,6 @@ Model::PutObjectOutcome S3Facade::PutObject(
   AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
   return outcome;
 }
-
 
 }  // namespace S3
 }  // namespace Aws

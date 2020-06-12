@@ -29,13 +29,16 @@
 #include <s3_file_uploader/s3_file_uploader.h>
 #include <s3_file_uploader/s3_file_uploader_action_server_handler.h>
 
+
+constexpr char kBucketNameParameter[] = "s3_bucket";
+constexpr char kEnableEncryptionParameter[] = "enable_encryption";
+constexpr char kSpinnerThreadCountOverrideParameter[] = "spinner_thread_count";
+
 /**
- * By default we use one thread to handle upload goals. You may specify a different setting
+ * By default we use two threads to handle upload goals. You may specify a different setting
  * via the "spinner_thread_count" parameter.
  */
 constexpr uint32_t kDefaultNumberOfSpinnerThreads = 2;
-constexpr char kSpinnerThreadCountOverrideParameter[] = "spinner_thread_count";
-constexpr char kBucketNameParameter[] = "s3_bucket";
 
 namespace Aws
 {
@@ -70,25 +73,33 @@ S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) 
   );
   
   action_server_.start();
-
 }
 
-void S3FileUploader::Spin() {
+void S3FileUploader::Spin()
+{
+  if (Aws::AwsError::AWS_ERR_OK != parameter_reader_->ReadParam(Aws::Client::ParameterPath(kBucketNameParameter), bucket_)) {
+    AWS_LOG_ERROR(__func__, "Failed to load s3 bucket name, aborting. Check the configuration file for parameter s3_bucket");
+    return;
+  }
+
+  bool enable_encryption = false;
+  if (Aws::AwsError::AWS_ERR_OK == parameter_reader_->ReadParam(Aws::Client::ParameterPath(kEnableEncryptionParameter), enable_encryption)) {
+    upload_manager_->EnableEncryption(enable_encryption);
+  }
+
   uint32_t spinner_thread_count = kDefaultNumberOfSpinnerThreads;
   int spinner_thread_count_input;
   if (Aws::AwsError::AWS_ERR_OK ==
     parameter_reader_->ReadParam(Aws::Client::ParameterPath(kSpinnerThreadCountOverrideParameter),
-                   spinner_thread_count_input)) {
-    spinner_thread_count = static_cast<uint32_t>(spinner_thread_count_input);
+                                 spinner_thread_count_input)) {
+    if (spinner_thread_count_input < 0) {
+      spinner_thread_count = 0;
+    } else {
+      spinner_thread_count = static_cast<uint32_t>(spinner_thread_count_input);
+    }
   }
 
-  if (Aws::AwsError::AWS_ERR_OK !=
-    parameter_reader_->ReadParam(Aws::Client::ParameterPath(kBucketNameParameter), bucket_)) {
-    AWS_LOG_ERROR(__func__, "Failed to load s3 bucket name, aborting. Check the configuration file for parameter s3_bucket");
-    return;
-  }
   AWS_LOG_INFO(__func__, "Starting S3FileUploader spinner with bucket %s and thread count %d\n", bucket_.c_str(), spinner_thread_count);
-
   ros::MultiThreadedSpinner executor(spinner_thread_count);
   executor.spin();
 }

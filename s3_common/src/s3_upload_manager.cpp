@@ -45,6 +45,11 @@ S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
 {
 }
 
+void S3UploadManager::EnableEncryption(const bool enable)
+{
+  s3_facade_->EnableEncryption(enable);
+}
+
 void S3UploadManager::CancelUpload()
 {
   std::lock_guard<std::recursive_mutex> lock(mutex_);

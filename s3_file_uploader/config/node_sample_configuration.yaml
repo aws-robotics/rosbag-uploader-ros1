@@ -1,7 +1,10 @@
 # S3 Bucket to use for file upload; must be specified.
 # s3_bucket: "my-s3-bucket"
 
-# Optionally specify the thread count. The default is 2. Specify 0 to use all cores.
+# Enable server-side encryption for uploaded files. The default is false.
+# enable_encryption: false
+
+# Optionally specify the thread count. The default is 2. Specify 0 or a negative number to use all cores.
 # spinner_thread_count: 2
 
 # This is the AWS Client Configuration used by the AWS service client in the Node. If given the node will load the

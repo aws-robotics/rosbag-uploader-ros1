@@ -36,6 +36,15 @@ public:
   S3Facade & operator=(const S3Facade & other) = delete;
 
   /**
+  * @brief Enable server-side encryption of uploaded files
+  *
+  * Specifies whether or not the uploaded files should be stored encrypted on S3.
+  *
+  * @param enable whether or not to enable encryption
+  */
+  void EnableEncryption(const bool enable);
+
+  /**
   * @brief Call s3 PutObject api to upload file to s3
   *
   * Synchronous call to S3. Uploads file at file_path to s3.
@@ -50,6 +59,7 @@ public:
 private:
   Aws::Client::ClientConfiguration config_;
   std::unique_ptr<Aws::S3::S3Client> s3_client_;
+  bool enable_encryption_ = false;
 };
 
 }  // namespace S3

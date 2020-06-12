@@ -58,6 +58,15 @@ public:
   explicit S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
   virtual ~S3UploadManager() = default;
 
+  /**
+  * @brief Enable server-side encryption of uploaded files
+  *
+  * Specifies whether or not the uploaded files should be stored encrypted on S3.
+  *
+  * @param enable whether or not to enable encryption
+  */
+  void EnableEncryption(const bool enable);
+
   /* Cancel the current upload
    */
   virtual void CancelUpload();
@@ -72,7 +81,9 @@ public:
     const std::vector<UploadDescription> & upload_descriptions,
     const std::string & bucket,
     const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
+
   virtual bool IsAvailable() const;
+
 private:
   // The current state of the upload manager
   S3UploadManagerState manager_status_;
@@ -81,8 +92,6 @@ private:
   // Facade for interaction with S3 client
   std::unique_ptr<S3Facade> s3_facade_;
 };
-
-
 
 }  // namespace S3
 }  // namespace Aws
