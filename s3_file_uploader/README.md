@@ -76,6 +76,7 @@ The action server can also be invoked via the command line
 | Name | Type | Description | Default Value |
 | ---- | ---- | ----------- | ------------- |
 | `s3_bucket` | string | The S3 bucket where files should be uploaded to | N/A (must be specified) |
+| `enable_encryption` (configuration file parameter only) | boolean | Enable server-side encryption for uploaded files | false |
 | `spinner_thread_count` (configuration file parameter only) | int | The number of threads for ros::MultiThreadedSpinner to use | 2 |
 | `aws_client_configuration.region` (configuration file parameter only) | string | The AWS region to use (must match the region of the S3 bucket) | us-west-2 |
 
