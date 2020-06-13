@@ -17,5 +17,4 @@
       <param name="upload_timeout" value="$(arg upload_timeout)"/>
       <param name="delete_bags_after_upload" value="$(arg delete_bags_after_upload)"/>
     </node>
-
 </launch>

@@ -4,7 +4,7 @@
 # If invalid value is given node will exit and log an error message
 # bag_rollover_time: 30
 
-# The length of time recordings are kept. Any rosbag older than this time will be deleted.
+# The length of time the recordings are to be kept in seconds. Any rosbag older than this time will be deleted.
 # Acceptable values: positive integers
 # If not given defaults to 300 seconds
 # If invalid value is given node will exit and log an error message

@@ -12,7 +12,7 @@
     <arg name="max_record_time" default="300" />
 
     <!-- Directory where rosbags will be written.
-         Defaults to ~/.ros/rosbag_uploader/ -->
+         Defaults to ~/.ros/rr_rosbag_uploader/ -->
     <arg name="write_directory" default="$(env HOME)/.ros/rr_rosbag_uploader/" />
 
     <!-- Time in seconds for server connection time out and
@@ -40,5 +40,4 @@
     <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
       <arg name="s3_bucket" value="$(arg s3_bucket)"/>
     </include>
-
 </launch>
