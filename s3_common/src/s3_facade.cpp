@@ -29,24 +29,19 @@ namespace Aws
 namespace S3
 {
 
-S3Facade::S3Facade() 
-: S3Facade(std::make_unique<S3Client>())
+S3Facade::S3Facade(const bool enable_encryption)
+: S3Facade(enable_encryption, std::make_unique<S3Client>())
 {
 }
 
-S3Facade::S3Facade(const Aws::Client::ClientConfiguration& config)
-: s3_client_(std::make_unique<S3Client>(config))
+S3Facade::S3Facade(const bool enable_encryption, const Aws::Client::ClientConfiguration & config)
+: S3Facade(enable_encryption, std::make_unique<S3Client>(config))
 {
 }
 
-S3Facade::S3Facade(std::unique_ptr<S3Client> s3_client)
-: s3_client_(std::move(s3_client))
+S3Facade::S3Facade(const bool enable_encryption, std::unique_ptr<S3Client> s3_client)
+: s3_client_(std::move(s3_client)), enable_encryption_(enable_encryption)
 {
-}
-
-void S3Facade::EnableEncryption(const bool enable)
-{
-  enable_encryption_ = enable;
 }
 
 Model::PutObjectOutcome S3Facade::PutObject(

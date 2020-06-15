@@ -13,6 +13,8 @@
  * permissions and limitations under the License.
  */
 
+#include "./s3_file_uploader_test.hpp"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -36,17 +38,6 @@ using ::testing::Return;
 using ::testing::_;
 using ::testing::ContainerEq;
 using ::testing::Invoke;
-
-class MockS3UploadManager : public S3UploadManager
-{
-public:
-  MockS3UploadManager() = default;
-  MOCK_METHOD3(UploadFiles, Model::PutObjectOutcome(const std::vector<UploadDescription> &,
-    const std::string &,
-    const boost::function<void (const std::vector<UploadDescription>&)>&));
-  MOCK_METHOD0(CancelUpload, void());
-  MOCK_CONST_METHOD0(IsAvailable,bool());
-};
 
 class MockGoalHandle 
 {

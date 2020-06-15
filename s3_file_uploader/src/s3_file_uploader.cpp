@@ -55,9 +55,15 @@ S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) 
   if (upload_manager) {
     upload_manager_ = move(upload_manager);
   } else {
+    bool enable_encryption = false;
+    if (Aws::AwsError::AWS_ERR_OK != parameter_reader_->ReadParam(Aws::Client::ParameterPath(kEnableEncryptionParameter), enable_encryption)) {
+      AWS_LOG_ERROR(__func__, "Failed to load encryption preference, defaulting to no encryption");
+    }
+
     Aws::Client::ClientConfigurationProvider configuration_provider(parameter_reader_);
     Aws::Client::ClientConfiguration aws_sdk_config = configuration_provider.GetClientConfiguration();
-    upload_manager_ = std::make_unique<S3UploadManager>(aws_sdk_config);
+
+    upload_manager_ = std::make_unique<S3UploadManager>(enable_encryption, aws_sdk_config);
   }
   
   action_server_.registerGoalCallback(
@@ -80,11 +86,6 @@ void S3FileUploader::Spin()
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader_->ReadParam(Aws::Client::ParameterPath(kBucketNameParameter), bucket_)) {
     AWS_LOG_ERROR(__func__, "Failed to load s3 bucket name, aborting. Check the configuration file for parameter s3_bucket");
     return;
-  }
-
-  bool enable_encryption = false;
-  if (Aws::AwsError::AWS_ERR_OK == parameter_reader_->ReadParam(Aws::Client::ParameterPath(kEnableEncryptionParameter), enable_encryption)) {
-    upload_manager_->EnableEncryption(enable_encryption);
   }
 
   uint32_t spinner_thread_count = kDefaultNumberOfSpinnerThreads;

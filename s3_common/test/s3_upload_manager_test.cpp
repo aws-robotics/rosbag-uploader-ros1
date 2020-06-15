@@ -36,26 +36,27 @@ using ::testing::_;
 class MockS3Facade : public S3Facade
 {
 public:
-  MockS3Facade() : S3Facade() {}
+  MockS3Facade(const bool enable_encryption) : S3Facade(enable_encryption) {}
   MOCK_METHOD3(PutObject, Model::PutObjectOutcome(const std::string &, const std::string &, const std::string &));
 };
 
 class S3UploadManagerTest : public ::testing::Test
 {
 protected:
+  bool enable_encryption;
   std::unique_ptr<MockS3Facade> facade;
   std::vector<UploadDescription> uploads;
   std::vector<UploadDescription> completed_uploads;
   std::size_t num_feedback_calls;
-  Model::PutObjectOutcome successfull_outcome;
+  Model::PutObjectOutcome successful_outcome;
   Model::PutObjectOutcome failed_outcome;
 
-  S3UploadManagerTest(): successfull_outcome(Model::PutObjectResult()){}
+  S3UploadManagerTest() : enable_encryption(false), successful_outcome(Model::PutObjectResult()) {}
 
   void SetUp() override
   {
     num_feedback_calls = 0;
-    facade = std::make_unique<MockS3Facade>();
+    facade = std::make_unique<MockS3Facade>(enable_encryption);
     uploads = 
       {
         {"file1", "location1"},
@@ -86,9 +87,9 @@ public:
           // Block until the mutex has been unlocked
           std::unique_lock<std::mutex> lock(lock_during_uploading);
         }),
-        Return(successfull_outcome)));
+        Return(successful_outcome)));
     for (int i = 0; i < additional_returns; ++i) {
-      mock_calls.WillOnce(Return(successfull_outcome));
+      mock_calls.WillOnce(Return(successful_outcome));
     }
 
     manager = std::unique_ptr<S3UploadManager>(new S3UploadManager(std::move(facade)));
@@ -104,7 +105,7 @@ public:
 TEST_F(S3UploadManagerTest, TestClientConfigConstructor)
 {
   Aws::Client::ClientConfiguration config;
-  S3UploadManager manager(config);
+  S3UploadManager manager(enable_encryption, config);
   EXPECT_TRUE(manager.IsAvailable());
   auto outcome = manager.UploadFiles(uploads, "bucket",
           [this](const std::vector<UploadDescription>& callback_uploads)
@@ -119,7 +120,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesSuccess)
 {
   EXPECT_CALL(*facade,PutObject(_,_,_))
     .Times(2)
-    .WillRepeatedly(Return(successfull_outcome));
+    .WillRepeatedly(Return(successful_outcome));
 
   S3UploadManager manager(std::move(facade));
   EXPECT_TRUE(manager.IsAvailable());
@@ -138,7 +139,7 @@ TEST_F(S3UploadManagerTest, TestUploadFilesFailsPutObjectFails)
   // First call succeeds, indicated by having a result.
   // Second call fails with an arbitrary error type.
   EXPECT_CALL(*facade,PutObject(_,_,_))
-    .WillOnce(Return(successfull_outcome))
+    .WillOnce(Return(successful_outcome))
     .WillOnce(Return(failed_outcome));
   S3UploadManager manager(std::move(facade));
   EXPECT_TRUE(manager.IsAvailable());

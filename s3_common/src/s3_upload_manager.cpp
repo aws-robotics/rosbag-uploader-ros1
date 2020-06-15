@@ -29,13 +29,13 @@ namespace Aws
 namespace S3
 {
 
-S3UploadManager::S3UploadManager():
-  S3UploadManager(std::make_unique<S3Facade>())
+S3UploadManager::S3UploadManager(const bool enable_encryption):
+  S3UploadManager(std::make_unique<S3Facade>(enable_encryption))
 {
 }
 
-S3UploadManager::S3UploadManager(const Aws::Client::ClientConfiguration &config):
-  S3UploadManager(std::make_unique<S3Facade>(config))
+S3UploadManager::S3UploadManager(const bool enable_encryption, const Aws::Client::ClientConfiguration & config):
+  S3UploadManager(std::make_unique<S3Facade>(enable_encryption, config))
 {
 }
 
@@ -43,11 +43,6 @@ S3UploadManager::S3UploadManager(std::unique_ptr<S3Facade> s3_facade):
   manager_status_(S3UploadManagerState::AVAILABLE),
   s3_facade_(std::move(s3_facade))
 {
-}
-
-void S3UploadManager::EnableEncryption(const bool enable)
-{
-  s3_facade_->EnableEncryption(enable);
 }
 
 void S3UploadManager::CancelUpload()
