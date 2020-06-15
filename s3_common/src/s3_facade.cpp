@@ -29,18 +29,18 @@ namespace Aws
 namespace S3
 {
 
-S3Facade::S3Facade() 
-: S3Facade(std::make_unique<S3Client>())
+S3Facade::S3Facade(const bool enable_encryption)
+: S3Facade(enable_encryption, std::make_unique<S3Client>())
 {
 }
 
-S3Facade::S3Facade(const Aws::Client::ClientConfiguration& config)
-: s3_client_(std::make_unique<S3Client>(config))
+S3Facade::S3Facade(const bool enable_encryption, const Aws::Client::ClientConfiguration & config)
+: S3Facade(enable_encryption, std::make_unique<S3Client>(config))
 {
 }
 
-S3Facade::S3Facade(std::unique_ptr<S3Client> s3_client)
-: s3_client_(std::move(s3_client))
+S3Facade::S3Facade(const bool enable_encryption, std::unique_ptr<S3Client> s3_client)
+: s3_client_(std::move(s3_client)), enable_encryption_(enable_encryption)
 {
 }
 
@@ -64,6 +64,11 @@ Model::PutObjectOutcome S3Facade::PutObject(
   put_object_request.SetBucket(bucket.c_str());
   put_object_request.SetKey(key.c_str());
   put_object_request.SetBody(file_data);
+  if (enable_encryption_) {
+    put_object_request.SetServerSideEncryption(Aws::S3::Model::ServerSideEncryption::AES256);
+  } else {
+    put_object_request.SetServerSideEncryption(Aws::S3::Model::ServerSideEncryption::NOT_SET);
+  }
 
   auto outcome = s3_client_->PutObject(put_object_request);
 
@@ -74,7 +79,6 @@ Model::PutObjectOutcome S3Facade::PutObject(
   AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
   return outcome;
 }
-
 
 }  // namespace S3
 }  // namespace Aws

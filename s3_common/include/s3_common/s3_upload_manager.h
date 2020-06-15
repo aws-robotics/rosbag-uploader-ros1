@@ -51,11 +51,28 @@ struct UploadDescription
 class S3UploadManager
 {
 public:
-  // Uses default constructor for S3Facade
-  S3UploadManager();
-  // Use the given ClientConfiguration for constructing an S3Facade
-  explicit S3UploadManager(const Aws::Client::ClientConfiguration &config);
+ /**
+  * Creates an S3UploadManager with a default-constructed S3Facade
+  *
+  * @param enable_encryption whether or not to enable AES256 server-side encryption
+  */
+  explicit S3UploadManager(const bool enable_encryption);
+  
+ /**
+  * Creates an S3UploadManager with a S3Facade that uses the given ClientConfiguration
+  *
+  * @param enable_encryption whether or not to enable AES256 server-side encryption
+  * @param config the ClientConfiguration to be used
+  */
+  explicit S3UploadManager(const bool enable_encryption, const Aws::Client::ClientConfiguration &config);
+
+ /**
+  * Creates an S3UploadManager with the given existing S3Facade
+  *
+  * @param s3_facade the existing S3Facade to be used
+  */
   explicit S3UploadManager(std::unique_ptr<S3Facade> s3_facade);
+
   virtual ~S3UploadManager() = default;
 
   /* Cancel the current upload
@@ -72,7 +89,9 @@ public:
     const std::vector<UploadDescription> & upload_descriptions,
     const std::string & bucket,
     const boost::function<void (const std::vector<UploadDescription>&)>& feedback_callback);
+
   virtual bool IsAvailable() const;
+
 private:
   // The current state of the upload manager
   S3UploadManagerState manager_status_;
@@ -81,8 +100,6 @@ private:
   // Facade for interaction with S3 client
   std::unique_ptr<S3Facade> s3_facade_;
 };
-
-
 
 }  // namespace S3
 }  // namespace Aws

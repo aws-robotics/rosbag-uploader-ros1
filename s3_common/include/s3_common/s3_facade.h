@@ -25,14 +25,32 @@ namespace S3
 class S3Facade
 {
 public:
-  // Creates an S3Client with default ClientConfig
-  S3Facade();
-  S3Facade(const S3Facade & other) = delete;
-  // Provide the ClientConfiguration used to create the S3Client
-  explicit S3Facade(const Aws::Client::ClientConfiguration& config);
-  explicit S3Facade(std::unique_ptr<Aws::S3::S3Client> s3_client);
+ /**
+  * Creates a facade and an S3Client with a default ClientConfig
+  *
+  * @param enable_encryption whether or not to enable AES256 server-side encryption
+  */
+  explicit S3Facade(const bool enable_encryption);
+
+ /**
+  * Creates a facade and an S3Client with the provided ClientConfiguration
+  *
+  * @param enable_encryption whether or not to enable AES256 server-side encryption
+  * @param config the ClientConfiguration to be used
+  */
+  explicit S3Facade(const bool enable_encryption, const Aws::Client::ClientConfiguration & config);
+
+ /**
+  * Creates a facade with an existing S3Client
+  *
+  * @param enable_encryption whether or not to enable AES256 server-side encryption
+  * @param s3_client the existing S3Client to be used
+  */
+  explicit S3Facade(const bool enable_encryption, std::unique_ptr<Aws::S3::S3Client> s3_client);
+
   virtual ~S3Facade() = default;
 
+  S3Facade(const S3Facade & other) = delete;
   S3Facade & operator=(const S3Facade & other) = delete;
 
   /**
@@ -50,6 +68,7 @@ public:
 private:
   Aws::Client::ClientConfiguration config_;
   std::unique_ptr<Aws::S3::S3Client> s3_client_;
+  const bool enable_encryption_;
 };
 
 }  // namespace S3

@@ -48,6 +48,7 @@ public:
 class S3FacadeTest : public ::testing::Test
 {
 protected:
+  bool enable_encryption = false;
   std::unique_ptr<MockS3Client> client;
   std::string upload_file;
   
@@ -68,7 +69,7 @@ protected:
 TEST_F(S3FacadeTest, TestClientConfigConstructor)
 {
   Aws::Client::ClientConfiguration config;
-  S3Facade s3_facade(config);
+  S3Facade s3_facade(enable_encryption, config);
   // No credentials configured, exepect upload to fail
   auto outcome = s3_facade.PutObject(upload_file, "bucket", "key");
   EXPECT_FALSE(outcome.IsSuccess());
@@ -81,7 +82,7 @@ TEST_F(S3FacadeTest, TestPutObjectSuccess)
   Model::PutObjectOutcome outcome(result);
   EXPECT_CALL(*client, PutObject(_))
       .WillOnce(Return(outcome));
-  auto s3_facade = std::make_shared<S3Facade>(std::move(client));
+  auto s3_facade = std::make_shared<S3Facade>(enable_encryption, std::move(client));
   auto facade_outcome = s3_facade->PutObject(upload_file, "bucket", "key");
 
   EXPECT_TRUE(facade_outcome.IsSuccess());
@@ -93,7 +94,7 @@ TEST_F(S3FacadeTest, TestPutObjectFileDoesntExist)
   // Note that there is some chance that another file with the generated name
   // is created between deleting this file and trying to open it in PutObject.
   remove(upload_file.c_str());
-  auto s3_facade = std::make_shared<S3Facade>(std::move(client));
+  auto s3_facade = std::make_shared<S3Facade>(enable_encryption, std::move(client));
 
   auto outcome = s3_facade->PutObject(upload_file, "bucket", "key");
   EXPECT_FALSE(outcome.IsSuccess());
@@ -106,7 +107,7 @@ TEST_F(S3FacadeTest, TestPutObjectFailureFromSDK)
   Model::PutObjectOutcome outcome(error);
   EXPECT_CALL(*client, PutObject(_))
       .WillOnce(Return(outcome));
-  auto s3_facade = std::make_shared<S3Facade>(std::move(client));
+  auto s3_facade = std::make_shared<S3Facade>(enable_encryption, std::move(client));
 
   auto facade_outcome = s3_facade->PutObject(upload_file, "bucket", "key");
   EXPECT_FALSE(outcome.IsSuccess());

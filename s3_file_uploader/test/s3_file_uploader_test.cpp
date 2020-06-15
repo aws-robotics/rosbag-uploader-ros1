@@ -13,6 +13,8 @@
  * permissions and limitations under the License.
  */
 
+#include "./s3_file_uploader_test.hpp"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -39,17 +41,6 @@ using ::testing::_;
 using ::testing::ContainerEq;
 using ::testing::Invoke;
 
-class MockS3UploadManager : public S3UploadManager
-{
-public:
-  MockS3UploadManager() = default;
-  MOCK_METHOD3(UploadFiles, Model::PutObjectOutcome(const std::vector<UploadDescription> &,
-    const std::string &,
-    const boost::function<void (const std::vector<UploadDescription>&)>&));
-  MOCK_METHOD0(CancelUpload, void());
-  MOCK_CONST_METHOD0(IsAvailable,bool());
-};
-
 class S3UploaderTest : public ::testing::Test
 {
 protected:
@@ -59,21 +50,21 @@ protected:
   UploadFilesActionClient action_client;
   std::unique_ptr<MockS3UploadManager> upload_manager;
   UploadFilesActionClient::GoalHandle goal_handle;
-  Model::PutObjectOutcome successfull_outcome;
+  Model::PutObjectOutcome successful_outcome;
 
   void TearDown() override
   {
     executor.stop();
   }
+
 public:
   S3UploaderTest():
     executor(0), nh("~"), action_client(nh, "UploadFiles"),
     upload_manager(std::make_unique<MockS3UploadManager>()),
-    successfull_outcome(Model::PutObjectResult())
+    successful_outcome(Model::PutObjectResult())
   {
     executor.start();
   }
-
 
   void SanityGoalCheck(actionlib::TerminalState::StateEnum goal_terminal_state) {
     bool message_received = false;
@@ -114,7 +105,7 @@ TEST_F(S3UploaderTest, TestMultipleFilesActionSucceeds)
   EXPECT_CALL(*upload_manager, IsAvailable())
     .WillRepeatedly(Return(true));
   EXPECT_CALL(*upload_manager, UploadFiles(ContainerEq(uploads),_,_))
-    .WillOnce(Return(successfull_outcome));
+    .WillOnce(Return(successful_outcome));
 
   S3FileUploader file_uploader(std::move(upload_manager));
   SanityGoalCheck(actionlib::TerminalState::StateEnum::SUCCEEDED);
