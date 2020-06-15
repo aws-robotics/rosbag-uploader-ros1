@@ -2,7 +2,7 @@
 
 This repository contains ROS nodes for recording rosbags and uploading them to Amazon S3.
 
-This repository has three nodes. A brief summary of each is included below. See the READMEs under the `rosbag_cloud_recorders` and `s3_uploader` directories for more details.
+There are three nodes under this repository: the `duration_recorder`, the `rolling_recorder`, and the `s3_file_uploader`. See the READMEs under the `rosbag_cloud_recorders` and `s3_uploader` directories for more details.
 - `duration_recorder` - This node provides an action interface to record rosbags for a specified duration. Once that duration is complete the rosbag files are uploaded to S3.
 - `rolling_recorder` - This node provides an action interface for uploading the past *x* minutes of rosbag files.
 - `s3_file_uploader` - This node is in the `s3_file_uploader` package and provides an action interface for uploading a set of files to S3.
