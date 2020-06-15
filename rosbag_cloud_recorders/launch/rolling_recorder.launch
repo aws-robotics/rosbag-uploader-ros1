@@ -14,13 +14,11 @@
          If an invalid value is given the node will exit and log an error message -->
     <arg name="max_record_time" default="300" />
 
-
     <!-- Directory where rosbags will be written.
-         Defaults to ~/.ros/rosbag_uploader/ -->
-    <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
+         Defaults to ~/.ros/rr_rosbag_uploader/ -->
+    <arg name="write_directory" default="$(env HOME)/.ros/rr_rosbag_uploader/" />
 
-    <!-- Time in seconds for server connection time out and
-         s3 upload action time out -->
+    <!-- Time in seconds for server connection time out and s3 upload action time out -->
     <arg name="upload_timeout" default="3600" />
 
     <!-- The topics that should be recorded into the rosbag.
@@ -45,5 +43,4 @@
       <param name="write_directory" value="$(arg write_directory)" />
       <param name="upload_timeout" value="$(arg upload_timeout)"/>
     </node>
-
 </launch>

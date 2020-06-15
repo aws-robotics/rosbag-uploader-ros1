@@ -23,5 +23,4 @@
     <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
       <arg name="s3_bucket" value="$(arg s3_bucket)"/>
     </include>
-
 </launch>

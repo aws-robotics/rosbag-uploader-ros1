@@ -21,15 +21,17 @@
 #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 #include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 
+constexpr char kNodeName[] = "rosbag_rolling_recorder";
+
 constexpr char kBagRolloverTimeParameter[] = "bag_rollover_time";
 constexpr char kMaxRecordTimeParameter[] = "max_record_time";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
-constexpr char kNodeName[] = "rosbag_rolling_recorder";
 constexpr char kUploadTimeoutParameter[] = "upload_timeout";
-constexpr char kWriteDirectoryDefault[] = "~/.ros/rr_rosbag_uploader/";
-constexpr uint32_t kTimeOutDefaultInSeconds = 3600;
+
 constexpr uint32_t kBagRolloverTimeDefaultInSeconds = 30;
 constexpr uint32_t kMaxRecordTimeDefaultInSeconds = 300;
+constexpr char kWriteDirectoryDefault[] = "~/.ros/rr_rosbag_uploader/";
+constexpr uint32_t kTimeOutDefaultInSeconds = 3600;
 
 int main(int argc, char* argv[])
 {

@@ -27,6 +27,7 @@
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 
 constexpr char kNodeName[] = "rosbag_duration_recorder";
+
 constexpr char kWriteDirectoryParameter[] = "write_directory";
 constexpr char kUploadTimeoutParameter[] = "upload_timeout";
 constexpr char kDeleteBagsAfterUploadParameter[] = "delete_bags_after_upload";

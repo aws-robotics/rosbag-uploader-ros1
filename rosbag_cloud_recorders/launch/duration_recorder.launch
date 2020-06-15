@@ -7,9 +7,9 @@
     <arg name="upload_timeout" default="3600" />
     
     <!-- The boolean value for having the action server to delete bag files after
-        they have been successfully uploaded to S3.
-        The default value is false, i.e. bags will not be deleted after they have
-        been uploaded. -->
+         they have been successfully uploaded to S3.
+         The default value is false, i.e. bags will not be deleted after they have
+         been uploaded. -->
     <arg name="delete_bags_after_upload" default='false' />
     
     <node name="duration_recorder" pkg="rosbag_cloud_recorders" type="duration_recorder" output="screen">
@@ -17,5 +17,4 @@
       <param name="upload_timeout" value="$(arg upload_timeout)"/>
       <param name="delete_bags_after_upload" value="$(arg delete_bags_after_upload)"/>
     </node>
-
 </launch>

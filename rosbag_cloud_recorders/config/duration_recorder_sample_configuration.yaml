@@ -1,0 +1,12 @@
+# Directory where rosbags will be written.
+# If not given defaults to "~/.ros/dr_rosbag_uploader/"
+# write_directory: "~/.ros/dr_rosbag_uploader/"
+
+# Time in seconds to wait for uploader node.
+# Timeouts <= 0 are treated as infinite
+# If not given defaults to 3600 seconds
+# upload_timeout: 3600
+
+# Whether or not the action server should delete bag files after they have been successfully uploaded to S3.
+# If not given defaults to false
+# delete_bags_after_upload: false
