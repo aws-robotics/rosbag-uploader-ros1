@@ -68,7 +68,7 @@ public:
 private:
   Aws::Client::ClientConfiguration config_;
   std::unique_ptr<Aws::S3::S3Client> s3_client_;
-  bool enable_encryption_;
+  const bool enable_encryption_;
 };
 
 }  // namespace S3
