@@ -73,8 +73,10 @@ public:
     AWS_LOG_INFO(__func__, "Goal received");
     if (rosbag_recorder.IsActive()) {
       std::string msg = "Rejecting goal since recorder already active";
+      recorder_msgs::DurationRecorderResult result;
+      result.result.result = recorder_msgs::RecorderResult::INTERNAL_ERROR;
+      goal_handle.setRejected(result, msg);
       AWS_LOG_INFO(__func__, msg.c_str());
-      goal_handle.setRejected(recorder_msgs::DurationRecorderResult(), msg);
       return;
     }
 

@@ -33,7 +33,7 @@ from duration_recorder_test_base import DurationRecorderTestBase
 PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'test_duration_record_general'
 RESULT_CODE_SUCCESS = 0
-RESULT_CODE_SKIPPED = 0
+RESULT_CODE_SKIPPED = 2
 
 class TestDurationRecorderGeneral(DurationRecorderTestBase):
     def test_record_duration(self):
