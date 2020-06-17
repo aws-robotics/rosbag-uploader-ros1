@@ -16,7 +16,7 @@
 
     <!-- Directory where rosbags will be written.
          Defaults to ~/.ros/rr_rosbag_uploader/ -->
-    <arg name="write_directory" default="$(env HOME)/.ros/rr_rosbag_uploader/" />
+    <arg name="write_directory" default="~/.ros/rr_rosbag_uploader/" />
 
     <!-- Time in seconds for server connection time out and s3 upload action time out -->
     <arg name="upload_timeout" default="3600" />

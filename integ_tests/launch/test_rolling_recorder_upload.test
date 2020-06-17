@@ -1,7 +1,7 @@
 <launch>
     <arg name="bag_rollover_time" value="2" />
     <arg name="test_topic" default="/test_topic" />
-    <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
+    <arg name="write_directory" default="~/.ros/rosbag_uploader/" />
 
     <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
         <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/config.yaml"/>

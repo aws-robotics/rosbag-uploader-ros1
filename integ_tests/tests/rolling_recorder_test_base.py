@@ -45,7 +45,7 @@ class RollingRecorderTestBase(unittest.TestCase):
     def setUp(self):
         self.bag_deactivate_time = BAG_DEACTIVATE_TIME
         self.bag_rollover_time = rospy.get_param("~bag_rollover_time")
-        self.rosbag_directory = rospy.get_param("~write_directory")
+        self.rosbag_directory = os.path.expanduser(rospy.get_param("~write_directory"))
 
     def tearDown(self):
         pass

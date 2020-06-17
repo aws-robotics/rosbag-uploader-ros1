@@ -5,7 +5,7 @@
 
     <param name="/s3_file_uploader/s3_bucket" command="$(find rosbag_uploader_ros1_integration_tests)/setup_test_bucket.sh"/>
 
-    <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
+    <arg name="write_directory" default="~/.ros/rosbag_uploader/" />
 
     <include file="$(find rosbag_cloud_recorders)/launch/duration_recorder.launch">
         <arg name="write_directory" value="$(arg write_directory)" />
