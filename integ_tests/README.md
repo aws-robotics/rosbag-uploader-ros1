@@ -19,4 +19,13 @@ The credentials will need to have the permissions to create/delete/read/write S3
 
 * Setup the necessary AWS credentials
 * `$ source install/local_setup.bash`
-* `$ rostest rosbag_uploader_ros1_integration_tests test_rosbag_uploader_ros1.test`
+* `$ rostest rosbag_uploader_ros1_integration_tests <rostest file>`
+
+This package contains the following `rostest` files:
+* `test_duration_recorder_general.test`
+* `test_rolling_recorder_custom_topic.test`
+* `test_rolling_recorder_default_topics.test`
+* `test_rolling_recorder_upload.test`
+* `test_s3_file_uploader_general.test`
+* `test_s3_file_uploader_wrong_region.test`
+* `test_periodic_file_deleter.test`
