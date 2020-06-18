@@ -90,7 +90,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 | `max_record_time` | int | The length of time recordings should be kept (older rosbags will be deleted) | 300 |
 | `write_directory` | string | The local directory where rosbags will be recorded | ~/.ros/rr_rosbag_uploader/ |
 | `upload_timeout` | int | The time in seconds to wait for upload to complete | 3600 |
-| `topics_to_record` (launch parameter only) | string[] | List of topics that should be recorded to rosbags | *empty* (all active topics will be recorded) |
+| `topics_to_record` (configuration file parameter only) | string[] | List of topics that should be recorded to rosbags | *empty* (all active topics will be recorded) |
 
 ### Actions
 
