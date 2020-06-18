@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
   // Set topics_to_record
   std::vector<std::string> topics_to_record;
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kTopicsToRecordParameter), topics_to_record)) {
-    AWS_LOG_WARN(__func__, "Failed to load topics to record preference, defaulting to all topics.");
+    AWS_LOG_INFO(__func__, "Failed to load topics to record preference, defaulting to all topics.");
     topics_to_record.clear();
   }
 
