@@ -36,7 +36,7 @@ PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'rolling_recorder_custom_topic'
 ACTION = '/rolling_recorder/RosbagRollingRecord'
 RESULT_SUCCESS = 0
-GOAL_COMPLETION_TIMEOUT_SEC = 30.0
+GOAL_COMPLETION_TIMEOUT_SEC = 60.0
 
 class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
     def setUp(self):
@@ -59,10 +59,10 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         self.s3_client.delete_bucket(self.s3_bucket_name)
 
     def test_record_upload(self):
-        self.total_test_messages = 10
+       self.total_test_messages = 10
 
-        start_time, s3_destination = self.run_rolling_recorder()
-        self.send_rolling_recorder_upload_goal(s3_destination, start_time)
+       start_time, s3_destination = self.run_rolling_recorder()
+       self.send_rolling_recorder_upload_goal(s3_destination, start_time)
 
     def test_record_upload_multiple_times(self):
         self.total_test_messages = 10
@@ -106,7 +106,7 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
 
         # Create the goal and send through action client
         s3_folder = 'test_rr/'
-        s3_subfolder = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(8)])  
+        s3_subfolder = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(11)])  
         s3_destination = os.path.join(s3_folder, s3_subfolder)
 
         return (start_time, s3_destination)
