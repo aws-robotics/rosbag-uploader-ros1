@@ -51,10 +51,7 @@ class RollingRecorderTestBase(unittest.TestCase):
         pass
 
     def wait_for_rolling_recorder_nodes(self, timeout=5):
-        required_nodes = set([
-            '/rolling_recorder',
-            '/rosbag_record'
-        ])
+        required_nodes = set(['/rolling_recorder'])
         start_time = time.time()
         while not required_nodes.issubset(rosnode.get_node_names()):
             if time.time() > start_time + timeout:

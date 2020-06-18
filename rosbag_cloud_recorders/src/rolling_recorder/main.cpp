@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     } else {
       Aws::Rosbag::Utils::RecorderOptions options;
       options.split = true;
-      options.max_duration = rolling_recorder_options.max_record_time;
+      options.max_duration = rolling_recorder_options.bag_rollover_time;
       options.record_all = false;
       if (topics_to_record.empty()) {
         options.record_all = true;
