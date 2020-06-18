@@ -28,6 +28,7 @@
 #include <boost/filesystem.hpp>
 
 #include <aws/core/utils/logging/LogMacros.h>
+#include <aws_common/fs_utils/wordexp_ros.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
@@ -42,6 +43,35 @@ namespace Utils
 {
 
 constexpr char kRosBagFileFormat[] = "%Y-%m-%d-%H-%M-%S";
+
+bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
+{
+  wordexp_t wordexp_result;
+  
+  int result = wordexp_ros(dir.c_str(), &wordexp_result, 0);
+
+  // Directory was successfully read and expanded
+  if (0 == result && wordexp_result.we_wordc == 1) {
+    expanded_dir = *(wordexp_result.we_wordv);
+  } else {
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << std::strerror(errno));
+    wordfree(&wordexp_result);
+    return false;
+  }
+  if (!boost::filesystem::exists(expanded_dir)) {
+    AWS_LOGSTREAM_INFO(__func__, "Provided write directory " << expanded_dir << " doesn't exist, creating.");
+    boost::filesystem::create_directories(expanded_dir);
+    if (!boost::filesystem::exists(expanded_dir)) {
+      AWS_LOGSTREAM_ERROR(__func__, "Failed to create write directory " << expanded_dir);
+      wordfree(&wordexp_result);
+      return false;
+    }
+  }
+
+  wordfree(&wordexp_result);
+
+  return true;
+}
 
 Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
 {

@@ -27,19 +27,13 @@
          If list is empty or no value is given defaults to all topics.
          If a topic in the list doesn't exist when recording starts
          no warning will be given. Behavior here depends on ROSBag implementaiton. -->
-    <arg name="topics_to_record" default='-a' />
-
-    <node name="rosbag_record" pkg="rosbag" type="record" args='--split
-                                                                --duration $(arg bag_rollover_time)
-                                                                --output-prefix $(arg write_directory)
-                                                                $(arg topics_to_record)'>
-          <param name="rosbag_record_mkdir" command="mkdir -p $(arg write_directory)" />
-    </node>
+    <arg name="topics_to_record" default="" />
 
     <node name="rolling_recorder" pkg="rosbag_cloud_recorders" type="rolling_recorder" >
       <rosparam command="load" file="$(arg node_config_file)" />
       <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
       <param name="max_record_time" value="$(arg max_record_time)" />
+      <param name="topics_to_record" value="$(arg topics_to_record)" />
       <param name="write_directory" value="$(arg write_directory)" />
       <param name="upload_timeout" value="$(arg upload_timeout)"/>
     </node>

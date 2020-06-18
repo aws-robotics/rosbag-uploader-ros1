@@ -10,6 +10,11 @@
 # If invalid value is given node will exit and log an error message
 # max_record_time: 300
 
+# The topics that should be recorded into the rosbag.
+# Acceptable values: A string of topic names separated by whitespace (e.g. "/topic1 /topic2 /topic3")
+# If string is empty or not given, all topics will be recorded.
+# topics_to_record: ""
+
 # Directory where rosbags will be written.
 # If not given defaults to "~/.ros/rr_rosbag_uploader/"
 # write_directory: "~/.ros/rr_rosbag_uploader/"

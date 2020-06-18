@@ -14,17 +14,24 @@
  */
 #include <string>
 
+#include <boost/algorithm/string.hpp>
+
 #include <ros/ros.h>
-#include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
 #include <aws/core/utils/logging/LogMacros.h>
 #include <aws_common/fs_utils/wordexp_ros.h>
 #include <aws_ros1_common/sdk_utils/logging/aws_ros_logger.h>
 #include <aws_ros1_common/sdk_utils/ros1_node_parameter_reader.h>
 
+#include <rosbag_cloud_recorders/rolling_recorder/rolling_recorder.h>
+#include <rosbag_cloud_recorders/utils/file_utils.h>
+#include <rosbag_cloud_recorders/utils/recorder.h>
+#include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
+
 constexpr char kNodeName[] = "rosbag_rolling_recorder";
 
 constexpr char kBagRolloverTimeParameter[] = "bag_rollover_time";
 constexpr char kMaxRecordTimeParameter[] = "max_record_time";
+constexpr char kTopicsToRecordParameter[] = "topics_to_record";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
 constexpr char kUploadTimeoutParameter[] = "upload_timeout";
 
@@ -58,9 +65,12 @@ int main(int argc, char* argv[])
     rolling_recorder_options.max_record_time = ros::Duration(kMaxRecordTimeDefaultInSeconds);
   }
 
-  // Set operation time out in seconds
-  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kUploadTimeoutParameter), rolling_recorder_options.upload_timeout_s)) {
-    rolling_recorder_options.upload_timeout_s = kTimeOutDefaultInSeconds;
+  // Set topics_to_record
+  std::string topics_to_record_string;
+  std::vector<std::string> topics_to_record;
+  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kTopicsToRecordParameter), topics_to_record_string)) {
+    AWS_LOG_WARN(__func__, "Failed to load topics to record preference, defaulting to all topics.");
+    boost::split(topics_to_record, topics_to_record_string, boost::is_any_of(" \t\n"), boost::token_compress_on);
   }
 
   // Set write_directory
@@ -68,22 +78,40 @@ int main(int argc, char* argv[])
     write_directory_input = kWriteDirectoryDefault;
   }
 
-
-  wordexp_t wordexp_result;
-  wordexp_ros(write_directory_input.c_str(), &wordexp_result, 0);
-  rolling_recorder_options.write_directory = *(wordexp_result.we_wordv);
-
-  AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
-  Aws::Rosbag::RollingRecorder rolling_recorder;
-  if (!rolling_recorder.InitializeRollingRecorder(rolling_recorder_options)) {
-    AWS_LOG_INFO(__func__, "Failed to initialize rolling recorder. Shutting down.");
-  } else {
-    ros::MultiThreadedSpinner spinner(2);
-    spinner.spin();
-    AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
+  // Set operation time out in seconds
+  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kUploadTimeoutParameter), rolling_recorder_options.upload_timeout_s)) {
+    rolling_recorder_options.upload_timeout_s = kTimeOutDefaultInSeconds;
   }
 
-  ros::shutdown();
+  if (Aws::Rosbag::Utils::ExpandAndCreateDir(write_directory_input, rolling_recorder_options.write_directory)) {
+    AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
+    Aws::Rosbag::Utils::RosbagRecorder<Aws::Rosbag::Utils::Recorder> rosbag_recorder;
+    Aws::Rosbag::RollingRecorder rolling_recorder;
+
+    if (!rolling_recorder.InitializeRollingRecorder(rolling_recorder_options)) {
+      AWS_LOG_INFO(__func__, "Failed to initialize rolling recorder. Shutting down.");
+    } else {
+      Aws::Rosbag::Utils::RecorderOptions options;
+      options.split = true;
+      options.max_duration = rolling_recorder_options.max_record_time;
+      options.record_all = false;
+      if (topics_to_record.empty()) {
+        options.record_all = true;
+      } else {
+        options.topics = std::move(topics_to_record);
+      }
+      options.prefix = rolling_recorder_options.write_directory;
+      rosbag_recorder.Run(options, nullptr, [](int /*exit_code*/) { ros::shutdown(); });
+
+      ros::MultiThreadedSpinner spinner(2);
+      spinner.spin();
+
+      AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
+    }
+
+    ros::shutdown();
+  }
+
   Aws::Utils::Logging::ShutdownAWSLogging();
 
   return 0;
