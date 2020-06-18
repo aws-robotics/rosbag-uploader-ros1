@@ -68,9 +68,10 @@ int main(int argc, char* argv[])
   // Set topics_to_record
   std::string topics_to_record_string;
   std::vector<std::string> topics_to_record;
-  if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kTopicsToRecordParameter), topics_to_record_string)) {
-    AWS_LOG_WARN(__func__, "Failed to load topics to record preference, defaulting to all topics.");
+  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kTopicsToRecordParameter), topics_to_record_string)) {
     boost::split(topics_to_record, topics_to_record_string, boost::is_any_of(" \t\n"), boost::token_compress_on);
+  } else {
+    AWS_LOG_WARN(__func__, "Failed to load topics to record preference, defaulting to all topics.");
   }
 
   // Set write_directory
