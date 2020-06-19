@@ -1,11 +1,12 @@
-name: build-test
-on: 
+name: "Build & Test Rosbag Uploader Cloud Extension"
+on:
   pull_request:
   push:
     branches:
       - master
   schedule:
-    - cron: '0 */6 * * *'
+    # Run the CI automatically every hour to look for flakyness.
+    - cron: '0 * * * *'
 
 jobs:
   build_and_test:
