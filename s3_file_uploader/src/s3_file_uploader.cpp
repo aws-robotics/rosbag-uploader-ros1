@@ -57,7 +57,7 @@ S3FileUploader::S3FileUploader(std::unique_ptr<S3UploadManager> upload_manager) 
   } else {
     bool enable_encryption = false;
     if (Aws::AwsError::AWS_ERR_OK != parameter_reader_->ReadParam(Aws::Client::ParameterPath(kEnableEncryptionParameter), enable_encryption)) {
-      AWS_LOG_ERROR(__func__, "Failed to load encryption preference, defaulting to no encryption");
+      AWS_LOG_INFO(__func__, "No user setting for data encryption provided, defaulting to no data encryption");
     }
 
     Aws::Client::ClientConfigurationProvider configuration_provider(parameter_reader_);
