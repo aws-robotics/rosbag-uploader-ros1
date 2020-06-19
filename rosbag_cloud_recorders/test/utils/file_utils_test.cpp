@@ -90,8 +90,26 @@ public:
     }
     return bag_files_in_write_directory;
   }
-
 };
+
+TEST(CreateDirTest, TestExpandAndCreateDirectory)
+{
+  const char * old_home = getenv("HOME");
+  setenv("HOME", ".", true);
+
+  std::string expanded_dir;
+  bool success = ExpandAndCreateDir("~/test_dir", expanded_dir);
+  ASSERT_TRUE(success);
+  ASSERT_EQ("./test_dir", expanded_dir);
+  ASSERT_TRUE(boost::filesystem::exists(expanded_dir));
+  boost::filesystem::remove_all(expanded_dir);
+
+  if (old_home == nullptr) {
+    unsetenv("HOME");
+  } else {
+    setenv("HOME", old_home, true);
+  }
+}
 
 TEST(DeleteFileTest, TestFileRemovalSucceeds)
 {

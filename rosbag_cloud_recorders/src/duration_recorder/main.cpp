@@ -65,6 +65,8 @@ int main(int argc, char* argv[])
     ros::MultiThreadedSpinner spinner(2);
     spinner.spin();
     result_code = 0;
+  } else {
+    AWS_LOG_ERROR(__func__, "Failed to access rosbag write directory. Shutting down.");
   }
 
   Aws::Utils::Logging::ShutdownAWSLogging();

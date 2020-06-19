@@ -85,9 +85,7 @@ int main(int argc, char* argv[])
     Aws::Rosbag::Utils::RosbagRecorder<Aws::Rosbag::Utils::Recorder> rosbag_recorder;
     Aws::Rosbag::RollingRecorder rolling_recorder;
 
-    if (!rolling_recorder.InitializeRollingRecorder(rolling_recorder_options)) {
-      AWS_LOG_INFO(__func__, "Failed to initialize rolling recorder. Shutting down.");
-    } else {
+    if (rolling_recorder.InitializeRollingRecorder(rolling_recorder_options)) {
       Aws::Rosbag::Utils::RecorderOptions options;
       options.split = true;
       options.max_duration = rolling_recorder_options.bag_rollover_time;
@@ -104,9 +102,13 @@ int main(int argc, char* argv[])
       spinner.spin();
 
       AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
+    } else {
+      AWS_LOG_ERROR(__func__, "Failed to initialize rolling recorder. Shutting down.");
     }
 
     ros::shutdown();
+  } else {
+    AWS_LOG_ERROR(__func__, "Failed to access rosbag write directory. Shutting down.");
   }
 
   Aws::Utils::Logging::ShutdownAWSLogging();

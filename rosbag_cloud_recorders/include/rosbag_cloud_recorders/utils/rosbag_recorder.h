@@ -85,7 +85,7 @@ public:
             exit_code = rosbag_recorder.Run();
           }
           if (exit_code != 0) {
-            AWS_LOG_ERROR(function_name, "RosbagRecorder encountered an error");
+            AWS_LOGSTREAM_ERROR(function_name, "RosbagRecorder encountered an error (code: " << exit_code << ')');
           }
           if (post_record) {
             post_record(exit_code);
