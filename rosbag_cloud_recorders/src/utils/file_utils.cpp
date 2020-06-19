@@ -70,7 +70,7 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
 
   wordfree(&wordexp_result);
 
-  return true;
+  return boost::filesystem::is_directory(expanded_dir);
 }
 
 Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
