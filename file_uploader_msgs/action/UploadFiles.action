@@ -7,7 +7,7 @@ string upload_location
 # Result
 
 # A status code from the uploader service
-uint16 result_code
+int16 result_code
 
 # The list of files that were uploaded
 string[] files_uploaded

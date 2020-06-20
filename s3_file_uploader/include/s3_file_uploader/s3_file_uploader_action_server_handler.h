@@ -68,7 +68,11 @@ public:
     auto outcome = upload_manager.UploadFiles(
       uploads, bucket, feedback_callback);
     file_uploader_msgs::UploadFilesResult result;
-    result.result_code = static_cast<int>(outcome.GetError().GetErrorType());
+    if (outcome.IsSuccess()) {
+      result.result_code = -1;
+    } else {
+      result.result_code = static_cast<int>(outcome.GetError().GetErrorType());
+    }
     for (auto const& upload : completed_uploads) {
       result.files_uploaded.push_back(upload.object_key);
     }
