@@ -46,12 +46,12 @@ constexpr char kRosBagFileFormat[] = "%Y-%m-%d-%H-%M-%S";
 
 bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
 {
-  wordexp_t wordexp_result;
-  
-  int result = wordexp_ros(dir.c_str(), &wordexp_result, 0);
+  wordexp_t wordexp_result{};
+
+  int expand_result = wordexp_ros(dir.c_str(), &wordexp_result, 0);
 
   // Directory was successfully read and expanded
-  if (0 == result && wordexp_result.we_wordc == 1) {
+  if (0 == expand_result && wordexp_result.we_wordc == 1) {
     expanded_dir = *(wordexp_result.we_wordv);
   } else {
     AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << std::strerror(errno));
@@ -70,7 +70,8 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
 
   wordfree(&wordexp_result);
 
-  return boost::filesystem::is_directory(expanded_dir);
+  int writeable_result = access(expanded_dir.c_str(), W_OK);  // test for writeability
+  return boost::filesystem::is_directory(expanded_dir) && 0 == writeable_result;
 }
 
 Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
