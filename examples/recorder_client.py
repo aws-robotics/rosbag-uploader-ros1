@@ -11,7 +11,7 @@ from recorder_msgs.msg import DurationRecorderAction, DurationRecorderGoal
 from recorder_msgs.msg import RollingRecorderAction, RollingRecorderGoal
 
 
-NODE_NAME = 'test_duration_recorder_client'
+NODE_NAME = 'recorder_client'
 # Choose 'rolling_recorder' or 'duration_recorder'
 recorder_type = sys.argv[1]
 record_time = 10    # seconds
