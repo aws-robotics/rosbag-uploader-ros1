@@ -14,6 +14,13 @@ add_action_files(
     UploadFiles.action
 )
 
+## Generate messages in the 'msg' folder
+add_message_files(
+    DIRECTORY msg
+    FILES
+    S3Result.msg
+)
+
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
     DEPENDENCIES

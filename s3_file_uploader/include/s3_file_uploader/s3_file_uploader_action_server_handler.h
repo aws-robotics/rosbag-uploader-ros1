@@ -14,7 +14,9 @@
  */
 
 #pragma once
+
 #include <array>
+#include <limits>
 #include <vector>
 
 #include <actionlib/server/action_server.h>
@@ -69,9 +71,11 @@ public:
       uploads, bucket, feedback_callback);
     file_uploader_msgs::UploadFilesResult result;
     if (outcome.IsSuccess()) {
-      result.result_code = -1;
+      result.result_code.success = true;
+      result.result_code.error_code = std::numeric_limits<int16_t>::lowest();
     } else {
-      result.result_code = static_cast<int>(outcome.GetError().GetErrorType());
+      result.result_code.success = false;
+      result.result_code.error_code = static_cast<int16_t>(outcome.GetError().GetErrorType());
     }
     for (auto const& upload : completed_uploads) {
       result.files_uploaded.push_back(upload.object_key);
