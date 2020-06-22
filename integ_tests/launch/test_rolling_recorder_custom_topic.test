@@ -1,17 +1,16 @@
 <launch>
     <arg name="bag_rollover_time" value="2" />
-    <arg name="test_topic" default="/test_topic" />
-    <arg name="write_directory" default="$(env HOME)/.ros/rosbag_uploader/" />
+    <arg name="write_directory" default="~/.ros/rosbag_uploader/" />
 
     <include file="$(find rosbag_cloud_recorders)/launch/rolling_recorder.launch">
+        <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/rolling_recorder_config.yaml"/>
         <arg name="bag_rollover_time" value="$(arg bag_rollover_time)" />
-        <arg name="topics_to_record" value="$(arg test_topic)" />
         <arg name="write_directory" value="$(arg write_directory)" />
     </include>
 
     <test test-name="TestRollingRecorderCustomTopic" pkg="rosbag_uploader_ros1_integration_tests" type="test_rolling_recorder_custom_topic.py">
         <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
-        <param name="topic_to_record" value="$(arg test_topic)" />
+        <param name="topic_to_record" value="/test_topic" />
         <param name="write_directory" value="$(arg write_directory)" />
     </test>
 </launch>

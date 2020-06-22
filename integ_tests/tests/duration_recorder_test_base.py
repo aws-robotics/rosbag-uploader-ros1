@@ -50,7 +50,7 @@ class DurationRecorderTestBase(unittest.TestCase):
 
     def setUp(self):
         self.action_client = self._create_duration_recorder_action_client()
-        self.rosbag_directory = rospy.get_param('~write_directory')
+        self.rosbag_directory = os.path.expanduser(rospy.get_param('~write_directory'))
 
     def tearDown(self):
         self.delete_all_rosbags()

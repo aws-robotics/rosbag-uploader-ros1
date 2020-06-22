@@ -41,12 +41,42 @@ using namespace Aws::Rosbag::Utils;
 using ::testing::_;
 using ::testing::UnorderedElementsAre;
 
+class ExpandAndCreateDirTests: public ::testing::Test
+{
+public:
+  ExpandAndCreateDirTests()
+  {
+    // Delete any existing test directory for start testing
+    boost::filesystem::remove_all(test_dir);
+
+    old_home = getenv("HOME");
+  }
+
+  ~ExpandAndCreateDirTests()
+  {
+    // Delete any existing test directory for cleaning up
+    boost::filesystem::remove_all(test_dir);
+
+    if (old_home == nullptr) {
+      unsetenv("HOME");
+    } else {
+      setenv("HOME", old_home, true);
+    }
+  }
+
+protected:
+  static constexpr char test_dir[] = "./temp_file_utils_test_dir";
+  static constexpr char test_dir_str[] = "~/temp_file_utils_test_dir";
+
+private:
+  const char * old_home;
+};
+
+constexpr char ExpandAndCreateDirTests::test_dir[];
+constexpr char ExpandAndCreateDirTests::test_dir_str[];
+
 class GetRosbagToUploadTests: public ::testing::Test
 {
-protected:
-  std::string write_directory;
-  boost::filesystem::path path;
-
 public:
   GetRosbagToUploadTests()
   {
@@ -91,7 +121,64 @@ public:
     return bag_files_in_write_directory;
   }
 
+protected:
+  std::string write_directory;
+  boost::filesystem::path path;
 };
+
+TEST_F(ExpandAndCreateDirTests, TestForNonexistingDirectory)
+{
+  std::string expanded_dir;
+  setenv("HOME", ".", true);
+  bool success = ExpandAndCreateDir(test_dir_str, expanded_dir);
+  ASSERT_EQ(test_dir, expanded_dir);
+  ASSERT_TRUE(success);
+  ASSERT_TRUE(boost::filesystem::exists(expanded_dir));
+}
+
+TEST_F(ExpandAndCreateDirTests, TestForExistingDirectory)
+{
+  // place an existing directory where it should be
+  boost::filesystem::create_directories(test_dir);
+
+  // test
+  std::string expanded_dir;
+  setenv("HOME", ".", true);
+  bool success = ExpandAndCreateDir(test_dir_str, expanded_dir);
+  ASSERT_EQ(test_dir, expanded_dir);
+  ASSERT_TRUE(success);
+  ASSERT_TRUE(boost::filesystem::exists(expanded_dir));
+}
+
+TEST_F(ExpandAndCreateDirTests, TestForNonwriteableDirectory)
+{
+  using namespace boost::filesystem;
+
+  // place an existing directory where it should be
+  create_directories(test_dir);
+  permissions(test_dir, owner_read | group_read | others_read);
+
+  // test
+  std::string expanded_dir;
+  setenv("HOME", ".", true);
+  bool success = ExpandAndCreateDir(test_dir_str, expanded_dir);
+  ASSERT_EQ(test_dir, expanded_dir);
+  ASSERT_FALSE(success);  // this test will fail if run as root
+}
+
+TEST_F(ExpandAndCreateDirTests, TestForImpossibleDirectory)
+{
+  // create a file where the directory should be
+  std::ofstream temp_file(test_dir);  
+  temp_file.close();
+
+  // test
+  std::string expanded_dir;
+  setenv("HOME", ".", true);
+  bool success = ExpandAndCreateDir(test_dir_str, expanded_dir);
+  ASSERT_EQ(test_dir, expanded_dir);
+  ASSERT_FALSE(success);
+}
 
 TEST(DeleteFileTest, TestFileRemovalSucceeds)
 {

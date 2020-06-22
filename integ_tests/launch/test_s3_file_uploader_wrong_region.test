@@ -1,6 +1,6 @@
 <launch>
     <include file="$(find s3_file_uploader)/launch/s3_file_uploader.launch">
-        <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/config.yaml"/>
+        <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/s3_file_uploader_config.yaml"/>
     </include>
 
     <param name="/s3_file_uploader/s3_bucket" command="$(find rosbag_uploader_ros1_integration_tests)/setup_test_bucket.sh"/>

@@ -45,16 +45,13 @@ class RollingRecorderTestBase(unittest.TestCase):
     def setUp(self):
         self.bag_deactivate_time = BAG_DEACTIVATE_TIME
         self.bag_rollover_time = rospy.get_param("~bag_rollover_time")
-        self.rosbag_directory = rospy.get_param("~write_directory")
+        self.rosbag_directory = os.path.expanduser(rospy.get_param("~write_directory"))
 
     def tearDown(self):
         pass
 
     def wait_for_rolling_recorder_nodes(self, timeout=5):
-        required_nodes = set([
-            '/rolling_recorder',
-            '/rosbag_record'
-        ])
+        required_nodes = set(['/rolling_recorder'])
         start_time = time.time()
         while not required_nodes.issubset(rosnode.get_node_names()):
             if time.time() > start_time + timeout:

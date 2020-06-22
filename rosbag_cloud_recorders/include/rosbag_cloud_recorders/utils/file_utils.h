@@ -30,6 +30,15 @@ namespace Utils
 {
 
 /**
+* Perform shell-like expansion on a directory path string and create that directory
+*
+* @param dir directory path string to be expanded and created
+* @param[out] expanded_dir the expanded directory path string
+* @return bool true if the directory exists or was created successfully, otherwise false
+*/
+bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir);
+
+/**
 * @brief delete a file
 *
 * Delete file at file_path.

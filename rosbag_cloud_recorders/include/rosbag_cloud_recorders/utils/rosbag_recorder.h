@@ -61,9 +61,9 @@ public:
   virtual ~RosbagRecorder() = default;
 
   virtual RosbagRecorderRunResult Run(
-    const RecorderOptions& recorder_options,
-    const std::function<void()>& pre_record,
-    const std::function<void(int)>& post_record
+    const RecorderOptions & recorder_options,
+    const std::function<void()> & pre_record = nullptr,
+    const std::function<void(int)> & post_record = nullptr
   )
   {
     {
@@ -76,16 +76,20 @@ public:
       static auto function_name = __func__;
       barrier_ = std::async(std::launch::async, [recorder_options, pre_record, post_record]
         {
-          pre_record();
+          if (pre_record) {
+            pre_record();
+          }
           int exit_code;
           {
             T rosbag_recorder(recorder_options);
             exit_code = rosbag_recorder.Run();
           }
           if (exit_code != 0) {
-            AWS_LOG_ERROR(function_name, "RosbagRecorder encountered an error");
+            AWS_LOGSTREAM_ERROR(function_name, "RosbagRecorder encountered an error (code: " << exit_code << ')');
           }
-          post_record(exit_code);
+          if (post_record) {
+            post_record(exit_code);
+          }
         }
       );
       return RosbagRecorderRunResult::STARTED;
