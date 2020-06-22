@@ -31,42 +31,21 @@ for the bucket specified in the config file.
 Note that this bucket must be in the same region as in the node configuration.
 - Launch the node with
 
-        roslaunch s3_file_uploader s3_file_uploader.launch
+        roslaunch s3_file_uploader s3_file_uploader.launch s3_bucket:=<BUCKET_NAME>
 
 ### Simple Upload File Test
 
-A simple example of a client to interact with this node:
-```
-import actionlib
-import rospy
+A simple example of an action client to interact with this node is provided.
+Create a dummy file to use an example to upload:
 
-from file_uploader_msgs.msg import UploadFilesAction, UploadFilesGoal
+        echo "Hello World!" > /tmp/hello_world.txt
 
-ACTION = "/s3_file_uploader/UploadFiles"
-FILE_NAME = "/tmp/hello_world.txt"
-NODE_NAME = "s3_file_uploader_client"
-S3_KEY_PREFIX = "rosbags/test"
+Then source the ROS workspace, and the example client can be run with `python examples/s3_file_uploader_client.py`.
+The action server can also be invoked via the `rostopic` command line tool:
 
-rospy.init_node(NODE_NAME)
+        rostopic pub /s3_file_uploader/UploadFiles/goal file_uploader_msgs/UploadFilesActionGoal "{goal: { files:['/tmp/hello_world.txt'], upload_location: 'rosbags/test' } }"
 
-goal = UploadFilesGoal(
-            upload_location=S3_KEY_PREFIX,
-            files=[FILE_NAME]
-        )
-client = actionlib.SimpleActionClient(ACTION, UploadFilesAction)
-client.wait_for_server()
-client.send_goal(goal)
-client.wait_for_result(rospy.Duration.from_sec(15.0))
-print(client.get_result())
-
-# If the configured bucket is called my-bucket then after this action is completed the contents of /tmp/hello_world.txt
-# wil be available at s3://my-bucket/rosbags/test/hello_world.txt
-```
-
-The action server can also be invoked via the command line
-```
- rostopic pub /s3_file_uploader/UploadFiles/goal file_uploader_msgs/UploadFilesActionGoal "{goal: { files:['/tmp/hello_world.txt'], upload_location: 'rosbags/test' } }"
-```
+After the action is completed, the contents of `/tmp/hello_world.txt` wil be available at `s3://<BUCKET_NAME>/rosbags/test/hello_world.txt`.
 
 
 ## `s3_file_uploader` node
