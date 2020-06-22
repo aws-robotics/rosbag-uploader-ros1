@@ -1,20 +1,27 @@
 # Goal
+
 # A list of files to be uploaded.
 string[] files
+
 # The destination for the file upload. No validity checks are done on the action
 string upload_location
+
 ---
+
 # Result
 
 # A status code from the uploader service
-uint16 result_code
+S3Result result_code
 
 # The list of files that were uploaded
 string[] files_uploaded
 
 ---
+
 # Feedback
+
 # Number of files that have been uploaded
 uint16 num_uploaded
+
 # Number of files that are remaining to upload
 uint16 num_remaining
