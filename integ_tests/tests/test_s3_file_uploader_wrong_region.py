@@ -34,7 +34,9 @@ class TestS3FileUploaderWrongRegion(S3FileUploaderTestBase):
         temp_file_name = create_temp_file()
         self.files_to_delete.append(temp_file_name)
         result = self._upload_temp_files([temp_file_name])
-        self.assertEqual(result.result_code, INCORRECT_REGION_RESULT_CODE, "Result code was %d" % result.result_code)
+        self.assertFalse(result.result_code.success)
+        self.assertEqual(result.result_code.error_code, INCORRECT_REGION_RESULT_CODE,
+            "Result code was %d" % result.result_code.error_code)
 
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestS3FileUploaderWrongRegion, sys.argv)
