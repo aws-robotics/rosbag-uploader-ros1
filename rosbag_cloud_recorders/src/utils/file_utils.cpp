@@ -49,15 +49,15 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
   wordexp_t wordexp_result{};
 
   int expand_result = wordexp_ros(dir.c_str(), &wordexp_result, 0);
-
   // Directory was successfully read and expanded
-  if (0 == expand_result && wordexp_result.we_wordc == 1) {
+  if (0 == expand_result && 1 == wordexp_result.we_wordc) {
     expanded_dir = *(wordexp_result.we_wordv);
   } else {
     AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << std::strerror(errno));
     wordfree(&wordexp_result);
     return false;
   }
+
   if (!boost::filesystem::exists(expanded_dir)) {
     AWS_LOGSTREAM_INFO(__func__, "Provided write directory " << expanded_dir << " doesn't exist, creating.");
     boost::filesystem::create_directories(expanded_dir);
@@ -71,6 +71,10 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
   wordfree(&wordexp_result);
 
   int writeable_result = access(expanded_dir.c_str(), W_OK);  // test for writeability
+  if (0 != writeable_result) {
+    AWS_LOGSTREAM_WARN(__func__, "Provided write directory " << expanded_dir << " is not writeable");
+  }
+
   return boost::filesystem::is_directory(expanded_dir) && 0 == writeable_result;
 }
 

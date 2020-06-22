@@ -150,6 +150,22 @@ TEST_F(ExpandAndCreateDirTests, TestForExistingDirectory)
   ASSERT_TRUE(boost::filesystem::exists(expanded_dir));
 }
 
+TEST_F(ExpandAndCreateDirTests, TestForNonwriteableDirectory)
+{
+  using namespace boost::filesystem;
+
+  // place an existing directory where it should be
+  create_directories(test_dir);
+  permissions(test_dir, owner_read | group_read | others_read);
+
+  // test
+  std::string expanded_dir;
+  setenv("HOME", ".", true);
+  bool success = ExpandAndCreateDir(test_dir_str, expanded_dir);
+  ASSERT_EQ(test_dir, expanded_dir);
+  ASSERT_FALSE(success);  // this test will fail if run as root
+}
+
 TEST_F(ExpandAndCreateDirTests, TestForImpossibleDirectory)
 {
   // create a file where the directory should be
