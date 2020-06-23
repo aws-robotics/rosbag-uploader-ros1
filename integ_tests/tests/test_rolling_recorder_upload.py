@@ -36,7 +36,7 @@ PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'rolling_recorder_custom_topic'
 ACTION = '/rolling_recorder/RosbagRollingRecord'
 RESULT_SUCCESS = 0
-GOAL_COMPLETION_TIMEOUT_SEC = 60.0
+GOAL_COMPLETION_TIMEOUT_SEC = 90.0
 
 class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
     def setUp(self):
@@ -54,15 +54,16 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
     def tearDown(self):
+       # print("=======================")
         super(TestRollingRecorderUploadOnGoal, self).setUp()
         self.s3_client.delete_all_objects(self.s3_bucket_name)
         self.s3_client.delete_bucket(self.s3_bucket_name)
 
-    def test_record_upload(self):
-       self.total_test_messages = 10
+   # def test_record_upload(self):
+    #   self.total_test_messages = 10
 
-       start_time, s3_destination = self.run_rolling_recorder()
-       self.send_rolling_recorder_upload_goal(s3_destination, start_time)
+    # start_time, s3_destination = self.run_rolling_recorder()
+     #  self.send_rolling_recorder_upload_goal(s3_destination, start_time)
 
     def test_record_upload_multiple_times(self):
         self.total_test_messages = 10
@@ -70,6 +71,10 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
 
         for _ in range(total_record_upload_attempts):
             start_time, s3_destination = self.run_rolling_recorder()
+            print("=======================")
+            print(start_time)
+            print(s3_destination)
+            print("=======================")
             self.send_rolling_recorder_upload_goal(s3_destination, start_time)
 
     def run_rolling_recorder(self):
@@ -88,15 +93,17 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         sleep_between_message = (bag_finish_time_remaining * 0.5)  / self.total_test_messages
         rospy.loginfo("Sleep between messages: %f" % sleep_between_message)
         for x in range(self.total_test_messages):
+            print("In run record=======")
             self.test_publisher.publish("Test message %d" % x)
-            time.sleep(sleep_between_message)
+            print(x)
+           # time.sleep(sleep_between_message)
 
         # Wait for current bag to finish recording and roll over
         bag_finish_time_remaining = bag_finish_time - time.time()
         rospy.loginfo("Bag finish time remaining after publish: %f" % bag_finish_time_remaining)
 
         # Add 0.5s as it takes some time for bag rotation to occur
-        time.sleep(bag_finish_time_remaining + 0.5) 
+        time.sleep(bag_finish_time_remaining) 
 
         # Send a goal to upload the bag data to S3
         # Create an Action client to send the goal
@@ -106,13 +113,15 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
 
         # Create the goal and send through action client
         s3_folder = 'test_rr/'
-        s3_subfolder = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(11)])  
+        s3_subfolder = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(8)])  
         s3_destination = os.path.join(s3_folder, s3_subfolder)
 
         return (start_time, s3_destination)
 
     def send_rolling_recorder_upload_goal(self, s3_destination, start_time):
         latest_bag = self.get_latest_bag_by_regex("*.bag")
+        print(latest_bag)
+        print("++++++++++++++")
         end_time = rospy.Time.now()
         goal = RollingRecorderGoal(
             destination=s3_destination,
@@ -129,10 +138,16 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         with tempfile.NamedTemporaryFile() as f:
             self.s3_client.download_file(self.s3_bucket_name, s3_key, f.name)
             bag = rosbag.Bag(f.name)
+            print("=======================")
+            print(bag)
+            print("=======================")
             total_bag_messages = 0
             for _, msg, _ in bag.read_messages():
+                print("=======================")
+                print(total_bag_messages)
+                print("=======================")
                 total_bag_messages += 1
-
+            
             self.assertEquals(total_bag_messages, self.total_test_messages)
 
 if __name__ == '__main__':
