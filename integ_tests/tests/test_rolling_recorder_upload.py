@@ -59,11 +59,11 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         self.s3_client.delete_all_objects(self.s3_bucket_name)
         self.s3_client.delete_bucket(self.s3_bucket_name)
 
-   # def test_record_upload(self):
-    #   self.total_test_messages = 10
+    def test_record_upload(self):
+        self.total_test_messages = 10
 
-    # start_time, s3_destination = self.run_rolling_recorder()
-     #  self.send_rolling_recorder_upload_goal(s3_destination, start_time)
+        start_time, s3_destination = self.run_rolling_recorder()
+        self.send_rolling_recorder_upload_goal(s3_destination, start_time)
 
     def test_record_upload_multiple_times(self):
         self.total_test_messages = 10
