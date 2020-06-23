@@ -400,7 +400,7 @@ void Recorder::StartWriting() {
 void Recorder::StopWriting() {
     ROS_INFO("Closing '%s'.", target_filename_.c_str());
     bag_.close();
-    rename(write_filename_.c_str(), target_filename_.c_str());
+    (void) rename(write_filename_.c_str(), target_filename_.c_str());
 }
 
 void Recorder::CheckNumSplits()

@@ -12,14 +12,17 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include <cstring>
+
 #include <cerrno>
+#include <cstring>
+#include <unistd.h>
+
+#include <array>
 #include <exception>
 #include <functional>
-#include <string>
-#include <unistd.h>
 #include <iostream>
 #include <regex>
+#include <string>
 
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -35,6 +38,14 @@
 
 #include <rosbag_cloud_recorders/recorder_common_error_codes.h>
 
+namespace
+{
+
+constexpr int kMaxErrStrSize = 256;
+constexpr char kRosBagFileFormat[] = "%Y-%m-%d-%H-%M-%S";
+
+}
+
 namespace Aws
 {
 namespace Rosbag
@@ -42,7 +53,6 @@ namespace Rosbag
 namespace Utils
 {
 
-constexpr char kRosBagFileFormat[] = "%Y-%m-%d-%H-%M-%S";
 
 bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
 {
@@ -53,7 +63,9 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
   if (0 == expand_result && 1 == wordexp_result.we_wordc) {
     expanded_dir = *(wordexp_result.we_wordv);
   } else {
-    AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << std::strerror(errno));
+    std::array<char, kMaxErrStrSize> err_msg;
+    strerror_r(errno, err_msg.data(), err_msg.max_size());
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << err_msg.data());
     wordfree(&wordexp_result);
     return false;
   }
@@ -82,14 +94,16 @@ Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
 {
   const int result = unlink(file_path.c_str());
   if (result == 0) {
-    AWS_LOGSTREAM_INFO(__func__, "Deleted file "<<file_path);
+    AWS_LOGSTREAM_INFO(__func__, "Deleted file " << file_path);
     return Aws::Rosbag::RecorderErrorCode::SUCCESS;
   } else {
+    std::array<char, kMaxErrStrSize> err_msg;
+    strerror_r(errno, err_msg.data(), err_msg.max_size());
     if (errno == ENOENT) {
-      AWS_LOGSTREAM_WARN(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+      AWS_LOGSTREAM_WARN(__func__, "Failed to delete file: " << file_path << ' ' << err_msg.data());
       return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
     }
-    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: " << file_path << ' ' << err_msg.data());
     return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
   }
 }
