@@ -12,14 +12,15 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include <cstring>
+#include <array>
 #include <cerrno>
+#include <cstring>
 #include <exception>
 #include <functional>
-#include <string>
-#include <unistd.h>
 #include <iostream>
 #include <regex>
+#include <string>
+#include <unistd.h>
 
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -53,7 +54,9 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
   if (0 == expand_result && 1 == wordexp_result.we_wordc) {
     expanded_dir = *(wordexp_result.we_wordv);
   } else {
-    AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << std::strerror(errno));
+    std::array<char, 256> err_msg;
+    strerror_r(errno, err_msg.data(), err_msg.max_size());
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << err_msg.data());
     wordfree(&wordexp_result);
     return false;
   }
@@ -82,14 +85,16 @@ Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
 {
   const int result = unlink(file_path.c_str());
   if (result == 0) {
-    AWS_LOGSTREAM_INFO(__func__, "Deleted file "<<file_path);
+    AWS_LOGSTREAM_INFO(__func__, "Deleted file " << file_path);
     return Aws::Rosbag::RecorderErrorCode::SUCCESS;
   } else {
+    std::array<char, 256> err_msg;
+    strerror_r(errno, err_msg.data(), err_msg.max_size());
     if (errno == ENOENT) {
-      AWS_LOGSTREAM_WARN(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+      AWS_LOGSTREAM_WARN(__func__, "Failed to delete file: " << file_path << ' ' << err_msg.data());
       return Aws::Rosbag::RecorderErrorCode::FILE_NOT_FOUND;
     }
-    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: "<<file_path<<" "<<std::strerror(errno));
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to delete file: " << file_path << ' ' << err_msg.data());
     return Aws::Rosbag::RecorderErrorCode::FILE_REMOVAL_FAILED;
   }
 }
@@ -141,9 +146,9 @@ ros::Time GetRosBagStartTime(const std::string& file_path)
   std::string time_stamp = match.str(0);
 
   // Convert time stamp to ros time
-  auto input_facet = new boost::posix_time::time_input_facet(kRosBagFileFormat);
+  boost::posix_time::time_input_facet input_facet(kRosBagFileFormat);
   std::stringstream ss;
-  ss.imbue(std::locale(ss.getloc(), input_facet));
+  ss.imbue(std::locale(ss.getloc(), &input_facet));
   ss.str(time_stamp);
   boost::posix_time::ptime pt;
   ss >> pt;
