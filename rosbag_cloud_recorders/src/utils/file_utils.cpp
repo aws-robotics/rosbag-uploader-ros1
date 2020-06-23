@@ -146,9 +146,9 @@ ros::Time GetRosBagStartTime(const std::string& file_path)
   std::string time_stamp = match.str(0);
 
   // Convert time stamp to ros time
-  boost::posix_time::time_input_facet input_facet(kRosBagFileFormat);
+  auto input_facet = new boost::posix_time::time_input_facet(kRosBagFileFormat);
   std::stringstream ss;
-  ss.imbue(std::locale(ss.getloc(), &input_facet));
+  ss.imbue(std::locale(ss.getloc(), input_facet));
   ss.str(time_stamp);
   boost::posix_time::ptime pt;
   ss >> pt;

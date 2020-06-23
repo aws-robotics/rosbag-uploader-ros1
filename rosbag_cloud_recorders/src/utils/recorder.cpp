@@ -257,11 +257,13 @@ bool Recorder::ShouldSubscribeToTopic(std::string const& topic, bool from_node) 
 template<class T>
 std::string Recorder::TimeToStr(T ros_t)
 {
-    (void) ros_t;
+    (void)ros_t;
     std::stringstream msg;
-    const boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
-    boost::posix_time::time_facet f("%Y-%m-%d-%H-%M-%S");
-    msg.imbue(std::locale(msg.getloc(), &f));
+    const boost::posix_time::ptime now=
+        boost::posix_time::second_clock::local_time();
+    boost::posix_time::time_facet *const f=
+        new boost::posix_time::time_facet("%Y-%m-%d-%H-%M-%S");
+    msg.imbue(std::locale(msg.getloc(),f));
     msg << now;
     return msg.str();
 }
