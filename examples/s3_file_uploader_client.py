@@ -22,6 +22,6 @@ goal = UploadFilesGoal(
 client = actionlib.SimpleActionClient(ACTION, UploadFilesAction)
 client.wait_for_server()
 client.send_goal(goal)
-client.wait_for_result(rospy.Duration.from_sec(15.0))
+client.wait_for_result()
 
 print(client.get_result())
