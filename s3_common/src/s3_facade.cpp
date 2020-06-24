@@ -71,12 +71,13 @@ Model::PutObjectOutcome S3Facade::PutObject(
   }
 
   auto outcome = s3_client_->PutObject(put_object_request);
-
-  if (!outcome.IsSuccess()) {
-    const auto& error = outcome.GetError();
-    AWS_LOGSTREAM_ERROR(__func__, "Failed to upload "<<file_path<<" to s3://"<<bucket<<"/"<<key<<" with message: "<<error.GetMessage());
-  } 
-  AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded "<<file_path<<" to s3://"<<bucket<<"/"<<key);
+  if (outcome.IsSuccess()) {
+    AWS_LOGSTREAM_INFO(__func__, "Successfully uploaded " << file_path << " to s3://" << bucket << "/" << key);
+  } else {
+    const auto & error = outcome.GetError();
+    AWS_LOGSTREAM_ERROR(__func__, "Failed to upload " << file_path << " to s3://" << bucket << "/" << key
+                                  << ": " << error.GetMessage());
+  }
   return outcome;
 }
 
