@@ -10,6 +10,12 @@
 # If invalid value is given node will exit and log an error message
 # max_record_time: 300
 
+# The minimum amount of free disk space in kB to try to maintain. If the limit is reached, recording will stop
+# Acceptable values: positive integers
+# If not given defaults to 1048576 kB
+# If invalid value is given node will exit and log an error message
+# min_free_disk_space: 1048576
+
 # The topics that should be recorded into the rosbag.
 # Acceptable values: A list of topic names (e.g. ["/topic1", "/topic2", "/topic3"])
 # If the list is empty or not given, all topics will be recorded.

@@ -26,11 +26,22 @@
 #include <rosbag_cloud_recorders/duration_recorder/duration_recorder.h>
 #include <rosbag_cloud_recorders/utils/file_utils.h>
 
+namespace
+{
+
 constexpr char kNodeName[] = "rosbag_duration_recorder";
 
+constexpr char kMinFreeSpaceParameter[] = "min_free_disk_space";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
 constexpr char kUploadTimeoutParameter[] = "upload_timeout";
 constexpr char kDeleteBagsAfterUploadParameter[] = "delete_bags_after_upload";
+
+constexpr uint64_t kMinFreeSpaceDefaultInKilobytes = 1048576;
+constexpr char kWriteDirectoryDefault[] = "~/.ros/dr_rosbag_uploader/";
+constexpr double kUploadTimeoutDefaultInSeconds = 3600.0;   // Default to 60 min timeout
+constexpr bool kDeleteBagsAfterUploadDefault = false; // Default to not deleting bags after they have been uploaded
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -39,24 +50,30 @@ int main(int argc, char* argv[])
         Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
 
   Aws::Rosbag::DurationRecorderOptions duration_recorder_options;
-
-  std::string write_dir_input;
-  std::string write_dir;
-
   auto parameter_reader = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
+
+  int min_free_space;
+  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMinFreeSpaceParameter), min_free_space)) {
+    if (min_free_space < 0) {
+      AWS_LOG_ERROR(__func__, "min_free_disk_space must be a positive integer.");
+      return 1;
+    }
+    duration_recorder_options.min_free_disk_space = min_free_space;
+  } else {
+    duration_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInKilobytes;
+  }
+  std::string write_dir_input;
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_dir_input)) {
-    write_dir_input = "~/.ros/dr_rosbag_uploader/";
+    write_dir_input = kWriteDirectoryDefault;
   }
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kUploadTimeoutParameter), duration_recorder_options.upload_timeout_s)) {
-    // Default to 60 min timeout
-    duration_recorder_options.upload_timeout_s = 3600;
+    duration_recorder_options.upload_timeout_s = kUploadTimeoutDefaultInSeconds;
   }
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kDeleteBagsAfterUploadParameter), duration_recorder_options.delete_bags_after_upload)) {
-    // Default to false, i.e. not delete bags after they have been uploaded
-    duration_recorder_options.delete_bags_after_upload = false;
+    duration_recorder_options.delete_bags_after_upload = kDeleteBagsAfterUploadDefault;
   }
-  
-  int result_code = 1;
+
+  std::string write_dir;
   if (Aws::Rosbag::Utils::ExpandAndCreateDir(write_dir_input, write_dir)) {
     duration_recorder_options.write_directory = write_dir;
     AWS_LOG_INFO(__func__, "Starting duration recorder");
@@ -64,12 +81,12 @@ int main(int argc, char* argv[])
     Aws::Rosbag::DurationRecorder duration_recorder(duration_recorder_options);
     ros::MultiThreadedSpinner spinner(2);
     spinner.spin();
-    result_code = 0;
   } else {
     AWS_LOG_ERROR(__func__, "Failed to access rosbag write directory. Shutting down.");
+    return 1;
   }
 
   Aws::Utils::Logging::ShutdownAWSLogging();
-  
-  return result_code;
+
+  return 0;
 }

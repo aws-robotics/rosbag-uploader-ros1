@@ -38,6 +38,7 @@ using UploadFilesActionSimpleClient = actionlib::SimpleActionClient<file_uploade
 // Contains option for deleting the rosbag after upload
 struct RollingRecorderOptions
 {
+  uint64_t min_free_disk_space {0};
   std::string write_directory;
   double upload_timeout_s {0};
   ros::Duration max_record_time;

@@ -32,6 +32,7 @@ namespace Rosbag {
 // Will contain option for deleting the rosbag after upload
 struct DurationRecorderOptions
 {
+  uint64_t min_free_disk_space {0};
   std::string write_directory;
   double upload_timeout_s {0};
   bool delete_bags_after_upload {false};

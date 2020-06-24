@@ -25,18 +25,25 @@
 #include <rosbag_cloud_recorders/utils/recorder.h>
 #include <rosbag_cloud_recorders/utils/rosbag_recorder.h>
 
+namespace
+{
+
 constexpr char kNodeName[] = "rosbag_rolling_recorder";
 
 constexpr char kBagRolloverTimeParameter[] = "bag_rollover_time";
 constexpr char kMaxRecordTimeParameter[] = "max_record_time";
+constexpr char kMinFreeSpaceParameter[] = "min_free_disk_space";
 constexpr char kTopicsToRecordParameter[] = "topics_to_record";
 constexpr char kWriteDirectoryParameter[] = "write_directory";
 constexpr char kUploadTimeoutParameter[] = "upload_timeout";
 
 constexpr uint32_t kBagRolloverTimeDefaultInSeconds = 30;
 constexpr uint32_t kMaxRecordTimeDefaultInSeconds = 300;
+constexpr uint64_t kMinFreeSpaceDefaultInKilobytes = 1048576;
 constexpr char kWriteDirectoryDefault[] = "~/.ros/rr_rosbag_uploader/";
 constexpr uint32_t kTimeOutDefaultInSeconds = 3600;
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -44,12 +51,10 @@ int main(int argc, char* argv[])
   Aws::Utils::Logging::InitializeAWSLogging(Aws::MakeShared<Aws::Utils::Logging::AWSROSLogger>(kNodeName));
 
   Aws::Rosbag::RollingRecorderOptions rolling_recorder_options;
-  std::string write_directory_input;
-  int max_record_time_input;
-  int bag_rollover_time_input;
-
   auto parameter_reader = std::make_shared<Aws::Client::Ros1NodeParameterReader>();
+
   // Set bag_rollover_time
+  int bag_rollover_time_input;
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kBagRolloverTimeParameter), bag_rollover_time_input)) {
     rolling_recorder_options.bag_rollover_time = ros::Duration(bag_rollover_time_input);
   } else {
@@ -57,10 +62,23 @@ int main(int argc, char* argv[])
   }
 
   // Set max_record_time
+  int max_record_time_input;
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMaxRecordTimeParameter), max_record_time_input)) {
     rolling_recorder_options.max_record_time = ros::Duration(max_record_time_input);
   } else {
     rolling_recorder_options.max_record_time = ros::Duration(kMaxRecordTimeDefaultInSeconds);
+  }
+
+  // Set min_free_disk_space
+  int min_free_space;
+  if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMinFreeSpaceParameter), min_free_space)) {
+    if (min_free_space < 0) {
+      AWS_LOG_ERROR(__func__, "min_free_disk_space must be a positive integer.");
+      return 1;
+    }
+    rolling_recorder_options.min_free_disk_space = min_free_space;
+  } else {
+    rolling_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInKilobytes;
   }
 
   // Set topics_to_record
@@ -71,6 +89,7 @@ int main(int argc, char* argv[])
   }
 
   // Set write_directory
+  std::string write_directory_input;
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_directory_input)) {
     write_directory_input = kWriteDirectoryDefault;
   }
@@ -89,10 +108,12 @@ int main(int argc, char* argv[])
       Aws::Rosbag::Utils::RecorderOptions options;
       options.split = true;
       options.max_duration = rolling_recorder_options.bag_rollover_time;
-      options.record_all = false;
+      options.min_space = 1024 * rolling_recorder_options.min_free_disk_space; // kilobytes to bytes
+      options.min_space_str = std::to_string(rolling_recorder_options.min_free_disk_space) + 'k';
       if (topics_to_record.empty()) {
         options.record_all = true;
       } else {
+        options.record_all = false;
         options.topics = std::move(topics_to_record);
       }
       options.prefix = rolling_recorder_options.write_directory;
@@ -104,11 +125,13 @@ int main(int argc, char* argv[])
       AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
     } else {
       AWS_LOG_ERROR(__func__, "Failed to initialize rolling recorder. Shutting down.");
+      return 1;
     }
 
     ros::shutdown();
   } else {
     AWS_LOG_ERROR(__func__, "Failed to access rosbag write directory. Shutting down.");
+    return 1;
   }
 
   Aws::Utils::Logging::ShutdownAWSLogging();
