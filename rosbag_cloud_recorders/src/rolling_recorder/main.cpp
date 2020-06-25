@@ -39,7 +39,7 @@ constexpr char kUploadTimeoutParameter[] = "upload_timeout";
 
 constexpr uint32_t kBagRolloverTimeDefaultInSeconds = 30;
 constexpr uint32_t kMaxRecordTimeDefaultInSeconds = 300;
-constexpr uint64_t kMinFreeSpaceDefaultInKilobytes = 1048576;
+constexpr uint64_t kMinFreeSpaceDefaultInKibibytes = 1048576;
 constexpr char kWriteDirectoryDefault[] = "~/.ros/rr_rosbag_uploader/";
 constexpr uint32_t kTimeOutDefaultInSeconds = 3600;
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
     }
     rolling_recorder_options.min_free_disk_space = min_free_space;
   } else {
-    rolling_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInKilobytes;
+    rolling_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInKibibytes;
   }
 
   // Set topics_to_record
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
       Aws::Rosbag::Utils::RecorderOptions options;
       options.split = true;
       options.max_duration = rolling_recorder_options.bag_rollover_time;
-      options.min_space = 1024 * rolling_recorder_options.min_free_disk_space; // kilobytes to bytes
+      options.min_space = 1024 * rolling_recorder_options.min_free_disk_space; // kibibytes to bytes
       options.min_space_str = std::to_string(rolling_recorder_options.min_free_disk_space) + 'k';
       if (topics_to_record.empty()) {
         options.record_all = true;

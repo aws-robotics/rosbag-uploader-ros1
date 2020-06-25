@@ -36,7 +36,7 @@ constexpr char kWriteDirectoryParameter[] = "write_directory";
 constexpr char kUploadTimeoutParameter[] = "upload_timeout";
 constexpr char kDeleteBagsAfterUploadParameter[] = "delete_bags_after_upload";
 
-constexpr uint64_t kMinFreeSpaceDefaultInKilobytes = 1048576;
+constexpr uint64_t kMinFreeSpaceDefaultInKibibytes = 1048576;
 constexpr char kWriteDirectoryDefault[] = "~/.ros/dr_rosbag_uploader/";
 constexpr double kUploadTimeoutDefaultInSeconds = 3600.0;   // Default to 60 min timeout
 constexpr bool kDeleteBagsAfterUploadDefault = false; // Default to not deleting bags after they have been uploaded
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     }
     duration_recorder_options.min_free_disk_space = min_free_space;
   } else {
-    duration_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInKilobytes;
+    duration_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInKibibytes;
   }
   std::string write_dir_input;
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_dir_input)) {
