@@ -15,6 +15,7 @@
 #pragma once
 
 #include <sstream>
+#include <string>
 #include <thread>
 
 #include <ros/ros.h>
@@ -87,11 +88,13 @@ public:
 
     const auto & goal = goal_handle.getGoal();
     Utils::RecorderOptions options;
-    options.record_all = false;
     options.max_duration = goal->duration;
+    options.min_space = 1024 * 1024 * duration_recorder_options.min_free_space_mib; // mebibytes to bytes
+    options.min_space_str = std::to_string(duration_recorder_options.min_free_space_mib) + 'M';
     if (goal->topics_to_record.empty()) {
-      options.record_all=true;
+      options.record_all = true;
     } else {
+      options.record_all = false;
       options.topics = goal->topics_to_record;
     }
     options.prefix = duration_recorder_options.write_directory;
