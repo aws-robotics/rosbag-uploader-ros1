@@ -56,11 +56,11 @@ int main(int argc, char* argv[])
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMinFreeSpaceParameter), min_free_space)) {
     if (min_free_space < 0) {
       AWS_LOG_ERROR(__func__, "min_free_disk_space must be a positive integer.");
-      return 1;
+      return EXIT_FAILURE;
     }
-    duration_recorder_options.min_free_disk_space = min_free_space;
+    duration_recorder_options.min_free_space_mib = min_free_space;
   } else {
-    duration_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInMebibytes;
+    duration_recorder_options.min_free_space_mib = kMinFreeSpaceDefaultInMebibytes;
   }
   std::string write_dir_input;
   if (Aws::AwsError::AWS_ERR_OK != parameter_reader->ReadParam(Aws::Client::ParameterPath(kWriteDirectoryParameter), write_dir_input)) {
@@ -83,10 +83,10 @@ int main(int argc, char* argv[])
     spinner.spin();
   } else {
     AWS_LOG_ERROR(__func__, "Failed to access rosbag write directory. Shutting down.");
-    return 1;
+    return EXIT_FAILURE;
   }
 
   Aws::Utils::Logging::ShutdownAWSLogging();
 
-  return 0;
+  return EXIT_SUCCESS;
 }

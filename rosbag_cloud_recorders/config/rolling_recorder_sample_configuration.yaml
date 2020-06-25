@@ -10,7 +10,7 @@
 # If invalid value is given node will exit and log an error message
 # max_record_time: 300
 
-# The minimum amount of free disk space in kB to try to maintain. If the limit is reached, recording will stop
+# The minimum amount of free disk space in MiB to try to maintain. If the limit is reached, recording will stop
 # Acceptable values: positive integers
 # If not given defaults to 1024 MiB
 # If invalid value is given node will exit and log an error message

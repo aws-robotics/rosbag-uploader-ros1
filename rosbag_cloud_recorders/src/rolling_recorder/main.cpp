@@ -74,11 +74,11 @@ int main(int argc, char* argv[])
   if (Aws::AwsError::AWS_ERR_OK == parameter_reader->ReadParam(Aws::Client::ParameterPath(kMinFreeSpaceParameter), min_free_space)) {
     if (min_free_space < 0) {
       AWS_LOG_ERROR(__func__, "min_free_disk_space must be a positive integer.");
-      return 1;
+      return EXIT_FAILURE;
     }
-    rolling_recorder_options.min_free_disk_space = min_free_space;
+    rolling_recorder_options.min_free_space_mib = min_free_space;
   } else {
-    rolling_recorder_options.min_free_disk_space = kMinFreeSpaceDefaultInMebibytes;
+    rolling_recorder_options.min_free_space_mib = kMinFreeSpaceDefaultInMebibytes;
   }
 
   // Set topics_to_record
@@ -108,8 +108,8 @@ int main(int argc, char* argv[])
       Aws::Rosbag::Utils::RecorderOptions options;
       options.split = true;
       options.max_duration = rolling_recorder_options.bag_rollover_time;
-      options.min_space = 1024 * 1024 * rolling_recorder_options.min_free_disk_space; // mebibytes to bytes
-      options.min_space_str = std::to_string(rolling_recorder_options.min_free_disk_space) + 'k';
+      options.min_space = 1024 * 1024 * rolling_recorder_options.min_free_space_mib; // mebibytes to bytes
+      options.min_space_str = std::to_string(rolling_recorder_options.min_free_space_mib) + 'M';
       if (topics_to_record.empty()) {
         options.record_all = true;
       } else {
@@ -125,16 +125,16 @@ int main(int argc, char* argv[])
       AWS_LOG_INFO(__func__, "Finishing rolling recorder node.");
     } else {
       AWS_LOG_ERROR(__func__, "Failed to initialize rolling recorder. Shutting down.");
-      return 1;
+      return EXIT_FAILURE;
     }
 
     ros::shutdown();
   } else {
     AWS_LOG_ERROR(__func__, "Failed to access rosbag write directory. Shutting down.");
-    return 1;
+    return EXIT_FAILURE;
   }
 
   Aws::Utils::Logging::ShutdownAWSLogging();
 
-  return 0;
+  return EXIT_SUCCESS;
 }

@@ -89,8 +89,8 @@ public:
     const auto & goal = goal_handle.getGoal();
     Utils::RecorderOptions options;
     options.max_duration = goal->duration;
-    options.min_space = 1024 * 1024 * duration_recorder_options.min_free_disk_space; // mebibytes to bytes
-    options.min_space_str = std::to_string(duration_recorder_options.min_free_disk_space) + 'k';
+    options.min_space = 1024 * 1024 * duration_recorder_options.min_free_space_mib; // mebibytes to bytes
+    options.min_space_str = std::to_string(duration_recorder_options.min_free_space_mib) + 'M';
     if (goal->topics_to_record.empty()) {
       options.record_all = true;
     } else {
