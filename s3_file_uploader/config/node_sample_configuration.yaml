@@ -35,8 +35,8 @@ aws_client_configuration:
 
   # Values that determine the length of time, in milliseconds, to wait before timing out a request. You can increase
   # this value if you need to transfer large files, such as in Amazon S3 or Amazon CloudFront.
-  connect_timeout_ms: 9000
-  request_timeout_ms: 9000
+  connect_timeout_ms: 10000
+  request_timeout_ms: 10000
   # The maximum number of allowed connections to a single server for your HTTP communications. The default value is 25.
   # You can set this value as high as you can support the bandwidth. We recommend a value around 25.
   # maxConnections: 25
@@ -54,4 +54,4 @@ aws_client_configuration:
   # verifySSL: true
 
   # The number of retries for connecting to AWS Services
-  max_retries: 10
+  max_retries: 30

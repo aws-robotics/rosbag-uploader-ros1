@@ -59,11 +59,11 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         self.s3_client.delete_all_objects(self.s3_bucket_name)
         self.s3_client.delete_bucket(self.s3_bucket_name)
 
-    def test_record_upload(self):
-        self.total_test_messages = 10
+    #def test_record_upload(self):
+     #   self.total_test_messages = 10
 
-        start_time, s3_destination = self.run_rolling_recorder()
-        self.send_rolling_recorder_upload_goal(s3_destination, start_time)
+      #  start_time, s3_destination = self.run_rolling_recorder()
+       # self.send_rolling_recorder_upload_goal(s3_destination, start_time)
 
     def test_record_upload_multiple_times(self):
         self.total_test_messages = 10
@@ -90,13 +90,16 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         rospy.loginfo("Bag finish time remaining: %f" % bag_finish_time_remaining)
 
         # Emit some data to the test topic
-        sleep_between_message = (bag_finish_time_remaining * 0.5)  / self.total_test_messages
+        # sleep_between_message = (bag_finish_time_remaining * 0.5)  / self.total_test_messages
+        sleep_between_message = 0.0
+        print("The sleep time between messages")
+        #print(sleep_between_message)
         rospy.loginfo("Sleep between messages: %f" % sleep_between_message)
         for x in range(self.total_test_messages):
             print("In run record=======")
             self.test_publisher.publish("Test message %d" % x)
             print(x)
-           # time.sleep(sleep_between_message)
+            time.sleep(sleep_between_message)
 
         # Wait for current bag to finish recording and roll over
         bag_finish_time_remaining = bag_finish_time - time.time()
@@ -104,7 +107,8 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
 
         # Add 0.5s as it takes some time for bag rotation to occur
         time.sleep(bag_finish_time_remaining) 
-
+        print("The bag rotation time")
+       # print(time.sleep(bag_finish_time_remaining + 1.0))
         # Send a goal to upload the bag data to S3
         # Create an Action client to send the goal
         self.action_client = actionlib.SimpleActionClient(ACTION, RollingRecorderAction)
