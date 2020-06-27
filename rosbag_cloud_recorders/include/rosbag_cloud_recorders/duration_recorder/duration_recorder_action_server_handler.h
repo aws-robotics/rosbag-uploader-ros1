@@ -105,11 +105,12 @@ public:
       {
         goal_handle.setAccepted();
         AWS_LOG_INFO(current_function, "Goal accepted");
+
         recorder_msgs::DurationRecorderFeedback recorder_feedback;
         recorder_msgs::RecorderStatus recording_status;
         Utils::GenerateFeedback(
           recorder_msgs::RecorderStatus::RECORDING,
-          time_of_goal_received,
+          ros::Time::now(),
           recorder_feedback,
           recording_status);
         goal_handle.publishFeedback(recorder_feedback);
@@ -122,6 +123,15 @@ public:
           goal_handle.setAborted(result, "Rosbag recorder encountered errors.");
           return;
         }
+
+        recorder_msgs::DurationRecorderFeedback recorder_feedback;
+        recorder_msgs::RecorderStatus recording_status;
+        Utils::GenerateFeedback(
+          recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+          ros::Time::now(),
+          recorder_feedback,
+          recording_status);
+        goal_handle.publishFeedback(recorder_feedback);
         std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(duration_recorder_options.write_directory,
           [time_of_goal_received](rosbag::View& rosbag) -> bool
           {
@@ -130,10 +140,18 @@ public:
             return time_of_goal_received < rosbag.getBeginTime();
           }
         );
+
         bool upload_finished = Utils::UploadFiles(goal_handle, duration_recorder_options.upload_timeout_s, upload_client, ros_bags_to_upload);
+
         Utils::HandleRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished, result);
-        
+
         if (duration_recorder_options.delete_bags_after_upload) {
+          Utils::GenerateFeedback(
+            recorder_msgs::RecorderStatus::CLEANUP,
+            ros::Time::now(),
+            recorder_feedback,
+            recording_status);
+          goal_handle.publishFeedback(recorder_feedback);
           for (const std::string & bag_file_name : upload_client.getResult()->files_uploaded) {
             AWS_LOG_INFO(current_function, "Bag file named: %s was uploaded to S3 and is now being deleted locally.", bag_file_name.c_str());
             Utils::DeleteFile(bag_file_name);

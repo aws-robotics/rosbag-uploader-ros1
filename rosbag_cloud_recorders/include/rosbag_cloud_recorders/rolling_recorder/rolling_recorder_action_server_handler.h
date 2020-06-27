@@ -77,6 +77,7 @@ private:
     //  Accept incoming goal and start processing it
     AWS_LOG_INFO(__func__, "Sending rosbag uploader goal to uploader action server.");
     req.goal_handle.setAccepted();
+
     recorder_msgs::RollingRecorderFeedback recorder_feedback;
     recorder_msgs::RecorderStatus recording_status;
     Utils::GenerateFeedback(
@@ -85,14 +86,12 @@ private:
       recorder_feedback,
       recording_status);
     req.goal_handle.publishFeedback(recorder_feedback);
-
     std::vector<std::string> rosbags_to_upload = Utils::GetRosbagsToUpload(req.rolling_recorder_options.write_directory,
       [time_of_goal_received](rosbag::View& rosbag) -> bool
       {
         return time_of_goal_received >= rosbag.getBeginTime();
       }
     );
-
     if (rosbags_to_upload.empty()) {
       std::string msg = "No rosbags found to upload.";
       Utils::GenerateResult(recorder_msgs::RecorderResult::SUCCESS, msg, result);
@@ -100,10 +99,19 @@ private:
       req.goal_handle.setSucceeded(result, msg);
       return;
     }
+
     auto goal = Utils::ConstructRosBagUploaderGoal(req.goal_handle.getGoal()->destination, rosbags_to_upload);
     req.recorder_status->SetUploadGoal(goal);
     req.rosbag_uploader_action_client.sendGoal(goal);
+
+    Utils::GenerateFeedback(
+      recorder_msgs::RecorderStatus::UPLOADING,
+      ros::Time::now(),
+      recorder_feedback,
+      recording_status);
+    req.goal_handle.publishFeedback(recorder_feedback);
     bool upload_finished = req.rosbag_uploader_action_client.waitForResult(ros::Duration(req.rolling_recorder_options.upload_timeout_s));
+
     Utils::HandleRecorderUploadResult(req.goal_handle, req.rosbag_uploader_action_client.getState(), upload_finished, result);
     req.recorder_status->SetUploadGoal(file_uploader_msgs::UploadFilesGoal());
   }
