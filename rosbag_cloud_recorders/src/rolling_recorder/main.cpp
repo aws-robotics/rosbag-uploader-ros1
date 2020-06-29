@@ -101,8 +101,8 @@ int main(int argc, char* argv[])
 
   if (Aws::Rosbag::Utils::ExpandAndCreateDir(write_directory_input, rolling_recorder_options.write_directory)) {
     AWS_LOG_INFO(__func__, "Starting rolling recorder node.");
-    Aws::Rosbag::Utils::RosbagRecorder<Aws::Rosbag::Utils::Recorder> rosbag_recorder;
     Aws::Rosbag::RollingRecorder rolling_recorder;
+    Aws::Rosbag::Utils::RosbagRecorder<Aws::Rosbag::Utils::Recorder> rosbag_recorder;
 
     if (rolling_recorder.InitializeRollingRecorder(rolling_recorder_options)) {
       Aws::Rosbag::Utils::RecorderOptions options;
@@ -117,6 +117,14 @@ int main(int argc, char* argv[])
         options.topics = std::move(topics_to_record);
       }
       options.prefix = rolling_recorder_options.write_directory;
+      options.status_callback = [&rolling_recorder](const Aws::Rosbag::Utils::RecorderStatus status) {
+        if (status == Aws::Rosbag::Utils::RecorderStatus::RECORDING_STARTED) {
+          rolling_recorder.PublishRecorderStatus(recorder_msgs::RecorderStatus::RECORDING);
+        } else if (status == Aws::Rosbag::Utils::RecorderStatus::INSUFFICIENT_DISK_SPACE) {
+          rolling_recorder.PublishRecorderStatus(recorder_msgs::RecorderStatus::INSUFFICIENT_DISK_SPACE);
+        }
+      };
+
       rosbag_recorder.Run(options, nullptr, [](int /*exit_code*/) { ros::shutdown(); });
 
       ros::MultiThreadedSpinner spinner(2);

@@ -42,10 +42,11 @@
 #endif
 #include <ctime>
 
+#include <functional>
+#include <list>
 #include <queue>
 #include <string>
 #include <vector>
-#include <list>
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
@@ -90,6 +91,13 @@ public:
     ros::Time                    time;
 };
 
+enum class RecorderStatus
+{
+    RECORDING_STARTED,
+    INSUFFICIENT_DISK_SPACE,
+    RECORDING_STOPPED
+};
+
 struct ROSBAG_DECL RecorderOptions
 {
     RecorderOptions() = default;
@@ -120,6 +128,8 @@ struct ROSBAG_DECL RecorderOptions
     ros::TransportHints transport_hints;
 
     std::vector<std::string> topics;
+
+    std::function<void(const RecorderStatus)> status_callback;
 };
 
 class ROSBAG_DECL Recorder

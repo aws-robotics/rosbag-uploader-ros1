@@ -40,8 +40,6 @@ namespace Rosbag{
 
 using DurationRecorderActionServer = actionlib::ActionServer<recorder_msgs::DurationRecorderAction>;
 
-
-
 template<typename GoalHandleT, typename UploadClientT>
 class DurationRecorderActionServerHandler
 {
@@ -98,6 +96,19 @@ public:
       options.topics = goal->topics_to_record;
     }
     options.prefix = duration_recorder_options.write_directory;
+    options.status_callback = [goal_handle](const Utils::RecorderStatus status) mutable
+    {
+      if (status == Utils::RecorderStatus::INSUFFICIENT_DISK_SPACE) {
+        recorder_msgs::DurationRecorderFeedback recorder_feedback;
+        recorder_msgs::RecorderStatus recording_status;
+        Utils::GenerateFeedback(
+          recorder_msgs::RecorderStatus::INSUFFICIENT_DISK_SPACE,
+          ros::Time::now(),
+          recorder_feedback,
+          recording_status);
+        goal_handle.publishFeedback(recorder_feedback);
+      }
+    };
 
     auto run_result = rosbag_recorder.Run(
       options,

@@ -469,6 +469,10 @@ bool Recorder::CheckDuration(const ros::Time& t)
 void Recorder::DoRecord() {
     // Open bag file for writing
     StartWriting();
+    if (options_.status_callback)
+    {
+        options_.status_callback(RecorderStatus::RECORDING_STARTED);
+    }
 
     // Schedule the disk space check
     warn_next_ = ros::WallTime();
@@ -542,6 +546,13 @@ void Recorder::DoRecord() {
             {
                 bag_.write(out.topic, out.time, *out.msg, out.connection_header);
             }
+            else
+            {
+                if (options_.status_callback)
+                {
+                    options_.status_callback(RecorderStatus::INSUFFICIENT_DISK_SPACE);
+                }
+            }
         }
         catch (const rosbag::BagException& ex)
         {
@@ -552,6 +563,10 @@ void Recorder::DoRecord() {
     }
 
     StopWriting();
+    if (options_.status_callback)
+    {
+        options_.status_callback(RecorderStatus::RECORDING_STOPPED);
+    }
 }
 
 void Recorder::DoRecordSnapshotter() {

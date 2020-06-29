@@ -91,9 +91,23 @@ bool RollingRecorder::InitializeRollingRecorder(RollingRecorderOptions rolling_r
   return true;
 }
 
-void RollingRecorder::UpdateStatus(const RollingRecorderStatus & status)
+void RollingRecorder::UpdateRecorderStatus(const RollingRecorderStatus & status)
 {
   upload_request_data_->recorder_status_ = status;
+}
+
+void RollingRecorder::PublishRecorderStatus(const uint8_t stage)
+{
+  if (upload_request_data_ != nullptr && upload_request_data_->action_server_busy_) {
+    recorder_msgs::RollingRecorderFeedback recorder_feedback;
+    recorder_msgs::RecorderStatus recording_status;
+    Utils::GenerateFeedback(
+      stage,
+      ros::Time::now(),
+      recorder_feedback,
+      recording_status);
+    upload_request_data_->recorder_status_.GetRecordGoal().publishFeedback(recorder_feedback);
+  }
 }
 
 std::vector<std::string> RollingRecorder::GetRosBagsToDelete() const

@@ -248,7 +248,7 @@ TEST_F(RollingRecorderTest, TestGetRosBagsToDeleteDeletesOldBags)
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(invalid_file_names));
 }
 
-TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
+TEST_F(RollingRecorderTest, TestRecorderStatusEffectOnGetRosBagsToDelete)
 {
   GivenRollingRecorderInitialized();
   file_uploader_msgs::UploadFilesGoal upload_goal;
@@ -256,10 +256,10 @@ TEST_F(RollingRecorderTest, TestUpdateStatusEffectOnGetRosBagsToDelete)
   RollingRecorderStatus status;
   status.SetUploadGoal(upload_goal);
   // Update the status to include the files and expect them to be protected from deletion.
-  rolling_recorder_.UpdateStatus(status);
+  rolling_recorder_.UpdateRecorderStatus(status);
   EXPECT_TRUE(FilesToDeleteContainsNoneOf(upload_goal.files));
   // Reset the status and expect the files to now be included in the result.
-  rolling_recorder_.UpdateStatus(RollingRecorderStatus());
+  rolling_recorder_.UpdateRecorderStatus(RollingRecorderStatus());
   EXPECT_TRUE(FilesToDeleteContainsAllOf(upload_goal.files));
 }
 

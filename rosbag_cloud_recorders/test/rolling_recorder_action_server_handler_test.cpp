@@ -44,7 +44,7 @@ MATCHER_P(FeedbackHasStatus, expected_status, "") {
   return expected_status == arg.status.stage;
 }
 
-class MockRollingRecorderGoalHandle
+class MockRollingRecorderGoalHandle : public RollingRecorderActionServer::GoalHandle
 {
   class MockRollingRecorderGoalHandleImpl
   {
