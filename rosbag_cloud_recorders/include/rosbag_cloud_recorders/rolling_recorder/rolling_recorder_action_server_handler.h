@@ -51,10 +51,9 @@ public:
     const RollingRecorderRosbagUploadRequest<GoalHandleT, UploadClientT> & req
   ) {
     AWS_LOG_INFO(__func__, "A new goal has been recieved by the goal action server");
-    req.recorder_status->SetRecordGoal(req.goal_handle);
+    bool expected_action_server_state = false;
 
     //  Check if action server is currently processing another goal
-    bool expected_action_server_state = false;
     if (std::atomic_compare_exchange_strong(&(req.action_server_busy),
                                             &expected_action_server_state,
                                             true)) {
@@ -67,8 +66,6 @@ public:
       Utils::GenerateResult(recorder_msgs::RecorderResult::INVALID_INPUT, log_message, result);
       req.goal_handle.setRejected(result, log_message);
     }
-
-    req.recorder_status->SetRecordGoal(RollingRecorderActionServer::GoalHandle());
   }
 
 private:
@@ -77,7 +74,6 @@ private:
   ) {
     ros::Time time_of_goal_received = ros::Time::now();
     recorder_msgs::RollingRecorderResult result;
-
     //  Accept incoming goal and start processing it
     AWS_LOG_INFO(__func__, "Sending rosbag uploader goal to uploader action server.");
     req.goal_handle.setAccepted();

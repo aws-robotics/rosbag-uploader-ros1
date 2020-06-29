@@ -45,19 +45,8 @@ struct RollingRecorderOptions
   ros::Duration bag_rollover_time;
 };
 
-class RollingRecorderStatus
-{
+class RollingRecorderStatus {
 public:
-  void SetRecordGoal(const RollingRecorderActionServer::GoalHandle & goal)
-  {
-    current_record_goal_ = goal;
-  }
-
-  RollingRecorderActionServer::GoalHandle & GetRecordGoal()
-  {
-    return current_record_goal_;
-  }
-
   virtual void SetUploadGoal(const file_uploader_msgs::UploadFilesGoal & goal)
   {
     current_upload_goal_ = goal;
@@ -69,7 +58,6 @@ public:
   }
 
 private:
-  RollingRecorderActionServer::GoalHandle current_record_goal_;
   file_uploader_msgs::UploadFilesGoal current_upload_goal_;
 };
 
@@ -95,12 +83,7 @@ public:
   /**
    * Used by the callback handler to communicate information back to the recorder.
    */
-  void UpdateRecorderStatus(const RollingRecorderStatus & status);
-
-  /**
-   * Publish status feedback of current goal being handled by the recorder action server.
-   */
-  void PublishRecorderStatus(const uint8_t stage);
+  void UpdateStatus(const RollingRecorderStatus & status);
 
   /**
    * To determine whether to start the rolling recorder action server based on whether the rolling recorder options are valid
