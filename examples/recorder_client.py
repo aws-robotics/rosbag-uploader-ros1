@@ -35,10 +35,13 @@ else:
     sys.exit(-1)
 print(goal)
 
+def print_feedback(feedback_msg):
+    print('Feedback:', feedback_msg.status)
+
 rospy.init_node(NODE_NAME, log_level=rospy.DEBUG)
 action_client = actionlib.SimpleActionClient(action, action_type)
 res = action_client.wait_for_server()
-action_client.send_goal(goal)
+action_client.send_goal(goal, feedback_cb=print_feedback)
 action_client.wait_for_result(rospy.Duration.from_sec(record_time+5))
 
 print('Goal state:', action_client.get_state())
