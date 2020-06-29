@@ -32,13 +32,17 @@
 using namespace Aws::Rosbag;
 
 using ::testing::_;
+using ::testing::ContainerEq;
+using ::testing::Field;
+using ::testing::InSequence;
+using ::testing::IsEmpty;
 using ::testing::Return;
 using ::testing::UnorderedElementsAre;
-using ::testing::InSequence;
-using ::testing::ContainerEq;
-using ::testing::IsEmpty;
 using ::testing::UnorderedElementsAreArray;
-using ::testing::Field;
+
+MATCHER_P(FeedbackHasStatus, expected_status, "") {
+  return expected_status == arg.status.stage;
+}
 
 class MockRollingRecorderGoalHandle
 {
@@ -278,9 +282,12 @@ public:
     EXPECT_CALL(*goal_handle, setAborted(_, _));
   }
 
-  void assertPublishFeedback()
+  void assertPublishFeedback(const std::initializer_list<int> & statuses)
   {
-    EXPECT_CALL(*goal_handle, publishFeedback(_));
+    InSequence s;
+    for (const auto status : statuses) {
+      EXPECT_CALL(*goal_handle, publishFeedback(FeedbackHasStatus(status)));
+    }
   }
 
   void assertStatusUpdatedCorrectly(const std::vector<std::string> & bags)
@@ -298,7 +305,9 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderActionSucceed
   auto bags = givenRecorderIsRunning();
   givenRollingRecorderGoal();
   assertGoalIsAccepted();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE});
   assertUploadGoalIsSent();
   assertGoalIsSuccess();
   assertStatusUpdatedCorrectly(bags);
@@ -319,7 +328,7 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderSucceedsDoesn
   givenActionServerAvailable();
   givenRollingRecorderGoal();
   assertGoalIsAccepted();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::PREPARING_UPLOAD});
   assertUploadGoalIsNotSent();
   assertGoalIsSuccess();
   Aws::Rosbag::RollingRecorderActionServerHandler<MockRollingRecorderGoalHandle, MockS3UploadClient>::RollingRecorderRosbagUpload(
@@ -333,7 +342,9 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderUploadFails)
   auto bags = givenRecorderIsRunning();
   givenRollingRecorderGoal();
   assertGoalIsAccepted();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE});
   assertUploadGoalIsSent();
   assertGoalIsAborted();
   assertStatusUpdatedCorrectly(bags);
@@ -348,7 +359,9 @@ TEST_F(RollingRecorderActionServerHandlerTests, TestRollingRecorderUploadTimesOu
   auto bags = givenRecorderIsRunning();
   givenRollingRecorderGoal();
   assertGoalIsAccepted();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE});
   assertUploadGoalIsSent();
   assertGoalIsAborted();
   assertStatusUpdatedCorrectly(bags);
