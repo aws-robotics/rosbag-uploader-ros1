@@ -50,7 +50,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 
 | Name | Type | Description | Default Value |
 | ---- | ---- | ----------- | ------------- |
-| `min_free_disk_space` | int | The minimum amount of free disk space in MiB (recording will be paused when free disk space falls below this amount) | 1024 |
+| `min_free_disk_space` | int | The minimum amount of free disk space in MiB (the current action goal will be aborted when the free disk space falls below this amount) | 1024 |
 | `write_directory` | string | The local directory where rosbags will be recorded (please make sure it is a writeable directory) | ~/.ros/dr_rosbag_uploader/ |
 | `upload_timeout` | int | The time in seconds to wait for upload to complete | 3600 |
 | `delete_bags_after_upload` | bool | Whether or not the bag files should be deleted after they have been successfully uploaded | false |
@@ -89,7 +89,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 | ---- | ---- | ----------- | ------------- |
 | `bag_rollover_time` | int | The length of time in seconds to be recorded per bag file | 30 |
 | `max_record_time` | int | The length of time recordings should be kept (older rosbags will be deleted) | 300 |
-| `min_free_disk_space` | int | The minimum amount of free disk space in MiB (recording will be paused when free disk space falls below this amount) | 1024 |
+| `min_free_disk_space` | int | The minimum amount of free disk space in MiB (the node will error out when the free disk space falls below this amount) | 1024 |
 | `topics_to_record` (configuration file parameter only) | string[] | List of topics that should be recorded to rosbags | *empty* (all active topics will be recorded) |
 | `write_directory` | string | The local directory where rosbags will be recorded (please make sure it is a writeable directory) | ~/.ros/rr_rosbag_uploader/ |
 | `upload_timeout` | int | The time in seconds to wait for upload to complete | 3600 |
