@@ -55,6 +55,8 @@ bool UploadFiles(
   auto goal = Utils::ConstructRosBagUploaderGoal(goal_handle.getGoal()->destination, ros_bags_to_upload);
   upload_client.sendGoal(goal);
 
+  // Getting the Feedback type from the type of the first arugment to GoalHandleT::publishFeedback()
+  // because GoalHandleT::Feedback is a private typedef
   using FuncType = decltype(&GoalHandleT::publishFeedback);
   using FuncArgsType = typename boost::function_types::parameter_types<FuncType>;
   using ArgCrefType = typename boost::mpl::at_c<FuncArgsType, 1>::type;
@@ -92,6 +94,8 @@ void HandleRecorderUploadResult(
   bool upload_finished,
   RecorderResultT& recorder_result)
 {
+  // Getting the Feedback type from the type of the first arugment to GoalHandleT::publishFeedback()
+  // because GoalHandleT::Feedback is a private typedef
   using FuncType = decltype(&GoalHandleT::publishFeedback);
   using FuncArgsType = typename boost::function_types::parameter_types<FuncType>;
   using ArgCrefType = typename boost::mpl::at_c<FuncArgsType, 1>::type;
