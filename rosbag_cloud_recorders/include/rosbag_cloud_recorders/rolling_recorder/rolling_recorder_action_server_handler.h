@@ -60,11 +60,11 @@ public:
       ProcessRollingRecorderGoal(req);
       req.action_server_busy = false;  // Done processing goal, setting action server status to not busy
     } else {
-      std::string log_message = "Rejecting new goal. Rolling recorder is already processing a goal.";
-      AWS_LOG_WARN(__func__, log_message.c_str());
+      const std::string log_message = "Rejecting new goal. Rolling recorder is already processing a goal.";
       recorder_msgs::RollingRecorderResult result;
       Utils::GenerateResult(recorder_msgs::RecorderResult::INVALID_INPUT, log_message, result);
       req.goal_handle.setRejected(result, log_message);
+      AWS_LOG_WARN(__func__, log_message.c_str());
     }
   }
 
@@ -72,8 +72,9 @@ private:
   static void ProcessRollingRecorderGoal(
     const RollingRecorderRosbagUploadRequest<GoalHandleT, UploadClientT> & req
   ) {
-    ros::Time time_of_goal_received = ros::Time::now();
     recorder_msgs::RollingRecorderResult result;
+    ros::Time time_of_goal_received = ros::Time::now();
+
     //  Accept incoming goal and start processing it
     AWS_LOG_INFO(__func__, "Sending rosbag uploader goal to uploader action server.");
     req.goal_handle.setAccepted();
@@ -93,10 +94,10 @@ private:
       }
     );
     if (rosbags_to_upload.empty()) {
-      std::string msg = "No rosbags found to upload.";
+      const std::string msg = "No rosbags found to upload.";
       Utils::GenerateResult(recorder_msgs::RecorderResult::SUCCESS, msg, result);
-      AWS_LOG_INFO(__func__, msg.c_str());
       req.goal_handle.setSucceeded(result, msg);
+      AWS_LOG_INFO(__func__, msg.c_str());
       return;
     }
 

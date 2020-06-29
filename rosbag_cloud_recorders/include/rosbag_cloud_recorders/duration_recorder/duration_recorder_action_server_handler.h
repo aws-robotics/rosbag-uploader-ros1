@@ -49,13 +49,13 @@ private:
   static bool ValidateGoal(GoalHandleT& goal_handle)
   {
     const auto & goal = goal_handle.getGoal();
-    std::stringstream msg;
-    recorder_msgs::DurationRecorderResult result;
-    result.result.result = recorder_msgs::RecorderResult::INVALID_INPUT;
     if (goal->duration <= ros::Duration(0) || goal->duration > ros::DURATION_MAX) {
+      std::stringstream msg;
       msg << "Goal rejected. Invalid record duration given: " << goal->duration;
-      AWS_LOG_INFO(__func__, msg.str().c_str());
-      goal_handle.setRejected(result, msg.str());
+      recorder_msgs::DurationRecorderResult result;
+      Utils::GenerateResult(recorder_msgs::RecorderResult::INVALID_INPUT, msg.str(), result);
+      goal_handle.setRejected(result, result.result.message);
+      AWS_LOG_INFO(__func__, result.result.message.c_str());
       return false;
     }
     return true;
@@ -73,9 +73,9 @@ public:
 
     AWS_LOG_INFO(__func__, "Goal received");
     if (rosbag_recorder.IsActive()) {
-      std::string msg = "Rejecting goal since recorder already active";
+      const std::string msg = "Rejecting goal since recorder already active";
       recorder_msgs::DurationRecorderResult result;
-      result.result.result = recorder_msgs::RecorderResult::INTERNAL_ERROR;
+      Utils::GenerateResult(recorder_msgs::RecorderResult::INTERNAL_ERROR, msg, result);
       goal_handle.setRejected(result, msg);
       AWS_LOG_INFO(__func__, msg.c_str());
       return;
@@ -119,8 +119,10 @@ public:
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {
+          const std::string msg = "Rosbag recorder encountered errors.";
+          Utils::GenerateResult(recorder_msgs::RecorderResult::INTERNAL_ERROR, msg, result);
+          goal_handle.setAborted(result, msg);
           AWS_LOG_INFO(current_function, "Recorder finished with non zero exit code, aborting goal");
-          goal_handle.setAborted(result, "Rosbag recorder encountered errors.");
           return;
         }
 
