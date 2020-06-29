@@ -110,7 +110,7 @@ public:
         recorder_msgs::RecorderStatus recording_status;
         Utils::GenerateFeedback(
           recorder_msgs::RecorderStatus::RECORDING,
-          ros::Time::now(),
+          time_of_goal_received,
           recorder_feedback,
           recording_status);
         goal_handle.publishFeedback(recorder_feedback);
