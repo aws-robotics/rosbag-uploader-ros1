@@ -77,7 +77,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 **Feedback**
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| `started` | time | The time at which the action server started working on the goal |
+| `started` | time | The time pertaining to this feedback, the time of entering the current stage |
 | `stage` | uint8 | The stage of operation of the `rolling_recorder` action server |
 
 
@@ -88,7 +88,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 | Name | Type | Description | Default Value |
 | ---- | ---- | ----------- | ------------- |
 | `bag_rollover_time` | int | The length of time in seconds to be recorded per bag file | 30 |
-| `max_record_time` | int | The length of time recordings should be kept (older rosbags will be deleted) | 300 |
+| `max_record_time` | int | The length of time recordings should be kept in rosbags (older rosbags will be deleted) and uploaded when requested | 300 |
 | `min_free_disk_space` | int | The minimum amount of free disk space in MiB (the node will error out when the free disk space falls below this amount) | 1024 |
 | `topics_to_record` (configuration file parameter only) | string[] | List of topics that should be recorded to rosbags | *empty* (all active topics will be recorded) |
 | `write_directory` | string | The local directory where rosbags will be recorded (please make sure it is a writeable directory) | ~/.ros/rr_rosbag_uploader/ |
@@ -102,8 +102,6 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 | Key | Type | Description |
 | --- | ---- | ----------- |
 | `destination` | string | The S3 Key prefix of the rosbag files to be uploaded |
-| `start_time` | time | Specifies that rosbags recorded between this time and `end_time` should be uploaded |
-| `end_time` | time | Specifies that rosbags recorded between `start_time` and this time should be uploaded |
 
 **Result**
 | Key | Type | Description |
@@ -116,7 +114,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 **Feedback**
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| `started` | time | The time at which the action server started working on the goal |
+| `started` | time | The time pertaining to this feedback, the time of entering the current stage |
 | `stage` | uint8 | The stage of operation of the `rolling_recorder` action server |
 
 
