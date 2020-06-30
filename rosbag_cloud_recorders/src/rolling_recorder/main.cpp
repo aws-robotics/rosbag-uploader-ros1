@@ -43,7 +43,7 @@ constexpr uint64_t kMinFreeSpaceDefaultInMebibytes = 1024;
 constexpr char kWriteDirectoryDefault[] = "~/.ros/rr_rosbag_uploader/";
 constexpr uint32_t kTimeOutDefaultInSeconds = 3600;
 
-}
+} // namespace
 
 int main(int argc, char* argv[])
 {
