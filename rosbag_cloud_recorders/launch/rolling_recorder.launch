@@ -36,7 +36,7 @@
           <param name="rosbag_record_mkdir" command="mkdir -p $(arg write_directory)" />
     </node>
 
-    <node name="rolling_recorder" pkg="rosbag_cloud_recorders" type="rolling_recorder" >
+    <node name="rolling_recorder" pkg="rosbag_cloud_recorders" type="rolling_recorder" output="screen">
       <rosparam command="load" file="$(arg node_config_file)" />
       <param name="bag_rollover_time" value="$(arg bag_rollover_time)" />
       <param name="max_record_time" value="$(arg max_record_time)" />

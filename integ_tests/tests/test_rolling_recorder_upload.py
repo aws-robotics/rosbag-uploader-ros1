@@ -36,7 +36,7 @@ PKG = 'rosbag_uploader_ros1_integration_tests'
 NAME = 'rolling_recorder_custom_topic'
 ACTION = '/rolling_recorder/RosbagRollingRecord'
 RESULT_SUCCESS = 0
-GOAL_COMPLETION_TIMEOUT_SEC = 90.0
+GOAL_COMPLETION_TIMEOUT_SEC = 30.0
 
 class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
     def setUp(self):
@@ -56,8 +56,8 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
     def tearDown(self):
        # print("=======================")
         super(TestRollingRecorderUploadOnGoal, self).setUp()
-        self.s3_client.delete_all_objects(self.s3_bucket_name)
-        self.s3_client.delete_bucket(self.s3_bucket_name)
+        #self.s3_client.delete_all_objects(self.s3_bucket_name)
+        #self.s3_client.delete_bucket(self.s3_bucket_name)
 
     #def test_record_upload(self):
      #   self.total_test_messages = 10
@@ -75,6 +75,7 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
             print(start_time)
             print(s3_destination)
             print("=======================")
+            time.sleep(0.5)
             self.send_rolling_recorder_upload_goal(s3_destination, start_time)
 
     def run_rolling_recorder(self):
@@ -82,12 +83,16 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         active_rosbag = self.get_latest_bag_by_regex("*.bag.active")
         rospy.loginfo("Active rosbag: %s" % active_rosbag)
         active_rosbag_start_time = os.path.getctime(active_rosbag)
+        print("Active rollback time" + str(active_rosbag_start_time))
         start_time = rospy.Time.from_sec(math.floor(active_rosbag_start_time))
 
         # Calculate time active bag will roll over
+        print(self.bag_rollover_time)
         bag_finish_time = active_rosbag_start_time + self.bag_rollover_time
-        bag_finish_time_remaining = bag_finish_time - time.time()
-        rospy.loginfo("Bag finish time remaining: %f" % bag_finish_time_remaining)
+        print("Before bag finish time")
+        print("The time time----------" + str(time.time()))
+        #bag_finish_time_remaining = bag_finish_time
+        #rospy.loginfo("Bag finish time remaining: %f" % bag_finish_time_remaining)
 
         # Emit some data to the test topic
         # sleep_between_message = (bag_finish_time_remaining * 0.5)  / self.total_test_messages
@@ -103,6 +108,8 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
 
         # Wait for current bag to finish recording and roll over
         bag_finish_time_remaining = bag_finish_time - time.time()
+        if bag_finish_time_remaining < 0:
+            bag_finish_time_remaining = bag_finish_time_remaining + 1.0
         rospy.loginfo("Bag finish time remaining after publish: %f" % bag_finish_time_remaining)
 
         # Add 0.5s as it takes some time for bag rotation to occur
@@ -132,14 +139,22 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
             start_time=start_time,
             end_time=end_time
         )
+       # time.sleep(0.1)
+        print("the goal" + str(goal))
+        print(self.action_client.send_goal(goal))
         self.action_client.send_goal(goal)
+        time.sleep(0.4)
         res = self.action_client.wait_for_result(rospy.Duration.from_sec(GOAL_COMPLETION_TIMEOUT_SEC))
+        print("the res printed here" + str(res))
         self.assertTrue(res, "Rolling Recorder Goal timed out")
         result = self.action_client.get_result()
         self.assertEquals(result.result.result, RESULT_SUCCESS)
-
+        #time.sleep(0.2)
         s3_key = os.path.join(s3_destination, os.path.basename(latest_bag))
         with tempfile.NamedTemporaryFile() as f:
+            print("The filae name" + f.name)
+            print("The bucket name" + self.s3_bucket_name)
+            print("the s3 Key" + s3_key)
             self.s3_client.download_file(self.s3_bucket_name, s3_key, f.name)
             bag = rosbag.Bag(f.name)
             print("=======================")
