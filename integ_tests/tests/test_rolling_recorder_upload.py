@@ -101,11 +101,7 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         s3_subfolder = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(8)])  
         s3_destination = os.path.join(s3_folder, s3_subfolder)
         end_time = rospy.Time.now()
-        goal = RollingRecorderGoal(
-            destination=s3_destination,
-            start_time=start_time,
-            end_time=end_time
-        )
+        goal = RollingRecorderGoal(destination=s3_destination)
         self.action_client.send_goal(goal)
         res = self.action_client.wait_for_result(rospy.Duration.from_sec(GOAL_COMPLETION_TIMEOUT_SEC))
         self.assertTrue(res, "Rolling Recorder Goal timed out")
