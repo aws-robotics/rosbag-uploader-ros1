@@ -74,7 +74,7 @@ public:
       result.result_code.success = static_cast<uint8_t>(true);
       result.result_code.error_code = std::numeric_limits<int16_t>::lowest();
     } else {
-      result.result_code.success = static_cast<uint8_t>(true);
+      result.result_code.success = static_cast<uint8_t>(false);
       result.result_code.error_code = static_cast<int16_t>(outcome.GetError().GetErrorType());
     }
     for (auto const& upload : completed_uploads) {
