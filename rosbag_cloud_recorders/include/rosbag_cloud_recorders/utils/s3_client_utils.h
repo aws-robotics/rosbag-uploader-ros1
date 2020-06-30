@@ -33,7 +33,7 @@ file_uploader_msgs::UploadFilesGoal ConstructRosBagUploaderGoal(std::string dest
 
 template<typename RecorderFeedbackT, typename RecorderStatusT>
 void GenerateFeedback(
-  uint stage,
+  uint8_t stage,
   ros::Time time_of_feedback,
   RecorderFeedbackT& recorder_feedback,
   RecorderStatusT& recording_status)
@@ -81,7 +81,7 @@ bool UploadFiles(
 }
 
 template<typename RecorderResultT>
-void GenerateResult(uint stage, std::string message, RecorderResultT& recorder_result)
+void GenerateResult(uint8_t stage, std::string message, RecorderResultT& recorder_result)
 {
   recorder_result.result.result = stage;
   recorder_result.result.message = std::move(message);

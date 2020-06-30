@@ -63,7 +63,7 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
   if (0 == expand_result && 1 == wordexp_result.we_wordc) {
     expanded_dir = *(wordexp_result.we_wordv);
   } else {
-    std::array<char, kMaxErrStrSize> err_msg;
+    std::array<char, kMaxErrStrSize> err_msg{};
     strerror_r(errno, err_msg.data(), err_msg.max_size());
     AWS_LOGSTREAM_ERROR(__func__, "Failed to expand write directory " << expanded_dir << " with error " << err_msg.data());
     wordfree(&wordexp_result);
@@ -97,7 +97,7 @@ Aws::Rosbag::RecorderErrorCode DeleteFile(const std::string & file_path)
     AWS_LOGSTREAM_INFO(__func__, "Deleted file " << file_path);
     return Aws::Rosbag::RecorderErrorCode::SUCCESS;
   } else {
-    std::array<char, kMaxErrStrSize> err_msg;
+    std::array<char, kMaxErrStrSize> err_msg{};
     strerror_r(errno, err_msg.data(), err_msg.max_size());
     if (errno == ENOENT) {
       AWS_LOGSTREAM_WARN(__func__, "Failed to delete file: " << file_path << ' ' << err_msg.data());

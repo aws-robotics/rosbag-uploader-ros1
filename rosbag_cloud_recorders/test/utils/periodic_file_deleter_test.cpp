@@ -86,7 +86,7 @@ TEST_F(PeriodicFileDeleterTest, TestIsActive)
 
 TEST_F(PeriodicFileDeleterTest, TestDeletesFilesSucceeds)
 {
-    uint num_files = 3;
+    int num_files = 3;
     CreateDeleteFiles(num_files);
 
     // Sanity check that files were created
@@ -108,7 +108,7 @@ TEST_F(PeriodicFileDeleterTest, TestDeletesFilesSucceeds)
 
 TEST_F(PeriodicFileDeleterTest, TestIgnoresFailedFileDeletion)
 {
-    uint num_files = 3;
+    int num_files = 3;
     CreateDeleteFiles(num_files);
     // Sanity check that files were created
     ASSERT_EQ(num_files, delete_files.size());

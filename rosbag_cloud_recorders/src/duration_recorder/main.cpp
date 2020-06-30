@@ -41,7 +41,7 @@ constexpr char kWriteDirectoryDefault[] = "~/.ros/dr_rosbag_uploader/";
 constexpr double kUploadTimeoutDefaultInSeconds = 3600.0;   // Default to 60 min timeout
 constexpr bool kDeleteBagsAfterUploadDefault = false; // Default to not deleting bags after they have been uploaded
 
-}
+} // namespace
 
 int main(int argc, char* argv[])
 {
