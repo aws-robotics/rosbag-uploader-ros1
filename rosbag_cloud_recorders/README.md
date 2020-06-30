@@ -77,7 +77,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 **Feedback**
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| `started` | time | The time pertaining to this feedback, the time of entering the current stage |
+| `started` | time | The time at which this feedback was published; the time of entering the current stage |
 | `stage` | uint8 | The stage of operation of the `rolling_recorder` action server |
 
 
@@ -114,7 +114,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 **Feedback**
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| `started` | time | The time pertaining to this feedback, the time of entering the current stage |
+| `started` | time | The time at which this feedback was published; the time of entering the current stage |
 | `stage` | uint8 | The stage of operation of the `rolling_recorder` action server |
 
 
