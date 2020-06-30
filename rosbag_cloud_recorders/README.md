@@ -88,7 +88,7 @@ After sourcing the ROS workspace, the example client can be run with `python exa
 | Name | Type | Description | Default Value |
 | ---- | ---- | ----------- | ------------- |
 | `bag_rollover_time` | int | The length of time in seconds to be recorded per bag file | 30 |
-| `max_record_time` | int | The length of time recordings should be kept in rosbags (older rosbags will be deleted) and uploaded when requested | 300 |
+| `max_record_time` | int | The length of time recordings should be kept in rosbags, which will be uploaded when requested (older rosbags will have been deleted and not be uploaded) | 300 |
 | `min_free_disk_space` | int | The minimum amount of free disk space in MiB (the node will error out when the free disk space falls below this amount) | 1024 |
 | `topics_to_record` (configuration file parameter only) | string[] | List of topics that should be recorded to rosbags | *empty* (all active topics will be recorded) |
 | `write_directory` | string | The local directory where rosbags will be recorded (please make sure it is a writeable directory) | ~/.ros/rr_rosbag_uploader/ |
