@@ -89,7 +89,9 @@ private:
     std::vector<std::string> rosbags_to_upload = Utils::GetRosbagsToUpload(req.rolling_recorder_options.write_directory,
       [time_of_goal_received](rosbag::View& rosbag) -> bool
       {
-        return time_of_goal_received >= rosbag.getBeginTime();
+        auto rosbag_begin_time = rosbag.getBeginTime();
+        AWS_LOG_INFO("ProcessRollingRecorderGoal", "Comparing: time_of_goal_received: [%u, %u], rosbag_begin_time: [%u, %u]", time_of_goal_received.sec, time_of_goal_received.nsec, rosbag_begin_time.sec, rosbag_begin_time.nsec);
+        return time_of_goal_received >= rosbag_begin_time;
       }
     );
 

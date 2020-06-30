@@ -54,16 +54,15 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
     def tearDown(self):
-       # print("=======================")
-        super(TestRollingRecorderUploadOnGoal, self).setUp()
-        #self.s3_client.delete_all_objects(self.s3_bucket_name)
-        #self.s3_client.delete_bucket(self.s3_bucket_name)
+        super(TestRollingRecorderUploadOnGoal, self).tearDown()
+        # self.s3_client.delete_all_objects(self.s3_bucket_name)
+        # self.s3_client.delete_bucket(self.s3_bucket_name)
 
-    #def test_record_upload(self):
-     #   self.total_test_messages = 10
+    # def test_record_upload(self):
+    #     self.total_test_messages = 10
 
-      #  start_time, s3_destination = self.run_rolling_recorder()
-       # self.send_rolling_recorder_upload_goal(s3_destination, start_time)
+    #     start_time, s3_destination = self.run_rolling_recorder()
+    #     self.send_rolling_recorder_upload_goal(s3_destination, start_time)
 
     def test_record_upload_multiple_times(self):
         self.total_test_messages = 10
@@ -81,7 +80,7 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
     def run_rolling_recorder(self):
         # Find start time of active file
         active_rosbag = self.get_latest_bag_by_regex("*.bag.active")
-        rospy.loginfo("Active rosbag: %s" % active_rosbag)
+        rospy.loginfo("++++++++++Active rosbag: %s" % active_rosbag)
         active_rosbag_start_time = os.path.getctime(active_rosbag)
         print("Active rollback time" + str(active_rosbag_start_time))
         start_time = rospy.Time.from_sec(math.floor(active_rosbag_start_time))
@@ -131,14 +130,16 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
 
     def send_rolling_recorder_upload_goal(self, s3_destination, start_time):
         latest_bag = self.get_latest_bag_by_regex("*.bag")
-        print(latest_bag)
-        print("++++++++++++++")
+
+        local_bag = rosbag.Bag(latest_bag)
+        total_bag_messages = 0
+        for _, msg, _ in local_bag.read_messages():
+            total_bag_messages += 1
+        self.assertEquals(total_bag_messages, self.total_test_messages)
+
+        rospy.loginfo("++++++++++Latest rosbag: %s" % latest_bag)
         end_time = rospy.Time.now()
-        goal = RollingRecorderGoal(
-            destination=s3_destination,
-            start_time=start_time,
-            end_time=end_time
-        )
+        goal = RollingRecorderGoal(destination=s3_destination)
        # time.sleep(0.1)
         print("the goal" + str(goal))
         print(self.action_client.send_goal(goal))
@@ -156,17 +157,16 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
             print("The bucket name" + self.s3_bucket_name)
             print("the s3 Key" + s3_key)
             self.s3_client.download_file(self.s3_bucket_name, s3_key, f.name)
-            bag = rosbag.Bag(f.name)
+            remote_bag = rosbag.Bag(f.name)
             print("=======================")
-            print(bag)
+            print(remote_bag)
             print("=======================")
             total_bag_messages = 0
-            for _, msg, _ in bag.read_messages():
+            for _, msg, _ in remote_bag.read_messages():
                 print("=======================")
                 print(total_bag_messages)
                 print("=======================")
                 total_bag_messages += 1
-            
             self.assertEquals(total_bag_messages, self.total_test_messages)
 
 if __name__ == '__main__':
