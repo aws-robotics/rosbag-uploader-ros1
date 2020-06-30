@@ -49,13 +49,13 @@ private:
   static bool ValidateGoal(GoalHandleT& goal_handle)
   {
     const auto & goal = goal_handle.getGoal();
-    std::stringstream msg;
-    recorder_msgs::DurationRecorderResult result;
-    result.result.result = recorder_msgs::RecorderResult::INVALID_INPUT;
     if (goal->duration <= ros::Duration(0) || goal->duration > ros::DURATION_MAX) {
+      std::stringstream msg;
       msg << "Goal rejected. Invalid record duration given: " << goal->duration;
-      AWS_LOG_INFO(__func__, msg.str().c_str());
-      goal_handle.setRejected(result, msg.str());
+      recorder_msgs::DurationRecorderResult result;
+      Utils::GenerateResult(recorder_msgs::RecorderResult::INVALID_INPUT, msg.str(), result);
+      goal_handle.setRejected(result, result.result.message);
+      AWS_LOG_INFO(__func__, result.result.message.c_str());
       return false;
     }
     return true;
@@ -73,9 +73,9 @@ public:
 
     AWS_LOG_INFO(__func__, "Goal received");
     if (rosbag_recorder.IsActive()) {
-      std::string msg = "Rejecting goal since recorder already active";
+      const std::string msg = "Rejecting goal since recorder already active";
       recorder_msgs::DurationRecorderResult result;
-      result.result.result = recorder_msgs::RecorderResult::INTERNAL_ERROR;
+      Utils::GenerateResult(recorder_msgs::RecorderResult::INTERNAL_ERROR, msg, result);
       goal_handle.setRejected(result, msg);
       AWS_LOG_INFO(__func__, msg.c_str());
       return;
@@ -105,6 +105,7 @@ public:
       {
         goal_handle.setAccepted();
         AWS_LOG_INFO(current_function, "Goal accepted");
+
         recorder_msgs::DurationRecorderFeedback recorder_feedback;
         recorder_msgs::RecorderStatus recording_status;
         Utils::GenerateFeedback(
@@ -118,10 +119,21 @@ public:
       {
         recorder_msgs::DurationRecorderResult result;
         if (exit_code != 0) {
+          const std::string msg = "Rosbag recorder encountered errors.";
+          Utils::GenerateResult(recorder_msgs::RecorderResult::INTERNAL_ERROR, msg, result);
+          goal_handle.setAborted(result, msg);
           AWS_LOG_INFO(current_function, "Recorder finished with non zero exit code, aborting goal");
-          goal_handle.setAborted(result, "Rosbag recorder encountered errors.");
           return;
         }
+
+        recorder_msgs::DurationRecorderFeedback recorder_feedback;
+        recorder_msgs::RecorderStatus recording_status;
+        Utils::GenerateFeedback(
+          recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+          ros::Time::now(),
+          recorder_feedback,
+          recording_status);
+        goal_handle.publishFeedback(recorder_feedback);
         std::vector<std::string> ros_bags_to_upload = Utils::GetRosbagsToUpload(duration_recorder_options.write_directory,
           [time_of_goal_received](rosbag::View& rosbag) -> bool
           {
@@ -130,10 +142,18 @@ public:
             return time_of_goal_received < rosbag.getBeginTime();
           }
         );
+
         bool upload_finished = Utils::UploadFiles(goal_handle, duration_recorder_options.upload_timeout_s, upload_client, ros_bags_to_upload);
+
         Utils::HandleRecorderUploadResult(goal_handle, upload_client.getState(), upload_finished, result);
-        
+
         if (duration_recorder_options.delete_bags_after_upload) {
+          Utils::GenerateFeedback(
+            recorder_msgs::RecorderStatus::CLEANUP,
+            ros::Time::now(),
+            recorder_feedback,
+            recording_status);
+          goal_handle.publishFeedback(recorder_feedback);
           for (const std::string & bag_file_name : upload_client.getResult()->files_uploaded) {
             AWS_LOG_INFO(current_function, "Bag file named: %s was uploaded to S3 and is now being deleted locally.", bag_file_name.c_str());
             Utils::DeleteFile(bag_file_name);

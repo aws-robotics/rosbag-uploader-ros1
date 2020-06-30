@@ -39,13 +39,14 @@
 
 using namespace Aws::Rosbag;
 
-using ::testing::Return;
 using ::testing::_;
-using ::testing::Field;
-using ::testing::Property;
-using ::testing::ReturnRef;
 using ::testing::Const;
 using ::testing::Eq;
+using ::testing::Field;
+using ::testing::InSequence;
+using ::testing::Property;
+using ::testing::Return;
+using ::testing::ReturnRef;
 
 MATCHER_P(FeedbackHasStatus, expected_status, "") {
   return expected_status == arg.status.stage;
@@ -345,10 +346,12 @@ public:
     EXPECT_CALL(*server_goal_handle, setAborted(_, _));
   }
 
-  void assertPublishFeedback()
+  void assertPublishFeedback(const std::initializer_list<int> & statuses)
   {
-    recorder_msgs::DurationRecorderFeedback feedback;
-    EXPECT_CALL(*server_goal_handle, publishFeedback(FeedbackHasStatus(recorder_msgs::RecorderStatus::RECORDING)));
+    InSequence s;
+    for (const auto status : statuses) {
+      EXPECT_CALL(*server_goal_handle, publishFeedback(FeedbackHasStatus(status)));
+    }
   }
 
   void assertRecorderRunWithExpectedOptions()
@@ -379,7 +382,10 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderStartSuccee
   givenUploadSucceeds();
   assertGoalIsAccepted();
   assertUploadGoalIsSent();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::RECORDING,
+                         recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE});
   assertGoalIsSuccess();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
@@ -395,7 +401,10 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderRecordSucce
   givenUploadFails();
   assertGoalIsAccepted();
   assertUploadGoalIsSent();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::RECORDING,
+                         recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE});
   assertGoalIsAborted();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
@@ -409,7 +418,7 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderFailed)
   givenDurationRecorderGoal();
   givenRecorderRanUnSuccessfully();
   assertGoalIsAccepted();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::RECORDING});
   assertGoalIsAborted();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
@@ -434,7 +443,10 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderEmptyTopics
   givenUploadSucceeds();
   assertGoalIsAccepted();
   assertUploadGoalIsSent();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::RECORDING,
+                         recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE});
   assertGoalIsSuccess();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);
@@ -452,7 +464,11 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderDeletesFile
   givenDeleteBagAfterUpload(result);
   assertGoalIsAccepted();
   assertUploadGoalIsSent();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::RECORDING,
+                         recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE,
+                         recorder_msgs::RecorderStatus::CLEANUP});
   assertGoalIsSuccess();
   assertBagFileCreated(boost::filesystem::path(bag_file_path));
 
@@ -491,7 +507,10 @@ TEST_F(DurationRecorderActionServerHandlerTests, TestDurationRecorderUploadTimed
   givenUploadTimesOut();
   assertGoalIsAccepted();
   assertUploadGoalIsSent();
-  assertPublishFeedback();
+  assertPublishFeedback({recorder_msgs::RecorderStatus::RECORDING,
+                         recorder_msgs::RecorderStatus::PREPARING_UPLOAD,
+                         recorder_msgs::RecorderStatus::UPLOADING,
+                         recorder_msgs::RecorderStatus::COMPLETE});
   assertGoalIsAborted();
   DurationRecorderActionServerHandler<MockServerGoalHandle, MockS3UploadClient>::DurationRecorderStart(
     *rosbag_recorder, duration_recorder_options, s3_upload_client, server_goal_handle);

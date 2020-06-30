@@ -1,18 +1,22 @@
 <launch>
+    <!-- If a node config file argument is provided by the caller we will load it instead of the example config -->
+    <arg name="node_config_file" default="$(find rosbag_cloud_recorders)/config/duration_recorder_sample_configuration.yaml" />
+
     <!-- Directory where rosbags will be written.
          Defaults to ~/.ros/dr_rosbag_uploader/ -->
     <arg name="write_directory" default="~/.ros/dr_rosbag_uploader/" />
-    
+
     <!-- Time in seconds to wait for uploader node. Timeouts <= 0 are treated as infinite -->
     <arg name="upload_timeout" default="3600" />
-    
+
     <!-- The boolean value for having the action server to delete bag files after
          they have been successfully uploaded to S3.
          The default value is false, i.e. bags will not be deleted after they have
          been uploaded. -->
     <arg name="delete_bags_after_upload" default='false' />
-    
+
     <node name="duration_recorder" pkg="rosbag_cloud_recorders" type="duration_recorder" output="screen">
+      <rosparam command="load" file="$(arg node_config_file)" />
       <param name="write_directory" value="$(arg write_directory)"/>
       <param name="upload_timeout" value="$(arg upload_timeout)"/>
       <param name="delete_bags_after_upload" value="$(arg delete_bags_after_upload)"/>
