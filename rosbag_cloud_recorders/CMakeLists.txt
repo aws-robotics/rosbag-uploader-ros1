@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 14)
 include(CheckCXXCompilerFlag)
 # Removed -Wmissing-declarations until gmock is ignored
 # Removed -Werror=pedantic until ros.h is fixed
-set(FLAGS -Wno-long-long -Wall -Wextra -Wcast-align -Wformat -Wwrite-strings)
+set(FLAGS -Wno-long-long -Wall -Wextra -Wcast-align -Wformat -Wwrite-strings -Wno-error=unused-result)
 foreach(FLAG ${FLAGS})
   check_cxx_compiler_flag(${FLAG} R${FLAG})
   if(${R${FLAG}})
