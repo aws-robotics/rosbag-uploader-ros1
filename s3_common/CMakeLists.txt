@@ -22,6 +22,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_CXX_FLAGS}")
 
+find_package(Boost REQUIRED)
 find_package(aws_common REQUIRED)
 
 if(AWSSDK_FOUND)
@@ -42,10 +43,12 @@ add_library(${PROJECT_NAME} SHARED
 
 target_link_libraries(${PROJECT_NAME} 
   ${AWS_LINK_LIBS}
-  ${aws_common_LIBRARIES})
+  ${aws_common_LIBRARIES}
+  ${Boost_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME}
   PRIVATE
+  ${Boost_INCLUDE_DIRS}
   ${AWSSDK_INCLUDE_DIRS}
   ${aws_common_INCLUDE_DIRS})
 

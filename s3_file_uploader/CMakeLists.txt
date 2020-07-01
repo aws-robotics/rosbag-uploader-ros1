@@ -31,6 +31,8 @@ find_package(catkin REQUIRED COMPONENTS
     s3_common
 )
 
+find_package(Boost REQUIRED)
+
 if(AWSSDK_FOUND)
   set(SERVICE s3)
   AWSSDK_DETERMINE_LIBS_TO_LINK(SERVICE AWS_LINK_LIBS)
@@ -43,6 +45,7 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${S3_UPLOADER_LIB_TARGET}
     CATKIN_DEPENDS actionlib actionlib_msgs aws_ros1_common file_uploader_msgs roscpp
+    DEPENDS Boost
 )
 
 ###########
@@ -116,10 +119,12 @@ if(CATKIN_ENABLE_TESTING)
     set(TEST_INCLUDE_DIRS
       ${catkin_INCLUDE_DIRS}
       ${s3_file_uploader_INCLUDE_DIRS}
+      ${Boost_INCLUDE_DIRS}
     )
     set(TEST_LINK_LIBS
       ${S3_UPLOADER_LIB_TARGET}
       ${catkin_LIBRARIES}
+      ${Boost_LIBRARIES}
     )
 
     find_package(rostest REQUIRED)
@@ -149,7 +154,7 @@ if(CATKIN_ENABLE_TESTING)
           ${PROJECT_NAME}_libgmock
         )
     endif()
-    
+
     find_common_test_packages()
     add_common_gtest(test_action_server_handler
       test/s3_file_uploader_action_server_handler_test.cpp
