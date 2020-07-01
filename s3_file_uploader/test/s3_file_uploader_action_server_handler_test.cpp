@@ -20,15 +20,13 @@
 
 #include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
+#include <boost/shared_ptr.hpp>
+
 #include <file_uploader_msgs/UploadFilesAction.h>
 #include <file_uploader_msgs/UploadFilesActionGoal.h>
 #include <file_uploader_msgs/UploadFilesGoal.h>
-
-#include <s3_file_uploader/s3_file_uploader_action_server_handler.h>
 #include <s3_common/s3_upload_manager.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/ref.hpp>
+#include <s3_file_uploader/s3_file_uploader_action_server_handler.h>
 
 #include <ros/ros.h>
 

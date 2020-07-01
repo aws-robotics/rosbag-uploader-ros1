@@ -15,6 +15,7 @@
   <depend>actionlib_msgs</depend>
   <depend>aws_common</depend>
   <depend>aws_ros1_common</depend>
+  <depend>boost</depend>
   <depend>file_uploader_msgs</depend>
   <depend>roscpp</depend>
   <depend>s3_common</depend>

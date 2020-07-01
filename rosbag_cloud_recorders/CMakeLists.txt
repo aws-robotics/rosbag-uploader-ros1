@@ -45,6 +45,7 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}_lib
     CATKIN_DEPENDS actionlib actionlib_msgs recorder_msgs roscpp file_uploader_msgs ${ROSBAG_RECORDER_DEPS}
+    DEPENDS Boost
 )
 
 ###########
@@ -69,7 +70,11 @@ add_library(${PROJECT_NAME}_lib
     src/utils/recorder.cpp
     src/utils/s3_client_utils.cpp
 )
-target_include_directories(${PROJECT_NAME}_lib PUBLIC include ${catkin_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME}_lib PUBLIC
+    include
+    ${Boost_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
+)
 target_link_libraries(${PROJECT_NAME}_lib
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}
