@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>s3_file_uploader</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>Package with a node that facilitates the uploading of files to Amazon S3</description>
 
   <author email="ros-contributions@amazon.com">AWS RoboMaker</author>

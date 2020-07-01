@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>rosbag_cloud_recorders</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>Package with nodes that facilitate the recording of rosbag files</description>
 
   <author email="ros-contributions@amazon.com">AWS RoboMaker</author>

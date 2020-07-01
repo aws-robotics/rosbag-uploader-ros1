@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag_uploader_ros1_integration_tests</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>End to end tests for rosbag-uploader-ros1 cloud extension package.</description>
 
   <author email="ros-contributions@amazon.com">AWS RoboMaker</author>
