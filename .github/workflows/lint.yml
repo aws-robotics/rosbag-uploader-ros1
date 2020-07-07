@@ -6,7 +6,7 @@ jobs:
   ament_lint:
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-melodic-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ros-tooling/action-ros-lint@0.0.6
         with:
+          distribution: foxy
           linter: ${{ matrix.linter }}
           package-name: |
             rosbag_cloud_recorders
