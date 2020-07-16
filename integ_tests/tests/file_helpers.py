@@ -38,7 +38,11 @@ def create_large_temp_file(file_size_in_mb):
     return temp_file.name
 
 def get_latest_bag_by_regex(directory, regex_pattern):
-    return get_latest_bags_by_regex(directory, regex_pattern, 1)[0]
+    bags_list = get_latest_bags_by_regex(directory, regex_pattern, 1)
+    if bags_list:
+        return bags_list[0]
+    else:
+        return (None, None)
 
 def get_latest_bags_by_regex(directory, regex_pattern, count=None):
     while True:

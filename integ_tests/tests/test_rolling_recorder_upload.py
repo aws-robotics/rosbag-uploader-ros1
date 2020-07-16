@@ -77,7 +77,10 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
             # Find start time of active file
             (active_rosbag, active_rosbag_start_time) = self.get_latest_bag_by_regex('*.bag.active')
             rospy.loginfo('Active rosbag: %s' % active_rosbag)
-            start_time = rospy.Time.from_sec(math.floor(active_rosbag_start_time))
+            if active_rosbag == None:
+                # give a bit of time for bag rotation to occur
+                time.sleep(0.01 * self.bag_rollover_time)
+                continue
 
             # Calculate time active bag will roll over
             bag_finish_time = active_rosbag_start_time + self.bag_rollover_time
