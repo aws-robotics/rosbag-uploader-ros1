@@ -41,10 +41,17 @@ def get_latest_bag_by_regex(directory, regex_pattern):
     return get_latest_bags_by_regex(directory, regex_pattern, 1)[0]
 
 def get_latest_bags_by_regex(directory, regex_pattern, count=None):
-    files = glob.iglob(os.path.join(directory, regex_pattern))
-    paths = [os.path.join(directory, filename) for filename in files]
-    paths.sort(key=os.path.getctime, reverse=True)
+    while True:
+        files = glob.iglob(os.path.join(directory, regex_pattern))
+        paths = [os.path.join(directory, filename) for filename in files]
+        try:
+            times = [os.path.getctime(path) for path in paths]
+        except OSError:
+            continue
+        break
+    entries = zip(paths, times)
+    entries.sort(key=lambda x: x[1], reverse=True)
     if count is None:
-        return paths
+        return entries
     else:
-        return paths[:count]
+        return entries[:count]

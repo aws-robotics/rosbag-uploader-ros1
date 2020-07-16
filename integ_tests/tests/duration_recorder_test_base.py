@@ -77,13 +77,12 @@ class DurationRecorderTestBase(unittest.TestCase):
         latest_bags = self.get_latest_bags_by_regex("*.bag", total_bags)
         total_bags_found = len(latest_bags)
         self.assertEquals(total_bags_found, total_bags, "Expected %d bags but only found %d" % (total_bags, total_bags_found))
-        for bag_path in latest_bags:
-            bag_create_time = os.path.getctime(bag_path)
+        for (bag_path, bag_create_time) in latest_bags:
             self.assertGreater(bag_create_time, start_time)
 
     def delete_all_rosbags(self):
         all_bags = get_latest_bags_by_regex(self.rosbag_directory, "*.bag")
-        for bag_path in all_bags:
+        for (bag_path, _) in all_bags:
             os.remove(bag_path)
 
     def get_latest_bag_by_regex(self, regex_pattern):
