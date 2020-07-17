@@ -54,7 +54,7 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
     def tearDown(self):
-        super(TestRollingRecorderUploadOnGoal, self).setUp()
+        super(TestRollingRecorderUploadOnGoal, self).tearDown()
         self.s3_client.delete_all_objects(self.s3_bucket_name)
         self.s3_client.delete_bucket(self.s3_bucket_name)
 
@@ -135,8 +135,12 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         result = self.action_client.get_result()
         self.assertEquals(result.result.result, RESULT_SUCCESS)
 
+        # wait for freshly uploaded file to become available for download from S3
+        time.sleep(1.0)
+
         s3_key = os.path.join(s3_destination, os.path.basename(bag_name))
         with tempfile.NamedTemporaryFile() as f:
+            rospy.loginfo('Downloading "%s" from S3' % s3_key)
             self.s3_client.download_file(self.s3_bucket_name, s3_key, f.name)
             bag = rosbag.Bag(f.name)
             total_bag_messages = 0

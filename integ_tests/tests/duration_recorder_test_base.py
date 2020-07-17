@@ -13,6 +13,7 @@
 # permissions and limitations under the License.
 
 import os
+import shutil
 import sys
 import unittest
 
@@ -34,23 +35,21 @@ class DurationRecorderTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rospy.init_node(TEST_NODE_NAME, log_level=rospy.DEBUG)
-        s3_region = rospy.get_param('/s3_file_uploader/aws_client_configuration/region')
-        s3 = S3Client(s3_region)
-        s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
-        s3.create_bucket(s3_bucket_name)
-        s3.wait_for_bucket_create(s3_bucket_name)
+        cls.s3_region = rospy.get_param('/s3_file_uploader/aws_client_configuration/region')
+        cls.s3 = S3Client(cls.s3_region)
+        cls.s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
+        cls.s3.create_bucket(cls.s3_bucket_name)
+        cls.s3.wait_for_bucket_create(cls.s3_bucket_name)
+        cls.rosbag_directory = os.path.expanduser(rospy.get_param('~write_directory'))
 
     @classmethod
     def tearDownClass(cls):
-        s3_region = rospy.get_param('/s3_file_uploader/aws_client_configuration/region')
-        s3 = S3Client(s3_region)
-        s3_bucket_name = rospy.get_param('/s3_file_uploader/s3_bucket')
-        s3.delete_all_objects(s3_bucket_name)
-        s3.delete_bucket(s3_bucket_name)
+        cls.s3.delete_all_objects(cls.s3_bucket_name)
+        cls.s3.delete_bucket(cls.s3_bucket_name)
+        shutil.rmtree(cls.rosbag_directory)
 
     def setUp(self):
         self.action_client = self._create_duration_recorder_action_client()
-        self.rosbag_directory = os.path.expanduser(rospy.get_param('~write_directory'))
 
     def tearDown(self):
         self.delete_all_rosbags()
