@@ -50,7 +50,7 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         self.wait_for_rolling_recorder_nodes()
         # Create publishers 
         self.topic_to_record = rospy.get_param('~topic_to_record')
-        self.test_publisher = rospy.Publisher(self.topic_to_record, String, queue_size=10)
+        self.test_publisher = rospy.Publisher(self.topic_to_record, String, queue_size=None)
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
     def tearDown(self):
@@ -61,31 +61,31 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
     def test_record_upload(self):
         self.total_test_messages = 10
 
-        (bag_name, s3_destination) = self.run_rolling_recorder()
-        self.send_rolling_recorder_upload_goal(bag_name, s3_destination)
+        (bag_name, expected_test_messages, s3_destination) = self.run_rolling_recorder()
+        self.send_rolling_recorder_upload_goal(bag_name, expected_test_messages, s3_destination)
 
     def test_record_upload_multiple_times(self):
         self.total_test_messages = 10
         total_record_upload_attempts = 10
 
         for _ in range(total_record_upload_attempts):
-            (bag_name, s3_destination) = self.run_rolling_recorder()
-            self.send_rolling_recorder_upload_goal(bag_name, s3_destination)
+            (bag_name, expected_test_messages, s3_destination) = self.run_rolling_recorder()
+            self.send_rolling_recorder_upload_goal(bag_name, expected_test_messages, s3_destination)
 
-    def _assert_bag_has_expected_messages(self, bag_file_path):
+    def _assert_bag_has_expected_messages(self, bag_file_path, expected_test_messages):
         bag = rosbag.Bag(bag_file_path)
         total_bag_messages = 0
         for _, msg, _ in bag.read_messages():
             total_bag_messages += 1
-        self.assertEquals(total_bag_messages, self.total_test_messages)
+        self.assertGreaterEqual(total_bag_messages, expected_test_messages)
 
     def run_rolling_recorder(self):
         while True:
-            # Find start time of active file
+            # Find start time of the currently active rosbag
             (active_rosbag, active_rosbag_start_time) = self.get_latest_bag_by_regex('*.bag.active')
             rospy.loginfo('Active rosbag: %s' % active_rosbag)
             if active_rosbag == None:
-                # give a bit of time for bag rotation to occur
+                # this means in the middle of bag rotation, give a bit of time for bag rotation to occur
                 time.sleep(0.01 * self.bag_rollover_time)
                 continue
 
@@ -103,23 +103,27 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
                 time.sleep(bag_finish_time_remaining)
 
         # Emit some data to the test topic
-        sleep_between_message = (bag_finish_time_remaining * 0.5)  / self.total_test_messages
-        rospy.loginfo('Sleep between messages: %f' % sleep_between_message)
-        for x in range(self.total_test_messages):
+        max_test_messages_per_bag = 10
+        num_test_messages = 0
+        for x in range(max_test_messages_per_bag):
             self.test_publisher.publish('Test message %d' % x)
-            time.sleep(sleep_between_message)
+            if time.time() < bag_finish_time:
+                num_test_messages += 1
+            else:
+                break
+        rospy.loginfo('Number of messages sent to bag recorder: %f' % num_test_messages)
 
-        # Wait for current bag to finish recording and roll over
+        # Wait for current bag to finish recording and roll over,
+        # so that the bag that received the test messages is ready for upload
         bag_finish_time_remaining = bag_finish_time - time.time()
         rospy.loginfo('Bag finish time remaining after publish: %f' % bag_finish_time_remaining)
-
-        # wait for bag to rotation to occur, so that the bag that received the test messages is ready for upload
+        time.sleep(bag_finish_time_remaining)
         while True:
-            time.sleep(0.05 * self.bag_rollover_time)
             (latest_bag, _) = self.get_latest_bag_by_regex('*.bag')
             if latest_bag == active_rosbag[:-len('.active')]:
                 break
-        self._assert_bag_has_expected_messages(latest_bag)
+            time.sleep(0.05 * self.bag_rollover_time)
+        self._assert_bag_has_expected_messages(latest_bag, num_test_messages)
 
         # Send a goal to upload the bag data to S3
         # Create an Action client to send the goal
@@ -132,9 +136,9 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         s3_subfolder = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(8)])  
         s3_destination = os.path.join(s3_folder, s3_subfolder)
 
-        return (latest_bag, s3_destination)
+        return (latest_bag, num_test_messages, s3_destination)
 
-    def send_rolling_recorder_upload_goal(self, bag_name, s3_destination):
+    def send_rolling_recorder_upload_goal(self, bag_name, expected_test_messages, s3_destination):
         end_time = rospy.Time.now()
         goal = RollingRecorderGoal(destination=s3_destination)
         self.action_client.send_goal(goal)
@@ -143,14 +147,11 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         result = self.action_client.get_result()
         self.assertEquals(result.result.result, RESULT_SUCCESS)
 
-        # wait for freshly uploaded file to become available for download from S3
-        time.sleep(1.0)
-
         s3_key = os.path.join(s3_destination, os.path.basename(bag_name))
         with tempfile.NamedTemporaryFile() as f:
             rospy.loginfo('Downloading "%s" from S3' % s3_key)
             self.s3_client.download_file(self.s3_bucket_name, s3_key, f.name)
-            self._assert_bag_has_expected_messages(f.name)
+            self._assert_bag_has_expected_messages(f.name, expected_test_messages)
 
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestRollingRecorderUploadOnGoal, sys.argv)
