@@ -143,6 +143,9 @@ class TestRollingRecorderUploadOnGoal(RollingRecorderTestBase):
         result = self.action_client.get_result()
         self.assertEquals(result.result.result, RESULT_SUCCESS)
 
+        # wait for freshly uploaded file to become available for download from S3
+        time.sleep(1.0)
+
         s3_key = os.path.join(s3_destination, os.path.basename(bag_name))
         with tempfile.NamedTemporaryFile() as f:
             rospy.loginfo('Downloading "%s" from S3' % s3_key)
