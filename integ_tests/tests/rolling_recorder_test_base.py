@@ -61,6 +61,8 @@ class RollingRecorderTestBase(unittest.TestCase):
 
     def wait_for_rolling_recorder_node_to_subscribe_to_topic(self):
         rostopic.wait_for_subscriber(self.test_publisher, ROLLING_RECORDER_NODE_START_TIMEOUT)
+        # https://answers.ros.org/question/251194/rospy-subscriber-needs-sleep-some-time-until-the-first-message-is-received/
+        rospy.sleep(0.5)
 
     def delete_all_rosbags(self):
         all_bags = get_latest_bags_by_regex(self.rosbag_directory, "*.bag")
