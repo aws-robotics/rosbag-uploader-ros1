@@ -34,22 +34,34 @@ async function loadEnvVariables(envVars:any, command:string) {
       }
     }
   };
-  
   await exec.exec("bash", ["-c", command], options);
 }
 
 async function setup() {
   try {
     const workspaceDir = core.getInput('workspace-dir');
+    // NOTE: This is a kludge to just get newer versions of the library for this integration test.
+    // We need SigV4 just for this test for internal reasons,
+    // but the APT versions on Ubuntu Xenial are not new enough to fully support it
+    if (ROS_DISTRO == "kinetic") {
+      // Remove the APT version of boto
+      await exec.exec("sudo", ["apt-get", "remove", "--yes", "python-boto3", "python-botocore"]);
+      // Make sure we have pip
+      await exec.exec("sudo", ["apt-get", "install", "--yes", "--no-install-recommends", "--quiet", "python-pip"]);
+      // Install the newer version of the library
+      await exec.exec("pip", ["install", "boto3"])
+    }
+
+
     await loadEnvVariables(ROS_ENV_VARIABLES, `source /opt/ros/${ROS_DISTRO}/setup.bash && printenv`);
-    await loadEnvVariables(INSTALL_ENV_VARS, `source ${workspaceDir}/install/setup.bash && printenv`);  
+    await loadEnvVariables(INSTALL_ENV_VARS, `source ${workspaceDir}/install/setup.bash && printenv`);
   } catch(error) {
     core.setFailed(error.message);
   }
 }
 
 async function rostest() {
-  try {  
+  try {
     const integTestPkgName = core.getInput('integ-test-package-name', {required: true});
     const integTestLaunchFilesString = core.getInput('integ-test-launch-files', {required: true});
     const integTestLaunchFiles = integTestLaunchFilesString.split("\n");
