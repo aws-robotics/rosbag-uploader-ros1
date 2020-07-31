@@ -45,9 +45,9 @@ async function setup() {
     // but the APT versions on Ubuntu Xenial are not new enough to fully support it
     if (ROS_DISTRO == "kinetic") {
       // Remove the APT version of boto
-      await exec.exec("apt-get", ["remove", "--yes", "python-boto3", "python-botocore"]);
+      await exec.exec("sudo", ["apt-get", "remove", "--yes", "python-boto3", "python-botocore"]);
       // Make sure we have pip
-      await exec.exec("apt-get", ["install", "--yes", "--no-install-recommends", "--quiet", "python-pip"]);
+      await exec.exec("sudo", ["apt-get", "install", "--yes", "--no-install-recommends", "--quiet", "python-pip"]);
       // Install the newer version of the library
       await exec.exec("pip", ["install", "boto3"])
     }
