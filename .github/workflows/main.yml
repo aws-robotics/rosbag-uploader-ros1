@@ -76,7 +76,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: coverage.info
         flags: ${{ matrix.ros_distro }},ROS_1
-        fail_ci_if_error: true
+        fail_ci_if_error: false
     - name: Upload Coverage
       uses: actions/upload-artifact@v2.0.1
       with:
