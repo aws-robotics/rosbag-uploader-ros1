@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/aws-robotics/action-clang-tidy.git#issues",
   "dependencies": {
-    "@actions/core": "^1.2.0",
+    "@actions/core": "^1.2.6",
     "@actions/exec": "^1.0.1"
   },
   "devDependencies": {
