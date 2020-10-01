@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/aws-robotics/action-ros1-ci.git#readme",
   "dependencies": {
-    "@actions/core": "^1.2.0",
+    "@actions/core": "^1.2.6",
     "@actions/exec": "^1.0.1",
     "@actions/github": "^1.0.1"
   },
