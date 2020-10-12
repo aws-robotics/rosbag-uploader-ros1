@@ -115,9 +115,9 @@ jobs:
     - name: Log Build Status
       uses: ros-tooling/action-cloudwatch-metrics@0.0.4
       with:
-        metric-value: ${{ ! contains(needs.build_and_test.outputs.build_result, 'failure') }}
+        metric-value: ${{ ! contains(join(needs.*.result, ''), 'failure') && ! contains(join(needs.*.result, ''), 'cancelled') }}
     - name: Log Integration Test Status
       uses: ros-tooling/action-cloudwatch-metrics@0.0.4
       with:
         namespace: IntegrationTests
-        metric-value: ${{ ! contains(needs.build_and_test.outputs.test_result, 'failure') }}
+        metric-value: ${{ ! contains(join(needs.*.result, ''), 'failure') && ! contains(join(needs.*.result, ''), 'cancelled') }}
