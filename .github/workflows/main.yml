@@ -26,12 +26,12 @@ jobs:
       build_result: ${{ steps.build.outcome }}
       test_result: ${{ steps.test.outcome }}
     steps:
+    - name: setup-ros-docker workaround
+      run:  sudo chown -R rosbuild:rosbuild "$HOME" .
     - name: Setup Build Environment 
       env:
         ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
       run: |
-        # TODO(setup-ros-docker#7): calling chown is necessary for now
-        sudo chown -R rosbuild:rosbuild "$HOME" .
         # this gives action-ros-ci access to private repos
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
