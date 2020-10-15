@@ -1,0 +1,55 @@
+name: Build & Test release-latest
+on:
+  schedule:
+    # Run every hour. This helps detect flakiness,
+    # and broken external dependencies.
+    - cron:  '0 * * * *'
+
+jobs:
+  build_and_test_release_latest:
+    name: Build and Test Release Latest ROS ${{ matrix.ros_version }} ${{ matrix.ros_distro }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro: [kinetic, melodic, dashing]
+        include:
+        - ros_distro: kinetic
+          ubuntu_distro: xenial
+          ros_version: 1
+          extra_cmake_args: --cmake-target tests
+        - ros_distro: melodic
+          ubuntu_distro: bionic
+          ros_version: 1
+          extra_cmake_args: --cmake-target tests
+        - ros_distro: dashing
+          ubuntu_distro: bionic
+          ros_version: 2
+          extra_cmake_args: ""
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
+    outputs:
+      build_result: ${{ steps.build.outcome }}
+      test_result: ${{ steps.test.outcome }}
+    steps:
+    # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - run: sudo chown -R rosbuild:rosbuild "$HOME" .
+    # Needed for the CMakeLists.txt setup
+    - run: export ROS_DISTRO=${{ matrix.ros_distro }}
+    # Needed for the CMakeLists.txt setup
+    - run: export ROS_VERSION=${{ matrix.ros_version }}
+    # Needed to access the vcs repos file from the workspace
+    - name: Checkout source
+      uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-ci@0.0.17
+      with:
+        source-ros-binary-installation: ${{ matrix.ros_distro }}
+        package-name: aws_common
+        extra-cmake-args: ${{ matrix.extra_cmake_args }}
+        # schedule runs against the default branch (master), so specify release-latest via repos file
+        vcs-repo-file-url: "${{ github.workspace }}/.github/workflows/release_latest.repos"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: colcon-logs-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}
+        path: ros_ws/log
+

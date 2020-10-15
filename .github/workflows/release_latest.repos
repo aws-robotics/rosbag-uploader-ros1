@@ -1,0 +1,5 @@
+repositories:
+  rosbag-uploader-ros1
+    type: git
+    url: https://github.com/aws-robotics/rosbag-uploader-ros1
+    version: release-latest
