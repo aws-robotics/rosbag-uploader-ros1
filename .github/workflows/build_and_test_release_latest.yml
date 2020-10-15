@@ -1,5 +1,9 @@
 name: Build & Test release-latest
 on:
+  pull_request:
+  push:
+    branches:
+      - master
   schedule:
     # Run every hour. This helps detect flakiness,
     # and broken external dependencies.
