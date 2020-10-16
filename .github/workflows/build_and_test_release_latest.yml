@@ -32,9 +32,6 @@ jobs:
           extra_cmake_args: ""
     container:
       image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
-    outputs:
-      build_result: ${{ steps.build.outcome }}
-      test_result: ${{ steps.test.outcome }}
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
