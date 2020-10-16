@@ -48,7 +48,7 @@ jobs:
     - uses: ros-tooling/action-ros-ci@0.0.17
       with:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
-        package-name: aws_common
+        package-name: file_uploader_msgs rosbag_cloud_recorders recorder_msgs rosbag_uploader_ros1_integration_tests s3_common s3_file_uploader
         extra-cmake-args: ${{ matrix.extra_cmake_args }}
         # schedule runs against the default branch (master), so specify release-latest via repos file
         vcs-repo-file-url: "${{ github.workspace }}/.github/workflows/release_latest.repos"
