@@ -20,10 +20,8 @@ jobs:
         include:
         - ros_distro: kinetic
           ubuntu_distro: xenial
-          extra_cmake_args: --cmake-target tests
         - ros_distro: melodic
           ubuntu_distro: bionic
-          extra_cmake_args: --cmake-target tests
     container:
       image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
     env:
@@ -42,7 +40,6 @@ jobs:
       with:
         source-ros-binary-installation: ${{ matrix.ros_distro }}
         package-name: file_uploader_msgs rosbag_cloud_recorders recorder_msgs rosbag_uploader_ros1_integration_tests s3_common s3_file_uploader
-        extra-cmake-args: ${{ matrix.extra_cmake_args }}
         vcs-repo-file-url: ''
     - name: Upload resulting colcon logs
       uses: actions/upload-artifact@v1
