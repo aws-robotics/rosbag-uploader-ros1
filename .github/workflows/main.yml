@@ -23,15 +23,18 @@ jobs:
     container:
       image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
     steps:
+    # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - name: Run setup-ros-docker workaround
+      run: sudo chown -R rosbuild:rosbuild "$HOME" .
+    # Needed to access the vcs repos file from the workspace
+    - name: Checkout source
+      uses: actions/checkout@v2
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1.5.4
+      uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
-    # TODO(setup-ros-docker#7): calling chown is necessary for now
-    - name: Run setup-ros-docker workaround
-      run: sudo chown -R rosbuild:rosbuild "$HOME" .
     - id: build
       name: Build
       uses: ros-tooling/action-ros-ci@0.0.17
