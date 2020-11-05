@@ -22,18 +22,16 @@ jobs:
           ubuntu_distro: bionic
     container:
       image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
-    outputs:
-      build_result: ${{ steps.build.outcome }}
-      test_result: ${{ steps.test.outcome }}
     steps:
-    - name: Setup Build Environment 
-      env:
-        ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
-      run: |
-        # TODO(setup-ros-docker#7): calling chown is necessary for now
-        sudo chown -R rosbuild:rosbuild "$HOME" .
-        # this gives action-ros-ci access to private repos
-        git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - name: Run setup-ros-docker workaround
+      run: sudo chown -R rosbuild:rosbuild "$HOME" .
     - id: build
       name: Build
       uses: ros-tooling/action-ros-ci@0.0.17
@@ -43,12 +41,6 @@ jobs:
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader rosbag_uploader_ros1_integration_tests
         colcon-mixin-name: compile-commands coverage-gcc
         colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/1ddb69bedfd1f04c2f000e95452f7c24a4d6176b/index.yaml
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
     - id: test
       name: Integration Tests
       uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
