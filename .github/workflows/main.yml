@@ -22,11 +22,12 @@ jobs:
           ubuntu_distro: bionic
     container:
       image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
-    outputs:
-      build_result: ${{ steps.build.outcome }}
-      test_result: ${{ steps.test.outcome }}
+    env:
+      # Needed for the CMakeLists.txt setup
+      ROS_DISTRO: ${{ matrix.ros_distro }}
+      ROS_VERSION: 1
     steps:
-    - name: Setup Build Environment 
+    - name: Setup Build Environment
       env:
         ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
       run: |
@@ -37,7 +38,6 @@ jobs:
       uses: ros-tooling/action-ros-ci@0.1.0
       with:
         target-ros1-distro: ${{ env.ROS_VERSION == '1' && matrix.ros_distro || '' }}
-        target-ros2-distro: ${{ env.ROS_VERSION == '2' && matrix.ros_distro || '' }}
         vcs-repo-file-url: ''
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader rosbag_uploader_ros1_integration_tests
         colcon-mixin-name: compile-commands coverage-gcc
