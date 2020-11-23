@@ -30,15 +30,14 @@ jobs:
       env:
         ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
       run: |
-        # TODO(setup-ros-docker#7): calling chown is necessary for now
-        sudo chown -R rosbuild:rosbuild "$HOME" .
         # this gives action-ros-ci access to private repos
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
-      uses: ros-tooling/action-ros-ci@0.0.17
+      uses: ros-tooling/action-ros-ci@0.1.0
       with:
-        source-ros-binary-installation: ${{ matrix.ros_distro }}
+        target-ros1-distro: ${{ env.ROS_VERSION == '1' && matrix.ros_distro || '' }}
+        target-ros2-distro: ${{ env.ROS_VERSION == '2' && matrix.ros_distro || '' }}
         vcs-repo-file-url: ''
         package-name: rosbag_cloud_recorders s3_common s3_file_uploader rosbag_uploader_ros1_integration_tests
         colcon-mixin-name: compile-commands coverage-gcc
