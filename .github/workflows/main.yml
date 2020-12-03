@@ -109,11 +109,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
     - name: Log Build Status
-      uses: ros-tooling/action-cloudwatch-metrics@0.0.4
+      uses: ros-tooling/action-cloudwatch-metrics@0.0.5
       with:
         metric-value: ${{ ! contains(join(needs.*.result, ''), 'failure') && ! contains(join(needs.*.result, ''), 'cancelled') }}
     - name: Log Integration Test Status
-      uses: ros-tooling/action-cloudwatch-metrics@0.0.4
+      uses: ros-tooling/action-cloudwatch-metrics@0.0.5
       with:
         namespace: IntegrationTests
         metric-value: ${{ ! contains(join(needs.*.result, ''), 'failure') && ! contains(join(needs.*.result, ''), 'cancelled') }}
