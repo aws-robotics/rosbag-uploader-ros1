@@ -105,12 +105,9 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        # CLOUDWATCH_AWS_* contains credentials to the AWS account storing
-        # build results. This is a separate account than what is used to
-        # run the ingration tests.
-        aws-access-key-id: ${{ secrets.CLOUDWATCH_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.CLOUDWATCH_AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.CLOUDWATCH_AWS_REGION }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
     - name: Log Build Status
       uses: ros-tooling/action-cloudwatch-metrics@0.0.4
       with:
