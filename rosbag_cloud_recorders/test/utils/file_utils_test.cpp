@@ -160,6 +160,8 @@ TEST_F(ExpandAndCreateDirTests, TestForNonwriteableDirectory)
 
   // test
   std::string expanded_dir;
+  std::string chattr_command_str = std::string("chattr +i ") + test_dir;
+  system(chattr_command_str.c_str());
   setenv("HOME", ".", true);
   bool success = ExpandAndCreateDir(test_dir_str, expanded_dir);
   ASSERT_EQ(test_dir, expanded_dir);
