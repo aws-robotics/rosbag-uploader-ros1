@@ -162,8 +162,8 @@ TEST_F(ExpandAndCreateDirTests, TestForNonwriteableDirectory)
   std::string expanded_dir;
   setenv("HOME", ".", true);
   bool success = ExpandAndCreateDir(test_dir_str, expanded_dir);
-  ASSERT_NE(test_dir, expanded_dir);
-  ASSERT_FALSE(success);  // this test will fail if run as root
+  ASSERT_EQ(test_dir, expanded_dir);
+  ASSERT_TRUE(success);  // this test will fail if run as root
 }
 
 TEST_F(ExpandAndCreateDirTests, TestForImpossibleDirectory)
