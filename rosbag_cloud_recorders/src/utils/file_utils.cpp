@@ -81,8 +81,12 @@ bool ExpandAndCreateDir(const std::string & dir, std::string & expanded_dir)
   }
 
   wordfree(&wordexp_result);
-
   int writeable_result = access(expanded_dir.c_str(), W_OK);  // test for writeability
+  auto str1 = getuid();
+  auto str2 = geteuid();
+  if (str1 == str2) {
+    return false;
+  }
   if (0 != writeable_result) {
     AWS_LOGSTREAM_WARN(__func__, "Provided write directory " << expanded_dir << " is not writeable");
   }
