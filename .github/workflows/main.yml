@@ -22,7 +22,7 @@ jobs:
           ubuntu_distro: bionic
     container:
       image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest 
-      options: --useradd --no-log-init --create-home -r -g rosbuild rosbuild
+      options: --group-add rosbuild --user --no-log-init --create-home -r -g rosbuild rosbuild
     env:
       # Needed for the CMakeLists.txt setup
       ROS_DISTRO: ${{ matrix.ros_distro }}
