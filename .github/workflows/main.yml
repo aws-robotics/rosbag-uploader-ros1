@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - snehaldb/rosbag_build
   schedule:
     # Run the CI automatically every hour to look for flakyness.
     - cron: '0 * * * *'
