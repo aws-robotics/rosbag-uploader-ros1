@@ -21,7 +21,8 @@ jobs:
         - ros_distro: melodic
           ubuntu_distro: bionic
     container:
-      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest 
+      options: --group-add rosbuild --user rosbuild
     env:
       # Needed for the CMakeLists.txt setup
       ROS_DISTRO: ${{ matrix.ros_distro }}
@@ -51,7 +52,6 @@ jobs:
     - id: test
       name: Integration Tests
       uses: $GITHUB_WORKSPACE/ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
-      run: ls ros_ws
       with:
         integ-test-package-name: rosbag_uploader_ros1_integration_tests
         integ-test-launch-files: |
