@@ -21,7 +21,7 @@ jobs:
         - ros_distro: melodic
           ubuntu_distro: bionic
     container:
-      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest --group-add rosbuild --user rosbuild
+      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
     env:
       # Needed for the CMakeLists.txt setup
       ROS_DISTRO: ${{ matrix.ros_distro }}
