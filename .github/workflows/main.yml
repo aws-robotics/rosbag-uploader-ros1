@@ -33,6 +33,7 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
       run: |
         # this gives action-ros-ci access to private repos
+        sudo chown rosbuild -R .git
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
