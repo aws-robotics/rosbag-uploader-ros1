@@ -22,7 +22,7 @@ jobs:
           ubuntu_distro: bionic
     container:
       image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ubuntu_distro }}-ros-${{ matrix.ros_distro }}-ros-base-latest
-      options: --group-add rosbuild --user rosbuild
+      options: --group-add rosbuild --user rosbuild --workdir="/home/rosbuild"
     env:
       # Needed for the CMakeLists.txt setup
       ROS_DISTRO: ${{ matrix.ros_distro }}
@@ -33,9 +33,8 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
       run: |
         # this gives action-ros-ci access to private repos
-        useradd --no-log-init --create-home -r -g rosbuild rosbuild
-        echo "rosbuild ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
+        echo "rosbuild ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     - id: build
       name: Build
       uses: ros-tooling/action-ros-ci@0.1.0
