@@ -35,7 +35,7 @@ jobs:
         git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
-      uses: ros-tooling/action-ros-ci@0.1.0
+      uses: ros-tooling/action-ros-ci@0.1.1
       with:
         target-ros1-distro: ${{ env.ROS_VERSION == '1' && matrix.ros_distro || '' }}
         vcs-repo-file-url: ''
