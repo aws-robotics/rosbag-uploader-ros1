@@ -150,7 +150,7 @@ TEST_F(ExpandAndCreateDirTests, TestForExistingDirectory)
   ASSERT_TRUE(boost::filesystem::exists(expanded_dir));
 }
 
-TEST_F(ExpandAndCreateDirTests, TestForNonwriteableDirectory)
+TEST_F(ExpandAndCreateDirTests, DISABLED_TestForNonwriteableDirectory)
 {
   using namespace boost::filesystem;
 
