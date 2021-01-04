@@ -48,10 +48,11 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
-    - run: ls
+    - name: Pre Integ Test
+       run: ls
     - id: test
       name: Integration Tests
-      uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
+      uses: ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
       with:
         integ-test-package-name: rosbag_uploader_ros1_integration_tests
         integ-test-launch-files: |
