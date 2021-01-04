@@ -50,7 +50,7 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
     - id: test
       name: Integration Tests
-      uses: ./.github/actions/ros1-integ-test/
+      uses: $GITHUB_WORKSPACE/ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
       with:
         integ-test-package-name: rosbag_uploader_ros1_integration_tests
         integ-test-launch-files: |
