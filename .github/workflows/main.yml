@@ -49,8 +49,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
     - id: test
+      name: CWD Integration Tests
+      run: ls
+
+    - id: test
       name: Integration Tests
-      uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
+      uses: ~/ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
       run: ls
       with:
         integ-test-package-name: rosbag_uploader_ros1_integration_tests
