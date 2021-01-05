@@ -50,11 +50,12 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
     - name: Pre Integ Test
       run: |
+        sudo apt install tree 
         tree -a ./ros_ws
         echo $GITHUB_WORKSPACE
     - id: test
       name: Integration Tests
-      uses: aws-robotics/rosbag-uploader-ros1/ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
+      uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
       with:
         integ-test-package-name: rosbag_uploader_ros1_integration_tests
         integ-test-launch-files: |
