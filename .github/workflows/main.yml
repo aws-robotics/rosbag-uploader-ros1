@@ -63,7 +63,7 @@ jobs:
           test_s3_file_uploader_general.test
           test_s3_file_uploader_wrong_region.test
         ros-distro: ${{ matrix.ros_distro }}
-        workspace-dir: ${{ env.GITHUB_WORKSPACE }}
+        workspace-dir: ./ros_ws
     - name: Generate Coverage Report
       run: |
         # TODO(colcon-lcov-result#18): necessary until there is support for catkin packages
