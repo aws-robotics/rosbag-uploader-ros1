@@ -51,7 +51,7 @@ jobs:
     - name: Pre Integ Test
       run: |
         sudo apt install tree 
-        tree -a ./ros_ws
+        tree -a 
         echo $GITHUB_WORKSPACE
     - id: test
       name: Integration Tests
