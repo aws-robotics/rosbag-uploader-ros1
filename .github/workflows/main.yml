@@ -77,12 +77,12 @@ jobs:
         flags: ${{ matrix.ros_distro }},ROS_1
         fail_ci_if_error: false
     - name: Upload Coverage
-      uses: actions/upload-artifact@v2.2.1
+      uses: actions/upload-artifact@v2.2.2
       with:
         name: ${{ matrix.ros_distro }}_coverage
         path: coverage.info
     - name: Upload Compile Commands
-      uses: actions/upload-artifact@v2.2.1
+      uses: actions/upload-artifact@v2.2.2
       with:
         name: ${{ matrix.ros_distro }}_compile_commands
         path: ros_ws/build/compile_commands.json
