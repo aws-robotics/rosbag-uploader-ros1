@@ -13,6 +13,7 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         ros_distro: [kinetic, melodic]
         include:
@@ -27,6 +28,7 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       ROS_VERSION: 1
     steps:
+    - uses: actions/checkout@v2
     - name: Setup Build Environment
       env:
         ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
@@ -45,12 +47,12 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        aws-access-key-id: ${{ secrets.INTEG_TEST_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.INTEG_TEST_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.INTEG_TEST_AWS_REGION }}
     - id: test
       name: Integration Tests
-      uses: ./ros_ws/src/rosbag-uploader-ros1/.github/actions/ros1-integ-test/
+      uses: ./.github/actions/ros1-integ-test/
       with:
         integ-test-package-name: rosbag_uploader_ros1_integration_tests
         integ-test-launch-files: |

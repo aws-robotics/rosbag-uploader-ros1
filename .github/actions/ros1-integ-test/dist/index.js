@@ -5675,7 +5675,7 @@ function setup() {
                 // Make sure we have pip
                 yield exec.exec("sudo", ["apt-get", "install", "--yes", "--no-install-recommends", "--quiet", "python-pip"]);
                 // Install the newer version of the library
-                yield exec.exec("pip", ["install", "boto3"]);
+                yield exec.exec("python", ["-m", "pip", "install", "boto3"]);
             }
             yield loadEnvVariables(ROS_ENV_VARIABLES, `source /opt/ros/${ROS_DISTRO}/setup.bash && printenv`);
             yield loadEnvVariables(INSTALL_ENV_VARS, `source ${workspaceDir}/install/setup.bash && printenv`);
