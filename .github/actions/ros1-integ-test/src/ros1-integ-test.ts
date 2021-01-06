@@ -75,7 +75,7 @@ async function rostest() {
     for (let i = 0; i < integTestLaunchFiles.length; i++) {
       let integTestLaunchFileName = integTestLaunchFiles[i];
       if (integTestLaunchFileName.trim().length > 0) {
-        await exec.exec(`/opt/ros/${ROS_DISTRO}/bin/rostest`, [integTestPkgName, integTestLaunchFileName], execOptions)
+        await exec.exec(`/opt/ros/${ROS_DISTRO}/bin/rostest`, ['--text', integTestPkgName, integTestLaunchFileName], execOptions)
       }
     }
   } catch (error) {
