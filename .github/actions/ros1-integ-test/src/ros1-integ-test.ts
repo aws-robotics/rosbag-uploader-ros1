@@ -49,7 +49,7 @@ async function setup() {
       // Make sure we have pip
       await exec.exec("sudo", ["apt-get", "install", "--yes", "--no-install-recommends", "--quiet", "python-pip"]);
       // Install the newer version of the library
-      await exec.exec("pip", ["install", "boto3"])
+      await exec.exec("python", ["-m", "pip", "install", "boto3"])
     }
 
 
