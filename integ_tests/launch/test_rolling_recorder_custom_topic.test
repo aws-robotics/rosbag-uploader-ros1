@@ -1,6 +1,6 @@
 <launch>
     <arg name="bag_rollover_time" value="2" />
-    <arg name="write_directory" default="~/.ros/rosbag_uploader/" />
+    <arg name="write_directory" default="~/.ros/rolling_recorder_custom_topic_test_tempdir/" />
 
     <include file="$(find rosbag_cloud_recorders)/launch/rolling_recorder.launch">
         <arg name="node_config_file" value="$(find rosbag_uploader_ros1_integration_tests)/configurations/rolling_recorder_config.yaml"/>

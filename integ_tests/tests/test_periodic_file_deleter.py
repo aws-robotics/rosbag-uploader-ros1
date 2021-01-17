@@ -47,9 +47,8 @@ class TestPeriodicFileDeleter(RollingRecorderTestBase):
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
         # Find start time of active file
-        active_rosbag = self.get_latest_bag_by_regex("*.bag.active")
+        (active_rosbag, active_rosbag_start_time) = self.get_latest_bag_by_regex("*.bag.active")
         rospy.loginfo("Active rosbag: %s" % active_rosbag)
-        active_rosbag_start_time = os.path.getctime(active_rosbag)
 
         # Calculate time active bag will be deleted
         bag_finish_time = active_rosbag_start_time + self.periodic_deleter_interval
@@ -69,7 +68,7 @@ class TestPeriodicFileDeleter(RollingRecorderTestBase):
         rospy.loginfo("Bag finish time remaining after publish: %f" % bag_finish_time_remaining)
         # Add 0.3s as it takes some time for bag rotation to occur
         time.sleep(bag_finish_time_remaining + 0.3) 
-        latest_bag = self.get_latest_bag_by_regex("*.bag")
+        (latest_bag, _) = self.get_latest_bag_by_regex("*.bag")
         rospy.loginfo("Latest rosbag: %s" % latest_bag)
 
         # Check that the bag is deleted after at least one interval and max record time has passed

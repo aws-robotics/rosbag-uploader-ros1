@@ -45,9 +45,8 @@ class TestRollingRecorderDefaultTopics(RollingRecorderTestBase):
         self.wait_for_rolling_recorder_node_to_subscribe_to_topic()
 
         # Find start time of active file
-        active_rosbag = self.get_latest_bag_by_regex("*.bag.active")
+        (active_rosbag, active_rosbag_start_time) = self.get_latest_bag_by_regex("*.bag.active")
         rospy.loginfo("Active rosbag: %s" % active_rosbag)
-        active_rosbag_start_time = os.path.getctime(active_rosbag)
 
         # Calculate time active bag will roll over
         bag_finish_time = active_rosbag_start_time + self.bag_rollover_time
@@ -67,13 +66,13 @@ class TestRollingRecorderDefaultTopics(RollingRecorderTestBase):
         # why we're waiting for it to roll over twice
         bag_finish_time_remaining = bag_finish_time - time.time()
         time.sleep(bag_finish_time_remaining + self.bag_rollover_time + self.bag_deactivate_time)
-        
+
         # Check that the data is inside the latest rosbags
         latest_bags = self.get_latest_bags_by_regex("*.bag", 2)
-        rospy.loginfo("Latest bags: %s " % latest_bags)
+        rospy.loginfo("Latest bags: %s " % str(zip(*latest_bags)[0]))
         total_messages = 0
         total_topic_messages = 0
-        for bag_path in latest_bags:
+        for (bag_path, _) in latest_bags:
             bag = rosbag.Bag(bag_path)
             for topic, msg, _ in bag.read_messages():
                 total_messages += 1
