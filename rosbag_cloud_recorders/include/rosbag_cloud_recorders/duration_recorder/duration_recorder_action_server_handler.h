@@ -18,6 +18,8 @@
 #include <string>
 #include <thread>
 
+#include <boost/filesystem.hpp>
+
 #include <ros/ros.h>
 #include <ros/duration.h>
 
@@ -156,7 +158,9 @@ public:
           goal_handle.publishFeedback(recorder_feedback);
           for (const std::string & bag_file_name : upload_client.getResult()->files_uploaded) {
             AWS_LOG_INFO(current_function, "Bag file named: %s was uploaded to S3 and is now being deleted locally.", bag_file_name.c_str());
-            Utils::DeleteFile(bag_file_name);
+            boost::filesystem::path bag_file_path(duration_recorder_options.write_directory);
+            bag_file_path += bag_file_name;
+            Utils::DeleteFile(bag_file_path.string());
           }
         }
       }
