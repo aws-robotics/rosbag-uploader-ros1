@@ -29,12 +29,6 @@ jobs:
       ROS_VERSION: 1
     steps:
     - uses: actions/checkout@v2
-    - name: Setup Build Environment
-      env:
-        ACCESS_TOKEN: ${{ secrets.PERSISTENT_GITHUB_TOKEN }}
-      run: |
-        # this gives action-ros-ci access to private repos
-        git config --global url."https://${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
     - id: build
       name: Build
       uses: ros-tooling/action-ros-ci@0.1.2
