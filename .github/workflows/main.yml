@@ -31,7 +31,7 @@ jobs:
     - uses: actions/checkout@v2
     - id: build
       name: Build
-      uses: ros-tooling/action-ros-ci@0.1.2
+      uses: ros-tooling/action-ros-ci@0.2.1
       with:
         target-ros1-distro: ${{ env.ROS_VERSION == '1' && matrix.ros_distro || '' }}
         vcs-repo-file-url: ''
