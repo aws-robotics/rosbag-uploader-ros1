@@ -35,30 +35,9 @@ jobs:
       with:
         target-ros1-distro: ${{ env.ROS_VERSION == '1' && matrix.ros_distro || '' }}
         vcs-repo-file-url: ''
-        package-name: rosbag_cloud_recorders s3_common s3_file_uploader rosbag_uploader_ros1_integration_tests
+        package-name: rosbag_cloud_recorders s3_common s3_file_uploader
         colcon-mixin-name: compile-commands coverage-gcc
         colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/1ddb69bedfd1f04c2f000e95452f7c24a4d6176b/index.yaml
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.INTEG_TEST_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.INTEG_TEST_AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.INTEG_TEST_AWS_REGION }}
-    - id: test
-      name: Integration Tests
-      uses: ./.github/actions/ros1-integ-test/
-      with:
-        integ-test-package-name: rosbag_uploader_ros1_integration_tests
-        integ-test-launch-files: |
-          test_duration_recorder_general.test
-          test_periodic_file_deleter.test
-          test_rolling_recorder_custom_topic.test
-          test_rolling_recorder_default_topics.test
-          test_rolling_recorder_upload.test
-          test_s3_file_uploader_general.test
-          test_s3_file_uploader_wrong_region.test
-        ros-distro: ${{ matrix.ros_distro }}
-        workspace-dir: ./ros_ws
     - name: Generate Coverage Report
       run: |
         # TODO(colcon-lcov-result#18): necessary until there is support for catkin packages
@@ -68,7 +47,6 @@ jobs:
     - name: Post Coverage to Codecov
       uses: codecov/codecov-action@v1.2.1
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
         file: coverage.info
         flags: ${{ matrix.ros_distro }},ROS_1
         fail_ci_if_error: false
@@ -107,9 +85,4 @@ jobs:
     - name: Log Build Status
       uses: ros-tooling/action-cloudwatch-metrics@0.0.5
       with:
-        metric-value: ${{ ! contains(join(needs.*.result, ''), 'failure') && ! contains(join(needs.*.result, ''), 'cancelled') }}
-    - name: Log Integration Test Status
-      uses: ros-tooling/action-cloudwatch-metrics@0.0.5
-      with:
-        namespace: IntegrationTests
         metric-value: ${{ ! contains(join(needs.*.result, ''), 'failure') && ! contains(join(needs.*.result, ''), 'cancelled') }}
