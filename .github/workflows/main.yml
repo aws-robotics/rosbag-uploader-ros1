@@ -45,7 +45,7 @@ jobs:
         lcov --remove coverage.info /usr/* /opt/ros/* */install/* --output-file coverage.info
         lcov --list coverage.info
     - name: Post Coverage to Codecov
-      uses: codecov/codecov-action@v1.2.1
+      uses: codecov/codecov-action@2.0.0
       with:
         file: coverage.info
         flags: ${{ matrix.ros_distro }},ROS_1
