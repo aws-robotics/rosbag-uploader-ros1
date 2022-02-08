@@ -69,14 +69,6 @@ _Note: If building the master branch instead of a release branch you may need to
 
 Instructions for running the nodes in this repository can be found in the READMEs for `rosbag_cloud_recorders` and `s3_file_uploader` packages.
 
-
-## Bugs & Feature Requests
-
-Please contact the team directly if you would like to request a feature.
-
-Please report bugs in [Issue Tracker].
-
-
 [Amazon Web Services (AWS)]: https://aws.amazon.com/
 [Apache 2.0]: https://aws.amazon.com/apache-2-0/
 [Issue Tracker]: https://github.com/aws-robotics/rosbag-uploader-ros1/issues
