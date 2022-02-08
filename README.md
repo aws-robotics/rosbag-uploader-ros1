@@ -11,23 +11,14 @@ More details on the `duration_recorder` and `rolling_recorder` can be found in t
 
 **Amazon S3 Summary**: Amazon Simple Storage Service (Amazon S3) is an object storage service that offers industry-leading scalability, data availability, security, and performance. This means customers of all sizes and industries can use it to store and protect any amount of data for a range of use cases, such as websites, mobile applications, backup and restore, archive, enterprise applications, IoT devices, and big data analytics. Amazon S3 provides easy-to-use management features so you can organize your data and configure finely-tuned access controls to meet your specific business, organizational, and compliance requirements. Amazon S3 is designed for 99.999999999% (11 9's) of durability, and stores data for millions of applications for companies all around the world.
 
-### Build status
-* GitHub Action Status
-     * master: ![Build & Test](https://github.com/aws-robotics/rosbag-uploader-ros1/workflows/Build%20&%20Test/badge.svg?branch=master&event=schedule)
-     * release-latest: ![Build & Test release-latest](https://github.com/aws-robotics/rosbag-uploader-ros1//workflows/Build%20&%20Test%20release-latest/badge.svg?event=schedule)
-
-
-
-[![Actions Status](https://github.com/aws-robotics/rosbag-uploader-ros1/workflows/build-test/badge.svg)](https://github.com/aws-robotics/rosbag-uploader-ros1/actions)
-
-
 ## License
 
 The source code is released under [Apache 2.0].
 
 **Author**: AWS RoboMaker<br/>
 **Affiliation**: [Amazon Web Services (AWS)]<br/>
-**Maintainer**: AWS RoboMaker, ros-contributions@amazon.com
+
+RoboMaker cloud extensions rely on third-party software licensed under open-source licenses and are provided for demonstration purposes only. Incorporation or use of RoboMaker cloud extensions in connection with your production workloads or commercial product(s) or devices may affect your legal rights or obligations under the applicable open-source licenses. License information for this repository can be found [here](https://github.com/aws-robotics/rosbag-uploader-ros1/blob/master/LICENSE). AWS does not provide support for this cloud extension. You are solely responsible for how you configure, deploy, and maintain this cloud extension in your workloads or commercial product(s) or devices.
 
 
 ## Installation
@@ -77,14 +68,6 @@ _Note: If building the master branch instead of a release branch you may need to
 ### Running
 
 Instructions for running the nodes in this repository can be found in the READMEs for `rosbag_cloud_recorders` and `s3_file_uploader` packages.
-
-
-## Bugs & Feature Requests
-
-Please contact the team directly if you would like to request a feature.
-
-Please report bugs in [Issue Tracker].
-
 
 [Amazon Web Services (AWS)]: https://aws.amazon.com/
 [Apache 2.0]: https://aws.amazon.com/apache-2-0/
