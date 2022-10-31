@@ -13,6 +13,7 @@
 # permissions and limitations under the License.
 
 import os
+import shutil
 import sys
 import time
 import unittest
@@ -37,18 +38,18 @@ class RollingRecorderTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rospy.init_node(TEST_NODE_NAME, log_level=rospy.DEBUG)
+        cls.rosbag_directory = os.path.expanduser(rospy.get_param("~write_directory"))
 
     @classmethod
     def tearDownClass(cls):
-        pass
+        shutil.rmtree(cls.rosbag_directory)
 
     def setUp(self):
         self.bag_deactivate_time = BAG_DEACTIVATE_TIME
         self.bag_rollover_time = rospy.get_param("~bag_rollover_time")
-        self.rosbag_directory = os.path.expanduser(rospy.get_param("~write_directory"))
 
     def tearDown(self):
-        pass
+        self.delete_all_rosbags()
 
     def wait_for_rolling_recorder_nodes(self, timeout=5):
         required_nodes = set(['/rolling_recorder'])
@@ -60,6 +61,13 @@ class RollingRecorderTestBase(unittest.TestCase):
 
     def wait_for_rolling_recorder_node_to_subscribe_to_topic(self):
         rostopic.wait_for_subscriber(self.test_publisher, ROLLING_RECORDER_NODE_START_TIMEOUT)
+        # https://answers.ros.org/question/251194/rospy-subscriber-needs-sleep-some-time-until-the-first-message-is-received/
+        rospy.sleep(0.5)
+
+    def delete_all_rosbags(self):
+        all_bags = get_latest_bags_by_regex(self.rosbag_directory, "*.bag")
+        for (bag_path, _) in all_bags:
+            os.remove(bag_path)
 
     def get_latest_bag_by_regex(self, regex_pattern):
         return get_latest_bag_by_regex(self.rosbag_directory, regex_pattern)

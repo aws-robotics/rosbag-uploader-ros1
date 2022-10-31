@@ -118,7 +118,7 @@ class TestDurationRecorderGeneral(DurationRecorderTestBase):
         self.check_rosbags_were_recorded(start_time, 1)
 
         # Ensure that the rosbag contains all the test messages
-        latest_bag = self.get_latest_bag_by_regex("*.bag")
+        (latest_bag, _) = self.get_latest_bag_by_regex("*.bag")
         total_topic_messages = 0
         bag = rosbag.Bag(latest_bag)
         for topic, msg, _ in bag.read_messages():
